@@ -16,7 +16,7 @@ DEFAULT_FROM_EMAIL=os.getenv('DEFAULT_FROM_EMAIL')
 MESSAGE_SAVE_DIRECTORY=os.getenv('MESSAGE_SAVE_DIRECTORY')
 
 
-def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body="", content_file_paths="") :
+def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body="", content_file_paths=[]) :
     """
     This function sends an email using Outlook.
     
@@ -55,18 +55,36 @@ def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body
     for file_path in content_file_paths :
         mail_item.Attachments.Add(Source=file_path)
 
-    # Save the mail into the directory
-    save_message_path = MESSAGE_SAVE_DIRECTORY + generate_timestamped_name() + ".msg"
-    mail_item.SaveAs(save_message_path, 3)
+    return mail_item
 
-    return save_message_path
+
+def save_email_item (email_item) :
+    """
+    Saves the email item in a given directory from a Outlook item
+    """
+    timestamped = generate_timestamped_name()
+    file_name = f"message_{timestamped}.msg"
+    save_path = os.join(MESSAGE_SAVE_DIRECTORY, file_name)
     
+    email_item.SaveAs(save_path, 3)
 
-def generate_html_body (body: str) :
+    return save_path
+
+
+def generate_html_body(body: str) -> str:
     """
-    This function returns a pre defined HTML body
+    Returns a standard HTML body with signature appended.
     """
-    html_body = f"""<p>{body}</p><p class="MsoNormal"><o:p> </o:p></p><p class="MsoNormal"><span lang="FR" style="mso-ansi-language:FR">Best regards,<o:p></o:p></span></p><p class="MsoNormal"><b><span lang="EN-US" style="font-size:14.0pt;font-family: 'helvetica light';color:#0d1b7b;mso-ansi-language:en-us;mso-fareast-language: en-gb;">Trading Desk</span></b><span lang="EN-GB" style="color:#0D1B7B;mso-ansi-language: EN-GB;mso-fareast-language:EN-GB"><o:p></o:p></span></p><p class="MsoNormal"><span lang="EN-US" style="font-size:10.5pt;font-family:'helvetica light';color:#272727;mso-ansi-language:en-us;mso-fareast-language:en-gb;"> </span><span lang="EN-GB" style="mso-ascii-font-family:Calibri;mso-ascii-theme-font:minor-latin; mso-hansi-font-family:Calibri;mso-hansi-theme-font:minor-latin;color:black; mso-ansi-language:EN-GB;mso-fareast-language:EN-GB"><o:p></o:p></span></p><p class="MsoNormal"><span lang="EN-US" style="font-size:10.0pt;font-family:'helvetica light';color:#0d1b7b;mso-ansi-language:en-us;mso-fareast-language:en-gb;">t: </span><span lang="EN-US" style="font-size:10.0pt;font-family:'helvetica light';color:#595959; mso-ansi-language:en-us;mso-fareast-language:en-gb;">+356 277 421 15</span><span lang="EN-GB" style="color:black;mso-ansi-language:EN-GB;mso-fareast-language: EN-GB"><o:p></o:p></span></p><p class="MsoNormal"><span lang="EN-US" style="font-size:10.0pt;font-family:'helvetica light';color:#0d1b7b;mso-ansi-language:en-us;mso-fareast-language:en-gb;">a: </span><span lang="EN-US" style="font-size:10.0pt;font-family:'helvetica light';color:#595959; mso-ansi-language:en-us;mso-fareast-language:en-gb;">Altarius Asset Management Ltd</span><span lang="EN-GB" style="color:#595959;mso-ansi-language:EN-GB; mso-fareast-language:EN-GB"><o:p></o:p></span></p><p class="MsoNormal"><span lang="EN-US" style="font-size:10.0pt;font-family:'helvetica light';color:#595959;mso-ansi-language:en-us;mso-fareast-language:en-gb;"> Cornerstone Complex, Suite A, Level 1, 16th September Square, Mosta MST 1180 Malta</span><span lang="EN-GB" style="color:#595959;mso-ansi-language:EN-GB; mso-fareast-language:EN-GB"><o:p></o:p></span></p><p class="MsoNormal"><span lang="EN-GB" style="font-size:10.0pt;font-family:'helvetica light';color:#0d1b7b;mso-ansi-language:en-gb;mso-fareast-language:en-gb;">w: </span><u><span lang="EN-GB" style="font-size:10.0pt;font-family:'helvetica light';color:#244171; border:none windowtext 1.0pt;mso-border-alt:none 0cm;padding:0cm; mso-ansi-language:en-gb;mso-fareast-language:en-gb;"><a href="http://www.altariusam.com/" title="http://www.altariusam.com/"><span style="color:#244171">www.altariusam.com</span></a></span></u><span lang="EN-GB" style="font-size:10.0pt;font-family:'helvetica light';color:#272727;mso-ansi-language: en-gb;mso-fareast-language:en-gb;"> </span><span lang="EN-GB" style="font-size:10.0pt;font-family:'helvetica light';color:#0d1b7b;border: none windowtext 1.0pt;mso-border-alt:none 0cm;padding:0cm; mso-ansi-language:en-gb;mso-fareast-language:en-gb;">e: </span><u><span lang="EN-GB" style="font-size:10.0pt;font-family:'helvetica light';color:#244171; border:none windowtext 1.0pt;mso-border-alt:none 0cm;padding:0cm; mso-ansi-language:en-gb;mso-fareast-language:en-gb;"><a href="mailto:tradingdesk@altariusam.com">tradingdesk@altariusam.com</a></span></u></p>"""
+    html_body = f"""<p>{body}</p>
+    <p>Best regards,</p>
+    <p><strong>Trading Desk</strong><br>
+    Altarius Asset Management Ltd<br>
+    Cornerstone Complex, Suite A, Level 1,<br>
+    16th September Square, Mosta MST 1180 Malta<br>
+    t: +356 277 421 15<br>
+    <a href="http://www.altariusam.com/">www.altariusam.com</a><br>
+    <a href="mailto:tradingdesk@altariusam.com">tradingdesk@altariusam.com</a></p>
+    """
 
     return html_body
 
@@ -75,12 +93,12 @@ def generate_timestamped_name () :
     """
     Generates a timestamped name using the current time and date
     """
-    name = dt.datetime.now().strftime(format="¨%Y%m%d_%H%M%S_%f")
+    name = dt.datetime.now().strftime(format="%Y%m%d_%H%M%S_%f")
 
     return name
 
 
-def check_email_format (email: str) :
+def check_email_format (email : str) :
     """
     Returns True if the email address has a valid format, otherwise False.
     """
