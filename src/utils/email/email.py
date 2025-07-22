@@ -1,4 +1,4 @@
-import os
+import os, re
 import pandas as pd
 import datetime as dt
 
@@ -78,3 +78,12 @@ def generate_timestamped_name () :
     name = dt.datetime.now().strftime(format="¨%Y%m%d_%H%M%S_%f")
 
     return name
+
+
+def check_email_format (email: str) :
+    """
+    Returns True if the email address has a valid format, otherwise False.
+    """
+    email_regex = r"^[\w\.-]+@[\w\.-]+\.\w{2,}$"
+
+    return re.match(email_regex, email) is not None
