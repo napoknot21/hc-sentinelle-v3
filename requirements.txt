@@ -4,7 +4,7 @@ streamlit-javascript
 streamlit-option-menu
 pandas
 numpy
-python-env
+dotenv
 seaborn
 plotly
 openpyxl
