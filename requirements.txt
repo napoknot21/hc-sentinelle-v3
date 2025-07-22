@@ -1,0 +1,11 @@
+streamlit
+streamlit-aggrid
+streamlit-javascript
+streamlit-option-menu
+pandas
+numpy
+python-env
+seaborn
+plotly
+openpyxl
+xlwings
