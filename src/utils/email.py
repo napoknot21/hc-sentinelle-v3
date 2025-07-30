@@ -29,7 +29,7 @@ def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body
         - content_file_paths    : List (str)    -> Path's list file to be attached.
 
     Returns :
-        - 
+        - mail_item : Dispatch object -> The generated Outlook email item.
     """
     # Create the Outlook application object
     pycom.CoInitialize()
@@ -49,7 +49,7 @@ def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body
     mail_item.Subject = subject
 
     # Body set up for the email
-    mail_item.body = generate_html_body(body)
+    mail_item.HTMLBody = generate_html_body(body)
 
     # Attach files to the email
     for file_path in content_file_paths :
@@ -58,13 +58,15 @@ def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body
     return mail_item
 
 
-def save_email_item (email_item) :
+def save_email_item (email_item, path : str) -> str :
     """
     Saves the email item in a given directory from a Outlook item
     """
     timestamped = generate_timestamped_name()
     file_name = f"message_{timestamped}.msg"
-    save_path = os.join(MESSAGE_SAVE_DIRECTORY, file_name)
+
+    save_dir = MESSAGE_SAVE_DIRECTORY if path is None else path
+    save_path = os.path.join(save_dir, file_name)
     
     email_item.SaveAs(save_path, 3)
 
@@ -89,7 +91,7 @@ def generate_html_body(body: str) -> str:
     return html_body
 
 
-def generate_timestamped_name () :
+def generate_timestamped_name () -> str :
     """
     Generates a timestamped name using the current time and date
     """
@@ -98,7 +100,7 @@ def generate_timestamped_name () :
     return name
 
 
-def check_email_format (email : str) :
+def check_email_format (email : str) -> bool :
     """
     Returns True if the email address has a valid format, otherwise False.
     """
