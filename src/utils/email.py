@@ -1,5 +1,5 @@
 import os, re
-import pandas as pd
+import polars as pl
 import datetime as dt
 
 import win32com.client as win32
@@ -9,21 +9,30 @@ from src.config.parameters import DEFAULT_TO_EMAIL, DEFAULT_CC_EMAIL, DEFAULT_FR
 from src.config.paths import MESSAGE_SAVE_DIRECTORY
 
 
-def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body="", content_file_paths=[]) :
+def create_email_item (
+        to_email : list = None,
+        cc_email : str = None,
+        from_email : str = DEFAULT_FROM_EMAIL,
+        subject : str = "",
+        body : str = "",
+        content_file_paths : list = None
+    ) -> win32.Dispatch :
     """
     This function sends an email using Outlook.
     
-    Args :
-        - to_email              : List (str)    -> Email addresses of the recipients.
-        - cc_email              : List (str)    -> Email addresses for CCs.
-        - from_email            : Str           -> Sender's email address. 
-        - subject               : Str           -> Email's subject.
-        - body                  : Str           -> Body's text of the email.
-        - content_file_paths    : List (str)    -> Path's list file to be attached.
+    Args:
+        to_email (List[str]): List of recipient email addresses. If None or empty, defaults to DEFAULT_TO_EMAIL.
+        cc_email (List[str]): List of CC email addresses. If None or empty, defaults to DEFAULT_CC_EMAIL.
+        from_email (str): Sender email address to appear in 'From' (SendOnBehalfOfName).
+        subject (str): Subject of the email.
+        body (str): Body content in HTML.
+        content_file_paths (List[str], optional): List of file paths to attach to the email.
 
-    Returns :
-        - mail_item : Dispatch object -> The generated Outlook email item.
+    Returns:
+        mail_item (win32.Dispatch) : The generated Outlook email item.
     """
+
+
     # Create the Outlook application object
     pycom.CoInitialize()
     outlook_app = win32.Dispatch('Outlook.Application')
@@ -31,9 +40,9 @@ def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body
     # Create a new mail item
     mail_item = outlook_app.CreateItem(0)
 
-    # Set up recipeients and CCs
-    mail_item.To = DEFAULT_TO_EMAIL if len(to_email) == 0 else "; ".join(to_email)
-    mail_item.CC = DEFAULT_CC_EMAIL if len(cc_email) == 0 else "; ".join(cc_email)
+    # Set up recipeients and CCs (Assumes that emails are in correct format)
+    mail_item.To = DEFAULT_TO_EMAIL if (len(to_email) == 0 or to_email is None) else "; ".join(to_email)
+    mail_item.CC = DEFAULT_CC_EMAIL if (len(cc_email) == 0 or cc_email is None) else "; ".join(cc_email)
 
     # Set up sender email
     mail_item.SendOnBehalfOfName = DEFAULT_FROM_EMAIL if from_email == "" else from_email
@@ -42,33 +51,75 @@ def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body
     mail_item.Subject = subject
 
     # Body set up for the email
-    mail_item.HTMLBody = generate_html_body(body)
+    mail_item.HTMLBody = generate_html_template_body(body)
 
     # Attach files to the email
     for file_path in content_file_paths :
-        mail_item.Attachments.Add(Source=file_path)
+        
+        if os.path.isfile(file_path) :
+            mail_item.Attachments.Add(Source=file_path)
+
+        else :
+            print("\n[-] File not found. Not attached...\n")
+
 
     return mail_item
 
 
-def save_email_item (email_item, path : str) -> str :
+def save_email_item (email_item, abs_path_directory : str = MESSAGE_SAVE_DIRECTORY) -> dict :
     """
-    Saves the email item in a given directory from a Outlook item
+    Saves an email item and returns the result status.
+
+    Args:
+        email_data (dict): The email data to save.
+
+    Returns:
+        dict: Contains:
+            - 'success' (bool): True if save succeeded, False otherwise.
+            - 'message' (str): A message describing the result.
+            - 'path' (str) : The path of the saved file.
     """
     timestamped = generate_timestamped_name()
     file_name = f"message_{timestamped}.msg"
 
-    save_dir = MESSAGE_SAVE_DIRECTORY if path is None else path
+    save_dir = abs_path_directory if os.path.isdir(abs_path_directory) else MESSAGE_SAVE_DIRECTORY
     save_path = os.path.join(save_dir, file_name)
     
-    email_item.SaveAs(save_path, 3)
+    status = {
 
-    return save_path
+        "success" : False,
+        "message" : "",
+        "path" : ""
+
+    }
+
+    try :
+
+        email_item.SaveAs(save_path, 3)
+
+        status["success"] = True
+        status["message"] = "Email saved successfully"
+        status["path"] = save_path
+
+    except Exception as e :
+
+        status["message"] = f"Failed to save email: {str(e)}"
+        return status
+
+    return status
 
 
-def generate_html_body(body: str) -> str:
+def generate_html_template_body (body: str) -> str:
     """
-    Returns a standard HTML body with signature appended.
+    Creates a standard HTML email body by embedding the provided content 
+    and appending a fixed company signature.
+
+    Args:
+        body (str): The main content of the email in plain text or HTML.
+
+    Returns:
+        str: A complete HTML string with the body content wrapped in <p> tags 
+             followed by the company signature.
     """
     html_body = f"""<p>{body}</p>
     <p>Best regards,</p>
@@ -86,7 +137,11 @@ def generate_html_body(body: str) -> str:
 
 def generate_timestamped_name () -> str :
     """
-    Generates a timestamped name using the current time and date
+    Generates a unique timestamped string based on the current date and time.
+
+    Returns:
+        str: A string formatted as 'YYYYMMDD_HHMMSS_microseconds', 
+             e.g., '20250801_143255_123456'.
     """
     name = dt.datetime.now().strftime(format="%Y%m%d_%H%M%S_%f")
 
@@ -95,7 +150,17 @@ def generate_timestamped_name () -> str :
 
 def check_email_format (email : str) -> bool :
     """
-    Returns True if the email address has a valid format, otherwise False.
+    Validates the format of an email address using a regular expression.
+
+    Args:
+        email (str): The email address to validate.
+
+    Returns:
+        bool: True if the email matches the expected format, False otherwise.
+
+    Note:
+        This validation checks for a general pattern like 'user@domain.tld' 
+        but does not guarantee that the email address actually exists.
     """
     email_regex = r"^[\w\.-]+@[\w\.-]+\.\w{2,}$"
 
