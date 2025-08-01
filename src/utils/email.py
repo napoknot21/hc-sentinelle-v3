@@ -66,7 +66,7 @@ def create_email_item (
     return mail_item
 
 
-def save_email_item (email_item, abs_path_directory : str = MESSAGE_SAVE_DIRECTORY) -> dict :
+def save_email_item (email_item : win32.Dispatch, abs_path_directory : str = MESSAGE_SAVE_DIRECTORY) -> dict :
     """
     Saves an email item and returns the result status.
 
@@ -107,6 +107,35 @@ def save_email_item (email_item, abs_path_directory : str = MESSAGE_SAVE_DIRECTO
         return status
 
     return status
+
+
+def send_email (email_item ! win32.Dispatch) -> bool :
+    """
+    Sends the given Outlook mail item immediately via Outlook.
+
+    Args:
+        mail_item (win32.Dispatch): The Outlook MailItem object to send.
+
+    Returns:
+        bool: True if the email was sent successfully, False otherwise.
+
+    Raises:
+        None: Exceptions are caught internally; failures result in False return value.
+
+    Notes:
+        - This function requires Outlook to be installed and properly configured on the system.
+        - Ensure the mail_item has all required fields set (To, Subject, Body) before calling.
+        - Sending emails programmatically may trigger Outlook security prompts depending on security settings.
+    """
+    try :
+
+        email_item.Send()
+        return True
+    
+    except Exception as e :
+
+        print(f"[-] Failed to send email: {e}")
+        return False
 
 
 def generate_html_template_body (body: str) -> str:
