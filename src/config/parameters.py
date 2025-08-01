@@ -1,7 +1,15 @@
 import os, sys
-from dotenv import load_dotenv
+from src.config.env import load_dotenv
 
-load_dotenv()
+DEFAULT_TO_EMAIL=os.getenv("DEFAULT_TO_EMAIL")
+DEFAULT_CC_EMAIL=os.getenv("DEFAULT_CC_EMAIL")
+DEFAULT_FROM_EMAIL=os.getenv("DEFAULT_FROM_EMAIL")
 
-LIBAPI_PATH_WINDOWS=os.getenv("LIBAPI_PATH_WINDOWS")
-LIBAPI_PATH_LINUX=os.getenv("LIBAPI_PATH_LINUX")
+
+FUND_NAME_MAP = {
+
+    os.getenv("FUND_HV") : "HV",
+    os.getenv("FUND_WR") : "WR"
+
+}
+

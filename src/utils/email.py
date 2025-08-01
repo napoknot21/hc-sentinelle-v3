@@ -5,15 +5,8 @@ import datetime as dt
 import win32com.client as win32
 import pythoncom as pycom
 
-from dotenv import load_dotenv
-
-# Default global variables load and get
-load_dotenv()
-
-DEFAULT_TO_EMAIL=os.getenv('DEFAULT_TO_EMAIL')
-DEFAULT_CC_EMAIL=os.getenv('DEFAULT_CC_EMAIL')
-DEFAULT_FROM_EMAIL=os.getenv('DEFAULT_FROM_EMAIL')
-MESSAGE_SAVE_DIRECTORY=os.getenv('MESSAGE_SAVE_DIRECTORY')
+from src.config.parameters import DEFAULT_TO_EMAIL, DEFAULT_CC_EMAIL, DEFAULT_FROM_EMAIL
+from src.config.paths import MESSAGE_SAVE_DIRECTORY
 
 
 def create_email_item (to_email=[], cc_email=[], from_email="", subject="", body="", content_file_paths=[]) :
