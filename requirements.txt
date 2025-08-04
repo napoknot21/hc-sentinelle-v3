@@ -3,6 +3,7 @@ streamlit-aggrid
 streamlit-javascript
 streamlit-option-menu
 pandas
+polars
 numpy
 dotenv
 seaborn

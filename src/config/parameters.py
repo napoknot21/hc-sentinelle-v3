@@ -1,15 +1,21 @@
 import os, sys
 from src.config.env import load_dotenv
 
+
 DEFAULT_TO_EMAIL=os.getenv("DEFAULT_TO_EMAIL")
 DEFAULT_CC_EMAIL=os.getenv("DEFAULT_CC_EMAIL")
 DEFAULT_FROM_EMAIL=os.getenv("DEFAULT_FROM_EMAIL")
 
+FUND_HV=os.getenv("FUND_HV")
+FUND_WR=os.getenv("FUND_WC")
+
 
 FUND_NAME_MAP = {
 
-    os.getenv("FUND_HV") : "HV",
-    os.getenv("FUND_WR") : "WR"
+    "HV" : FUND_HV,
+    "WC" : FUND_WR
 
 }
+
+
 
