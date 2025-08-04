@@ -246,7 +246,7 @@ def export_dataframe_to_json (df : pl.DataFrame, output_abs_path : str = None) -
         return response
     
 
-def export_dataframe_to_csv (df : pl.DataFrame, decimal_coma : bool = False, output_abs_path : str = None) -> dict :    
+def export_dataframe_to_csv (df : pl.DataFrame, separator : str = ",", output_abs_path : str = None) -> dict :
     """
     Exports a Polars DataFrame to a CSV file.
 
@@ -281,8 +281,8 @@ def export_dataframe_to_csv (df : pl.DataFrame, decimal_coma : bool = False, out
         df.write_csv(
 
             file=output_abs_path,
-            decimal_coma=decimal_coma
-
+            # decimal_comma=decimal_comma # Error here due to the polars version
+            separator=separator
         )
 
         duration = time.time() - start

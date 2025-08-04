@@ -9,11 +9,12 @@ DEFAULT_FROM_EMAIL=os.getenv("DEFAULT_FROM_EMAIL")
 FUND_HV=os.getenv("FUND_HV")
 FUND_WR=os.getenv("FUND_WC")
 
+SIMM_HIST_NAME=os.getenv("SIMM_HIST_NAME")
 
 FUND_NAME_MAP = {
 
-    "HV" : FUND_HV,
-    "WC" : FUND_WR
+    FUND_HV : "HV",
+    FUND_WR : "WR"
 
 }
 

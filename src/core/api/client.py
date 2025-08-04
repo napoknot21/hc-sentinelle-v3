@@ -1,8 +1,9 @@
 import os, sys
 import streamlit as st
 
+
 from src.config.paths import LIBAPI_PATH
-sys.path.append(str(LIBAPI_PATH))
+sys.path.append(LIBAPI_PATH)
 
 from libApi.pricers.fx import PricerFX
 from libApi.pricers.eq import PricerEQ
