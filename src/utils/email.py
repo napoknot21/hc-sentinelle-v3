@@ -109,7 +109,7 @@ def save_email_item (email_item : win32.Dispatch, abs_path_directory : str = MES
     return status
 
 
-def send_email (email_item ! win32.Dispatch) -> bool :
+def send_email (email_item : win32.Dispatch) -> bool :
     """
     Sends the given Outlook mail item immediately via Outlook.
 

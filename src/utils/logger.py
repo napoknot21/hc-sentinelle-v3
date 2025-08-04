@@ -5,8 +5,6 @@ from src.config.paths import LOG_DIR
 os.makedirs(LOG_DIR, exist_ok=True)
 
 
-
-
 def get_logger (name: str = "sentinelle") -> logging.Logger:
     """
     Create or retrieve a logger with a given name.

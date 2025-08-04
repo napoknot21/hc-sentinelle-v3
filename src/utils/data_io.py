@@ -10,7 +10,7 @@ def load_excel_to_dataframe (excel_file_abs_pth : str, sheet_name : str = None, 
     Loads an Excel file and returns it as a Polars dataframe, applying schema overrides.
 
     Args:
-        file_abs_pth (str): Absolute path to the Excel file.
+        excel_file_abs_pth (str): Absolute path to the Excel file.
         sheet_name (str): Sheet name to read from.
         specific_cols (list): List of columns to import. If None, then all columns
         schema_overrides (dict): Dictionary mapping column names to Polars types.
@@ -89,7 +89,7 @@ def load_csv_to_dataframe (csv_abs_path : str, specific_cols : list = None, sche
     
     except Exception as e :
 
-        log(f"\n[-] Error during convertion of CSV {csv_abs_path}\n", "error")
+        log(f"\n[-] Error during convertion of CSV {csv_abs_path}\n : {e}", "error")
     
         return None
 
@@ -128,7 +128,7 @@ def load_json_to_dataframe (json_abs_path : str, schema_overrides : dict = None)
 
     except Exception as e :
 
-        log(f"\n[-] Error during convertion of {json_abs_path}\n", "error")
+        log(f"\n[-] Error during convertion of {json_abs_path} : {e}\n", "error")
     
         return None
 
@@ -143,9 +143,161 @@ def export_dataframe_to_excel (df : pl.DataFrame, sheet_name : str = "Sheet1", o
         output_abs_path (str): Absolute path to output the Excel file.
 
     Returns:
-        dict: Dictionary containing:
+        response (dict) : Dictionary containing:
             - 'success' (bool): Whether the export was successful.
             - 'message' (str): Description of the result.
             - 'path' (str): Output file path if successful.
     """
-    return None # TO DO
+    response = {
+
+        'success' :  False,
+        'message' : None,
+        'path' : None
+
+    }
+
+    if output_abs_path is None or output_abs_path == "" :
+
+        response["message"] = "Output path not specified."
+        return response
+    
+    try :
+
+        start = time.time()
+
+        df.write_excel(
+        
+            workbook=output_abs_path,
+            sheet_name=sheet_name
+
+        )
+
+        duration = time.time() - start
+
+        log(f"[+] [POLARS] Excel written in {duration:.2f} seconds to {output_abs_path}", "info")
+
+        response["success"] = True
+        response["message"] = "Export Successful"
+        response["path"] = output_abs_path
+    
+    except Exception as e :
+
+        log(f"\n[-] Failed to export DataFrame to Excel: {e}\n", "error")
+
+        response["message"] = f"Export failed : {e}"
+    
+    finally :
+
+        return response
+    
+
+def export_dataframe_to_json (df : pl.DataFrame, output_abs_path : str = None) -> dict :
+    """
+    Exports a Polars DataFrame to a JSON file.
+
+    Args:
+        df (pl.DataFrame): The Polars DataFrame to export.
+        output_abs_path (str, optional): The absolute path where the JSON file will be saved. If None, the file is not saved.
+
+    Returns:
+        response (dict) : A dictionary containing:
+            - 'success' (bool): Whether the export was successful or not.
+            - 'message' (str): A message describing the result.
+            - 'path' (str or None): The output file path if successful, None otherwise.
+    """
+    response = {
+
+        'success' : False,
+        'message' : None,
+        'path' : None
+
+    }
+
+    if output_abs_path is None or output_abs_path == "" :
+        
+        response['message'] = "Output path not specified."
+        return response
+    
+    try :
+
+        start = time.time()
+
+        df.write_json(
+
+            file=output_abs_path
+
+        )
+
+        duration = time.time() - start
+        log(f"[+] [POLARS] JSON written in {duration:.2f} seconds to {output_abs_path}", "info")
+
+        response["success"] = True
+        response["message"] = "Export Successful"
+        response['path'] = output_abs_path
+
+    except Exception as e :
+
+        log(f"\n[-] Failed to export DataFrame to JSON: {e}\n", "error")
+
+        response["message"] = f"Export failed : {e}"
+
+    finally :
+
+        return response
+    
+
+def export_dataframe_to_csv (df : pl.DataFrame, decimal_coma : bool = False, output_abs_path : str = None) -> dict :
+    """
+    Exports a Polars DataFrame to a CSV file.
+
+    Args:
+        df (pl.DataFrame): The Polars DataFrame to export.
+        decimal_coma (bool, optional): Whether to use a comma as the decimal separator (True) or a period (False). Defaults to False.
+        output_abs_path (str): The absolute path where the CSV file will be saved. If None, the file is not saved.
+
+    Returns:
+        response (dict) : A dictionary containing:
+            - 'success' (bool): Whether the export was successful or not.
+            - 'message' (str): A message describing the result.
+            - 'path' (str or None): The output file path if successful, None otherwise.
+    """
+    response = {
+
+        'success' : False,
+        'message' : None,
+        'path' : None
+
+    }
+
+    if output_abs_path is None or output_abs_path == "" :
+        
+        response['message'] = "Output path not specified."
+        return response
+    
+    try : 
+
+        start = time.time()
+
+        df.write_csv(
+
+            file=output_abs_path,
+            decimal_coma=decimal_coma
+
+        )
+
+        duration = time.time() - start
+        log(f"[+] [POLARS] CSV written in {duration:.2f} seconds to {output_abs_path}", "info")
+
+        response["success"] = True
+        response["message"] = "Export Successful"
+        response['path'] = output_abs_path
+
+    except Exception as e :
+
+        log(f"\n[-] Failed to export DataFrame to CSV: {e}\n", "error")
+
+        response["message"] = f"Export failed : {e}"
+
+    finally :
+
+        return response
