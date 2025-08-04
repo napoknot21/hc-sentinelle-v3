@@ -20,7 +20,7 @@ def load_excel_to_dataframe (excel_file_abs_pth : str, sheet_name : str = None, 
     """
     if not os.path.isfile(excel_file_abs_pth) :
         
-        log(f"\n[-] File not found : {excel_file_abs_pth}\n", "error")
+        log(f"[-] File not found : {excel_file_abs_pth}", "error")
         return None
 
     if sheet_name is None or sheet_name == "" :
@@ -46,7 +46,7 @@ def load_excel_to_dataframe (excel_file_abs_pth : str, sheet_name : str = None, 
     
     except Exception as e :
 
-        log(f"\n[-] Error while converting the Excel file : {e}\n", "error")
+        log(f"[-] Error while converting the Excel file : {e}", "error")
         
         return None
 
@@ -89,7 +89,7 @@ def load_csv_to_dataframe (csv_abs_path : str, specific_cols : list = None, sche
     
     except Exception as e :
 
-        log(f"\n[-] Error during convertion of CSV {csv_abs_path}\n : {e}", "error")
+        log(f"[-] Error during convertion of CSV {csv_abs_path} : {e}", "error")
     
         return None
 
@@ -107,7 +107,7 @@ def load_json_to_dataframe (json_abs_path : str, schema_overrides : dict = None)
     """
     if not os.path.isfile(json_abs_path) :
 
-        log(f"\n[-] File {json_abs_path} not found...\n", "error")
+        log(f"[-] File {json_abs_path} not found...", "error")
         return None
 
 
@@ -128,7 +128,7 @@ def load_json_to_dataframe (json_abs_path : str, schema_overrides : dict = None)
 
     except Exception as e :
 
-        log(f"\n[-] Error during convertion of {json_abs_path} : {e}\n", "error")
+        log(f"[-] Error during convertion of {json_abs_path} : {e}", "error")
     
         return None
 
@@ -182,7 +182,7 @@ def export_dataframe_to_excel (df : pl.DataFrame, sheet_name : str = "Sheet1", o
     
     except Exception as e :
 
-        log(f"\n[-] Failed to export DataFrame to Excel: {e}\n", "error")
+        log(f"[-] Failed to export DataFrame to Excel: {e}", "error")
 
         response["message"] = f"Export failed : {e}"
     
@@ -237,7 +237,7 @@ def export_dataframe_to_json (df : pl.DataFrame, output_abs_path : str = None) -
 
     except Exception as e :
 
-        log(f"\n[-] Failed to export DataFrame to JSON: {e}\n", "error")
+        log(f"[-] Failed to export DataFrame to JSON: {e}", "error")
 
         response["message"] = f"Export failed : {e}"
 
@@ -246,7 +246,7 @@ def export_dataframe_to_json (df : pl.DataFrame, output_abs_path : str = None) -
         return response
     
 
-def export_dataframe_to_csv (df : pl.DataFrame, decimal_coma : bool = False, output_abs_path : str = None) -> dict :
+def export_dataframe_to_csv (df : pl.DataFrame, decimal_coma : bool = False, output_abs_path : str = None) -> dict :    
     """
     Exports a Polars DataFrame to a CSV file.
 
@@ -294,7 +294,7 @@ def export_dataframe_to_csv (df : pl.DataFrame, decimal_coma : bool = False, out
 
     except Exception as e :
 
-        log(f"\n[-] Failed to export DataFrame to CSV: {e}\n", "error")
+        log(f"[-] Failed to export DataFrame to CSV: {e}", "error")
 
         response["message"] = f"Export failed : {e}"
 
