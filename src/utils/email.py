@@ -10,12 +10,14 @@ from src.config.paths import MESSAGE_SAVE_DIRECTORY
 
 
 def create_email_item (
+        
         to_email : list = None,
         cc_email : str = None,
         from_email : str = DEFAULT_FROM_EMAIL,
         subject : str = "",
         body : str = "",
         content_file_paths : list = None
+        
     ) -> win32.Dispatch :
     """
     This function sends an email using Outlook.

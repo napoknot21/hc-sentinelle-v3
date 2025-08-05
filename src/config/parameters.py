@@ -11,6 +11,8 @@ FUND_WR=os.getenv("FUND_WC")
 
 SIMM_HIST_NAME=os.getenv("SIMM_HIST_NAME")
 
+SIMM_CUTOFF_DATE=os.getenv("SIMM_CUTOFF_DATE")
+
 FUND_NAME_MAP = {
 
     FUND_HV : "HV",
