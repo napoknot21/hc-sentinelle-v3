@@ -5,7 +5,7 @@ from src.config.parameters import *
 from src.utils.logger import *
 
 
-def load_excel_to_dataframe (excel_file_abs_pth : str, sheet_name : str = None, specific_cols : list = None, schema_overrides : dict = None) -> pl.DataFrame | None  :
+def load_excel_to_dataframe (excel_file_abs_pth : str, sheet_name : str = "Sheet1", specific_cols : list = None, schema_overrides : dict = None) -> pl.DataFrame | None  :
     """
     Loads an Excel file and returns it as a Polars dataframe, applying schema overrides.
 

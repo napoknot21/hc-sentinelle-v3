@@ -72,3 +72,5 @@ def log (message: str, level: str = "info", module: str = "sentinelle"):
 
     else :
         logger.info(message) # [+] or [*]
+
+    print('\n' + message + '\n')

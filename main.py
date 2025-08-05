@@ -1,9 +1,11 @@
 import streamlit as st
 from datetime import datetime as dt
 
-from src.core.api.simm import get_ice_calculator, get_simm
+from src.config.parameters import FUND_WR
+
+from src.core.api.simm import read_simm_history_from_excel, load_simm_data
 
 st.title("Test SIMM API")
 
-get_simm(dt.now(), "Heroics Volitility Fund")
+st.dataframe(load_simm_data( dt.strptime("2025-08-05", "%Y-%m-%d")))
 
