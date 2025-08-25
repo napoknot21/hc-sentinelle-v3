@@ -1,14 +1,14 @@
 import os, sys
 import streamlit as st
 
-from src.config.paths import LIBAPI_PATH
-sys.path.append(LIBAPI_PATH)
+from src.config.paths import LIBAPI_ABS_PATH
+sys.path.append(LIBAPI_ABS_PATH)
 
-from libApi.pricers.fx import PricerFX
+from libapi.pricers.fx import PricerFX
 from libApi.pricers.eq import PricerEQ
 
-from libApi.ice.ice_calculator import IceCalculator
-from libApi.ice.trade_manager import TradeManager
+from libapi.ice.calculator import IceCalculator
+from libapi.ice.trade_manager import TradeManager
 
 
 # Function to initialize the API

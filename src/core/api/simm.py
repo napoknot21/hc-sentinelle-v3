@@ -35,7 +35,8 @@ SCHEMA_OVERRIDES_WTH_DATE = SCHEMA_OVERRIDES.copy()
 SCHEMA_OVERRIDES_WTH_DATE["Date"] = pl.Utf8
 
 
-def fetch_raw_simm_data (date : dt.datetime = dt.datetime.now(), fund : str = FUND_HV, fund_map : dict = FUND_NAME_MAP) -> pl.DataFrame | None :
+@st.cache_resource(ttl=600)
+def fetch_raw_simm_data (date : str | dt.datetime = None, fund : str = FUND_HV, fund_map : dict = FUND_NAME_MAP) -> pl.DataFrame | None :
     """
     Fetch raw bilateral SIMM data from ICE API and normalize the JSON response.
 
@@ -50,6 +51,8 @@ def fetch_raw_simm_data (date : dt.datetime = dt.datetime.now(), fund : str = FU
     Note:
         This function refers to the "get_simm()" precedent version.
     """
+    date = _as_date_type(date)
+    fund = FUND_HV if fund is None else fund
     try :
 
         ice_calc = get_ice_calculator()
@@ -100,7 +103,7 @@ def fetch_raw_simm_data (date : dt.datetime = dt.datetime.now(), fund : str = FU
         return None
 
 
-@st.cache_resource()
+@st.cache_data()
 def load_simm_data_from_ice (
         
         date : dt.datetime = dt.datetime.now(),

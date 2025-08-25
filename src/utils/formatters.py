@@ -1,7 +1,6 @@
-import pandas as pd
+import polars as pl
 
-
-def format_numeric_column (dataframe : pd.DataFrame, column : str, round_v=2) -> pd.DataFrame :
+def format_numeric_column (dataframe : pl.DataFrame, column : str, round_v : int = 2) -> pl.DataFrame :
     """
     Formats a numeric column in a DataFrame by:
     - removing commas from the values (e.g., "1,000" -> "1000")
@@ -17,10 +16,23 @@ def format_numeric_column (dataframe : pd.DataFrame, column : str, round_v=2) ->
     Returns:
         pd.DataFrame: A copy of the DataFrame with the formatted column as strings
     """
-    df = dataframe.copy()
+    df_cols = pl.col(column).cast(pl.Utf8)
+    no_commas = df_cols.col.str.replace(",", "")
 
-    df[column] = pd.to_numeric(df[column].astype(str).str.replace(",", ""), errors='coerce')
-    df[column] = df[column].apply( lambda x : round(x, round_v))
-    df[column] = df[column].apply( lambda x : "{:,.2f}".format(x))
+    as_float = no_commas.cast(pl.Float64)
+    rounded = as_float.round(round_v)
 
-    return df
+    fmt_string = f"{{:,.{round_v}f}}"
+
+    formatted = rounded.map_elements(
+
+        lambda x: fmt_string.format(x) if x is not None else None,
+        return_dtype=pl.Utf8
+
+    )
+
+    new_df = dataframe.with_columns([
+        formatted.alias(column)
+    ])
+
+    return new_df
