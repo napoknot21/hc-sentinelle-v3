@@ -5,7 +5,7 @@ from src.config.paths import LIBAPI_ABS_PATH
 sys.path.append(LIBAPI_ABS_PATH)
 
 from libapi.pricers.fx import PricerFX
-from libApi.pricers.eq import PricerEQ
+from libapi.pricers.eq import PricerEQ
 
 from libapi.ice.calculator import IceCalculator
 from libapi.ice.trade_manager import TradeManager

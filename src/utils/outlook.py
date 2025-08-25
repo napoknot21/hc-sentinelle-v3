@@ -5,7 +5,7 @@ import datetime as dt
 import win32com.client as win32
 import pythoncom as pycom
 
-from typing import Dict, List, Optinal
+from typing import Dict, List, Optional
 
 from src.utils.formatters import check_email_format
 from src.config.parameters import DEFAULT_TO_EMAIL, DEFAULT_CC_EMAIL, DEFAULT_FROM_EMAIL
@@ -71,7 +71,7 @@ def create_email_item (
     return mail_item
 
 
-def save_email_item (email_item : win32.Dispatch, abs_path_directory : str = MESSAGE_SAVE_DIRECTORY) -> dict :
+def save_email_item (email_item : win32.Dispatch, abs_path_directory : str = MESSAGE_SAVE_DIRECTORY) -> Optional[Dict] :
     """
     Saves an email item and returns the result status.
 
