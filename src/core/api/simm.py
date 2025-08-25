@@ -9,6 +9,7 @@ from src.core.api.client import get_ice_calculator
 from src.config.paths import SIMM_FUNDS_DIR_PATHS
 from src.config.parameters import FUND_HV, FUND_NAME_MAP, SIMM_HIST_NAME, SIMM_CUTOFF_DATE
 
+from src.utils.formatters import date_to_str
 from src.utils.data_io import load_excel_to_dataframe
 from src.utils.logger import log
 
@@ -36,7 +37,7 @@ SCHEMA_OVERRIDES_WTH_DATE["Date"] = pl.Utf8
 
 
 @st.cache_resource(ttl=600)
-def fetch_raw_simm_data (date : str | dt.datetime = None, fund : str = FUND_HV, fund_map : dict = FUND_NAME_MAP) -> pl.DataFrame | None :
+def fetch_raw_simm_data (date : str | dt.datetime = None, fund : str | None = None, fund_map : dict | None = None) -> pl.DataFrame | None :
     """
     Fetch raw bilateral SIMM data from ICE API and normalize the JSON response.
 
@@ -51,8 +52,10 @@ def fetch_raw_simm_data (date : str | dt.datetime = None, fund : str = FUND_HV, 
     Note:
         This function refers to the "get_simm()" precedent version.
     """
-    date = _as_date_type(date)
+    date = date_to_str(date)
     fund = FUND_HV if fund is None else fund
+    fund_map = FUND_NAME_MAP if fund_map is None else fund_map
+
     try :
 
         ice_calc = get_ice_calculator()

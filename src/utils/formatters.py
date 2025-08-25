@@ -1,4 +1,43 @@
+import os, re
 import polars as pl
+import datetime as dt
+
+
+def date_to_str (date : str | dt.datetime = None, format : str = "%Y-%m-%d") -> str :
+    """
+    Convert a date or datetime object to a string in specific ("YYYY-MM-DD" default) format.
+
+    Args:
+        date (str | datetime): The input date.
+        format (str) : The string format for the date
+
+    Returns:
+        str: Date string in "YYYY-MM-DD" format.
+    """
+    if date is None :
+        date = dt.datetime.now()
+
+    return date.strftime(format) if isinstance(date, dt.datetime) else str(date)
+
+
+def check_email_format (email : str) -> bool :
+    """
+    Validates the format of an email address using a regular expression.
+
+    Args:
+        email (str): The email address to validate.
+
+    Returns:
+        bool: True if the email matches the expected format, False otherwise.
+
+    Note:
+        This validation checks for a general pattern like 'user@domain.tld' 
+        but does not guarantee that the email address actually exists.
+    """
+    email_regex = r"^[\w\.-]+@[\w\.-]+\.\w{2,}$"
+
+    return re.match(email_regex, email) is not None
+
 
 def format_numeric_column (dataframe : pl.DataFrame, column : str, round_v : int = 2) -> pl.DataFrame :
     """
