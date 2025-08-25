@@ -5,18 +5,21 @@ import datetime as dt
 import win32com.client as win32
 import pythoncom as pycom
 
+from typing import Dict, List, Optinal
+
+from src.utils.formatters import check_email_format
 from src.config.parameters import DEFAULT_TO_EMAIL, DEFAULT_CC_EMAIL, DEFAULT_FROM_EMAIL
 from src.config.paths import MESSAGE_SAVE_DIRECTORY
 
 
 def create_email_item (
         
-        to_email : list = None,
-        cc_email : str = None,
+        to_email : List[str] = None,
+        cc_email : List[str] = None,
         from_email : str = DEFAULT_FROM_EMAIL,
         subject : str = "",
         body : str = "",
-        content_file_paths : list = None
+        content_file_paths : List[str] = None
         
     ) -> win32.Dispatch :
     """
@@ -178,8 +181,6 @@ def generate_timestamped_name () -> str :
 
     return name
 
-
-def check_email_format (email : str) -> bool :
     """
     Validates the format of an email address using a regular expression.
 

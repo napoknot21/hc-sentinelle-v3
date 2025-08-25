@@ -64,7 +64,7 @@ def send_mail (
         
         token : str | None = None,
         from_email : str = DEFAULT_FROM_EMAIL,
-        cc_email : str = DEFAULT_CC_EMAIL,
+        cc_email : List[str] = None,
         to_email : List[str] | None = None,
         subject : str = "",
         content : str = "",
@@ -78,6 +78,7 @@ def send_mail (
     token = get_token_azure() if token is None else token
     endpoint = endpoint.replace("SENDER_MAIL", from_email)
     to_email = [DEFAULT_TO_EMAIL] if to_email is None else to_email
+    cc_email = [DEFAULT_CC_EMAIL] if cc_email is None else cc_email
 
     headers = {
 
@@ -100,11 +101,18 @@ def send_mail (
                 
             recipients.append(
                 {
-                    "emailAddress": {
+                    "emailAddress": { "address": email }
+                }
+            )
 
-                        "address": email
-                    
-                    }
+    cc_recipients = []
+    for email in cc_email :
+
+        if check_email_format(email) :
+                
+            cc_recipients.append(
+                {
+                    "emailAddress": { "address": email }
                 }
             )
 
@@ -116,12 +124,37 @@ def send_mail (
 
     }
 
+    # Add ccRecipients if any valid emails found
+    if cc_recipients :
+        message["ccRecipients"] = cc_recipients
+
     payload = {
 
         "message" : message,
         "saveToSentItems" : "true"
 
     }
+
+    if file_abs_path is not None :
+
+        if os.path.exists(file_abs_path) :
+
+            base_name = os.path.basename(file_abs_path)
+            bytes_file = convert_bytes_64(file_abs_path)
+
+            attachment = [
+                {
+                    "@odata.type" : "#microsoft.graph.fileAttachment",
+                    "name" : base_name,
+                    "contentType" : "text/plain",
+                    "contentBytes" : bytes_file,
+                }
+            ]
+
+            payload["message"]["attachments"] = attachment
+
+        else :
+            print("[-] File attached does not exist. Sending without attachment")
 
     try :
 
@@ -134,7 +167,19 @@ def send_mail (
         return False
     
     print("[+] Email send.")
+
     return True
+
+
+def convert_bytes_64 (file_abs_path : str) :
+    """
+    
+    """
+    # We assume the path is not None and exists
+    with open(file_abs_path, "rb") as f :
+        base64_cont = base64.b64encode(f.read()).decode('utf-8')
+
+    return base64_cont
 
 
 def generate_timestamped_name () -> str :
