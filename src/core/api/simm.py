@@ -4,6 +4,8 @@ import polars as pl
 import datetime as dt
 import streamlit as st
 
+from typing import Optional, Dict, List, Tuple
+
 from src.core.api.client import get_ice_calculator
 
 from src.config.paths import SIMM_FUNDS_DIR_PATHS
@@ -29,7 +31,6 @@ SIMM_COLUMNS = {
 }
 
 RENAME_COLUMNS = {k : v["name"] for k, v in SIMM_COLUMNS.items()}
-
 SCHEMA_OVERRIDES = {v["name"] : v["type"] for v in SIMM_COLUMNS.values()}
 
 SCHEMA_OVERRIDES_WTH_DATE = SCHEMA_OVERRIDES.copy()
@@ -37,7 +38,13 @@ SCHEMA_OVERRIDES_WTH_DATE["Date"] = pl.Utf8
 
 
 @st.cache_resource(ttl=600)
-def fetch_raw_simm_data (date : str | dt.datetime = None, fund : str | None = None, fund_map : dict | None = None) -> pl.DataFrame | None :
+def fetch_raw_simm_data (
+    
+        date : str | dt.datetime = None,
+        fund : str | None = None,
+        fund_map : dict | None = None
+    
+    ) -> Optional[pl.DataFrame] :
     """
     Fetch raw bilateral SIMM data from ICE API and normalize the JSON response.
 
@@ -58,8 +65,8 @@ def fetch_raw_simm_data (date : str | dt.datetime = None, fund : str | None = No
 
     try :
 
-        ice_calc = get_ice_calculator()
-        fund_name = fund_map[fund]
+        calculator = get_ice_calculator()
+        fund_name = fund_map.get(fund)
 
         if not fund_name :
 
@@ -72,15 +79,15 @@ def fetch_raw_simm_data (date : str | dt.datetime = None, fund : str | None = No
 
         log(f"[-] Error during connexion to the API ICE: {e}", "error")
         
-        return None
+        return None, None
 
     # Billateral Data request
-    bilateral_im = ice_calc.get_billateral_im_ctpy(date, fund=fund_name)
+    bilateral_im = calculator.get_bilateral_im_ctpy(date, fund_name)
     
     if bilateral_im is None :
         
-        log("[-] Error during bilateral IM data request", "error")
-        return None
+        log("[!] Error during bilateral IM data request", "error")
+        return None, None
 
     log("[+] Bilateral IM data request successful")
 
@@ -92,7 +99,7 @@ def fetch_raw_simm_data (date : str | dt.datetime = None, fund : str | None = No
         if normal_json is None :
 
             log("[-] Error during bilateral IM data normalization", "error")
-            return None
+            return None, None
         
         md5_hash = hashlib.md5(normal_json.write_csv().encode()).hexdigest()
 
@@ -103,18 +110,18 @@ def fetch_raw_simm_data (date : str | dt.datetime = None, fund : str | None = No
     except Exception as e :
 
         log(f"[-] Error during bilateral IM data normalization: {e}", "error")
-        return None
+        return None, None
 
 
 @st.cache_data()
 def load_simm_data_from_ice (
         
-        date : dt.datetime = dt.datetime.now(),
-        fund : str = FUND_HV,
-        rename_cols : dict = RENAME_COLUMNS,
-        specific_cols : list = list(RENAME_COLUMNS.values())
+        date : str | dt.datetime = None,
+        fund : str | None = None,
+        rename_cols : Dict | None = None,
+        specific_cols : List | None = None
 
-    ) -> pl.DataFrame | None :
+    ) -> Tuple[Optional[pl.DataFrame], str] :
     """
     Load and preprocess SIMM data from the ICE API.
 
@@ -127,9 +134,16 @@ def load_simm_data_from_ice (
         specific_cols (list): List of final column names to retain in the resulting DataFrame.
 
     Returns:
-        pl.DataFrame | None: Cleaned Polars DataFrame with renamed and filtered columns,
+        data_cols (pl.DataFrame | None) : Cleaned Polars DataFrame with renamed and filtered columns,
                              or None if the fetch fails.
     """
+    # Default values
+    date = date_to_str(date)
+    fund = FUND_HV if fund is None else fund
+
+    rename_cols = RENAME_COLUMNS if rename_cols is None else rename_cols
+    specific_cols = list(RENAME_COLUMNS.values()) if specific_cols is None else specific_cols
+
     # Fetch and get the SIMM
     try :
 
@@ -138,7 +152,7 @@ def load_simm_data_from_ice (
     except Exception as e :
 
         log("[-] Error getting the SIMM data from API ICE...", "error")
-        return None
+        return None, None
     
     log("[+] SIMM data successfully got", "info")
     

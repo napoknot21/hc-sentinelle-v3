@@ -16,11 +16,15 @@ st.title("Test SIMM API")
 #df_2, hashh = load_simm_data()
 
 #st.dataframe(df_2)"""
-date = st.date_input("Date à récupérer", dt.datetime.strptime("2025-08-05", "%Y-%m-%d"))
+date = st.date_input("Date à récupérer", dt.datetime.now().strftime("%Y-%m-%d"))
 print(type(date))
+print(type(dt.datetime.now()))
+dt = dt.datetime.combine(date, dt.time())
+print(dt)
+print(type(dt))
 fund = st.selectbox("Fundation", options=list(FUND_NAME_MAP.keys()))
 
-result = fetch_raw_simm_data(date, fund)
+result = fetch_raw_simm_data(dt, fund)
 
 if result:
     df, df_hash = result
