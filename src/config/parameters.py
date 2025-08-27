@@ -33,8 +33,7 @@ FUND_NAME_MAP = {
 
 # SIMM values
 SIMM_HIST_NAME=os.getenv("SIMM_HIST_NAME")
-SIMM_CUTOFF_DATE=os.getenv("SIMM_CUTOFF_DATE")
-
+SIMM_CUTOFF_DATE=os.getenv("SIMM_CUTOFF_DATE") 
 
 SIMM_COLUMNS = {
 
@@ -48,4 +47,51 @@ SIMM_COLUMNS = {
     'post.shortfall' : { "name" : "Available / Shortfall Amount", "type" : pl.Float64 },
     "post.clientMarginRatio" : { "name" : "Client Margin Rate", "type" : pl.Float64 },
 
+}
+
+
+# Exclusive for FX screener
+
+COLUMNS={
+
+    # General information
+    "Portfolio Name" : pl.Utf8,
+    "Instrument Type" : pl.Utf8,
+    "Trade Code" : pl.Utf8,
+    "Underlying Asset" : pl.Utf8,
+    "Trade Date" : pl.Utf8 ,
+    "FX Next Fixing Date" : pl.Utf8,
+    "FX Remaining Target Term Per Base" : pl.Float64,
+    "Expiry Date" : pl.Utf8,
+    "Call/Put 1" :  pl.Utf8,
+
+    # Amounts and notionals
+    "Remaining Notional" : pl.Float64,
+    "Base Notional" : pl.Int64,
+    "Total Premium" : pl.Float64,
+    "MV" : pl.Float64,
+    "Total Expiries" : pl.Int64,
+
+    # Strat and price
+    "Original Spot" : pl.Float64,
+    "Reference Spot" : pl.Float64,
+    "Strike" : pl.Float64,
+    "Trigger" : pl.Float64,
+
+    # Greeks 
+    "FX Delta Base" : pl.Float64,
+    "FX Gamma Base" : pl.Float64,
+    "Theta" : pl.Float64,
+
+    # Fixing and FX echéances
+    "FX Remaining Number of Fixings" : pl.Int64,
+    "FX Projected Number of Expiries Remaining" : pl.Int64,
+    "FX Projected Last Expiry Date" : pl.Utf8,
+    "FX Projected Payout at Next Fixing" : pl.Float64,
+
+    # Performance & Accumulation
+    "FX Accrued Target Term Per Base" : pl.Float64,
+    "FX Total Accumulated Profit" : pl.Float64,
+    "FX Remaining Notional" : pl.Float64,
+    
 }
