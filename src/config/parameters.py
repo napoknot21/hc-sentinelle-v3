@@ -1,5 +1,8 @@
 import os, sys
+import polars as pl
+
 from src.config.env import load_dotenv
+load_dotenv()
 
 # Azure info for Microsoft Graph API
 CLIENT_ID=os.getenv("CLIENT_ID") # or APP_ID
@@ -33,3 +36,16 @@ SIMM_HIST_NAME=os.getenv("SIMM_HIST_NAME")
 SIMM_CUTOFF_DATE=os.getenv("SIMM_CUTOFF_DATE")
 
 
+SIMM_COLUMNS = {
+
+    "group" : { "name" : "Counterparty", "type": pl.Utf8 },
+
+    "postIm" : { "name" : "IM", "type" : pl.Float64 },
+
+    "post.price" : { "name" : "MV", "type" : pl.Float64 },
+    "post.priceCapped" : { 'name' : 'MV Capped', 'type' : pl.Float64 },
+    "post.priceCappedMode" : { "name" : "MV Capped Type", "type" : pl.Utf8 },
+    'post.shortfall' : { "name" : "Available / Shortfall Amount", "type" : pl.Float64 },
+    "post.clientMarginRatio" : { "name" : "Client Margin Rate", "type" : pl.Float64 },
+
+}

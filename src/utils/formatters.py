@@ -1,4 +1,5 @@
 import os, re
+import hashlib
 import polars as pl
 import datetime as dt
 
@@ -37,6 +38,18 @@ def check_email_format (email : str) -> bool :
     email_regex = r"^[\w\.-]+@[\w\.-]+\.\w{2,}$"
 
     return re.match(email_regex, email) is not None
+
+
+def dataframe_fingerprint (dataframe : pl.DataFrame) -> str:
+    """
+    Deterministic & fast fingerprint based on 64-bit row hashes.
+    Uses native polars hashing (no string casting, no CSV roundtrip).
+    """
+    # One pass hash over all columns; stable across a given Polars version.
+    # For stronger digest but still fast, md5 the u64 bytes.
+    h = dataframe.hash_rows(seed=0).to_numpy()  # u64 array
+    
+    return hashlib.md5(h.tobytes()).hexdigest()
 
 
 def format_numeric_column (dataframe : pl.DataFrame, column : str, round_v : int = 2) -> pl.DataFrame :

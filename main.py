@@ -4,6 +4,7 @@ import datetime as dt
 from src.config.parameters import FUND_NAME_MAP
 
 from src.core.api.simm import fetch_raw_simm_data
+from src.core.data.simm import *
 
 st.title("Test SIMM API")
 
