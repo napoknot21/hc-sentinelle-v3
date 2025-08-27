@@ -88,3 +88,40 @@ def format_numeric_column (dataframe : pl.DataFrame, column : str, round_v : int
     ])
 
     return new_df
+
+
+def get_closest_file_timestamp (file_abs_path : str , suffix : str, date : str | dt.datetime, lastest : bool = True) :
+    """
+    
+    """
+    prefix = os.path.basename(file_abs_path) # filename
+    directory = os.path.dirname(file_abs_path)
+
+    try :
+        files = [f for f in os.listdir(directory) if f.startswith(prefix) and f.endswith(suffix)]
+
+    except FileNotFoundError :
+        return None
+    
+    dates = []
+    for f in files :
+
+        raw = f[len(prefix) : -len(suffix)]
+
+        try :
+            dates.append(dt.strptime(raw, "%Y-%m-%d_%H-%M"))
+
+        except ValueError :
+            continue
+
+    if not dates :
+        return None
+    
+    if lastest :
+        # Restrict to same day files
+        same_day = [d for d in dates if d.date() == date.date()]
+
+        if same_day :
+            return max(same_day) # latest of the day
+
+    return min(dates, key=lambda d: abs(d - date))
