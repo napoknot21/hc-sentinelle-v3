@@ -3,17 +3,15 @@ import hashlib
 import polars as pl
 import datetime as dt
 import streamlit as st
+
 from typing import Optional, Dict, List, Tuple
 
 from src.core.api.client import get_ice_calculator
 
 from src.config.paths import SIMM_FUNDS_DIR_PATHS
-from src.config.parameters import FUND_HV, FUND_NAME_MAP, SIMM_COLUMNS
+from src.config.parameters import FUND_HV, FUND_NAME_MAP, SIMM_RENAME_COLUMNS
 from src.utils.logger import log
 from src.utils.formatters import date_to_str, dataframe_fingerprint
-
-# Mapping: raw_name -> final_name
-RENAME_COLUMNS : dict[str, str] = {k: v["name"] for k, v in SIMM_COLUMNS.items()}
 
 
 @st.cache_data(ttl=600, show_spinner=False)
@@ -137,8 +135,8 @@ def load_simm_data_from_ice (
     date = date_to_str(date)
     fund = FUND_HV if fund is None else fund
 
-    rename_cols = RENAME_COLUMNS if rename_cols is None else rename_cols
-    specific_cols = list(RENAME_COLUMNS.values()) if specific_cols is None else specific_cols
+    rename_cols = SIMM_RENAME_COLUMNS if rename_cols is None else rename_cols
+    specific_cols = list(SIMM_RENAME_COLUMNS.values()) if specific_cols is None else specific_cols
 
     # Fetch and get the SIMM
     try :

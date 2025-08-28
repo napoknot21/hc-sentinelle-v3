@@ -16,10 +16,25 @@ def date_to_str (date : str | dt.datetime = None, format : str = "%Y-%m-%d") -> 
         str: Date string in "YYYY-MM-DD" format.
     """
     if date is None :
-        date = dt.datetime.now()
+        
+        return dt.datetime.now().strftime(format)
 
-    return date.strftime(format) if isinstance(date, dt.datetime) else str(date)
+    if isinstance(date, str) :
 
+        try :
+
+            # try to parse common formats
+            parsed = dt.datetime.fromisoformat(date.strip())
+            return parsed.strftime(format)
+        
+        except ValueError :
+            return date.strip()  # fallback: assume already good
+    
+    # works for both date & datetime
+    if isinstance(date, dt.date) :
+
+        return date.strftime(format)
+    
 
 def check_email_format (email : str) -> bool :
     """

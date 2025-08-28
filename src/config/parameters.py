@@ -19,7 +19,8 @@ DEFAULT_CC_EMAIL=os.getenv("DEFAULT_CC_EMAIL")
 DEFAULT_FROM_EMAIL=os.getenv("DEFAULT_FROM_EMAIL")
 
 
-# Fundations
+# -------- Fundations --------
+
 FUND_WR=os.getenv("FUND_WR")
 FUND_HV=os.getenv("FUND_HV")
 
@@ -31,28 +32,70 @@ FUND_NAME_MAP = {
 }
 
 
-# SIMM values
-SIMM_HIST_NAME=os.getenv("SIMM_HIST_NAME")
+# -------- SIMM values -------
+
+SIMM_HIST_NAME_DEFAULT=os.getenv("SIMM_HIST_NAME")
 SIMM_CUTOFF_DATE=os.getenv("SIMM_CUTOFF_DATE") 
 
 SIMM_COLUMNS = {
 
-    "group" : { "name" : "Counterparty", "type": pl.Utf8 },
+    "group" : { 
+    
+        "name" : "Counterparty",
+        "type": pl.Utf8 
+    
+    },
 
-    "postIm" : { "name" : "IM", "type" : pl.Float64 },
+    "postIm" : {
+    
+        "name" : "IM",
+        "type" : pl.Float64
+    
+    },
 
-    "post.price" : { "name" : "MV", "type" : pl.Float64 },
-    "post.priceCapped" : { 'name' : 'MV Capped', 'type' : pl.Float64 },
-    "post.priceCappedMode" : { "name" : "MV Capped Type", "type" : pl.Utf8 },
-    'post.shortfall' : { "name" : "Available / Shortfall Amount", "type" : pl.Float64 },
-    "post.clientMarginRatio" : { "name" : "Client Margin Rate", "type" : pl.Float64 },
+    "post.price" : {
+        
+        "name" : "MV",
+        "type" : pl.Float64
+    
+    },
+    
+    "post.priceCapped" : {
+    
+        "name" : "MV Capped",
+        "type" : pl.Float64
+    
+    },
+
+    "post.priceCappedMode" : {
+    
+        "name" : "MV Capped Type",
+        "type" : pl.Utf8
+    
+    },
+    
+    'post.shortfall' : {
+    
+        "name" : "Available / Shortfall Amount",
+        "type" : pl.Float64
+    
+    },
+
+    "post.clientMarginRatio" : {
+    
+        "name" : "Client Margin Rate",
+        "type" : pl.Float64
+    
+    },
 
 }
 
+# Mapping: raw_name -> final_name
+SIMM_RENAME_COLUMNS : dict[str, str] = {k: v["name"] for k, v in SIMM_COLUMNS.items()}
 
-# Exclusive for FX screener
+# -------- FX Screeners (Tarf) --------
 
-COLUMNS={
+TARF_COLUMNS={
 
     # General information
     "Portfolio Name" : pl.Utf8,
@@ -95,3 +138,32 @@ COLUMNS={
     "FX Remaining Notional" : pl.Float64,
     
 }
+
+
+# -------- Expiries --------
+
+EXPIRIES_COLUMNS = {
+
+    "Trade Type" : pl.Utf8,
+    "Underlying Asset" : pl.Utf8,
+    "Termination Date" : pl.Utf8,
+
+    "Buy/Sell" : pl.Utf8,
+    "Notional" : pl.UInt64,
+    "Portfolio Name" : pl.Utf8,
+    "Call/Put" : pl.Utf8,
+
+    "Strike" : pl.Float64,
+    "Trigger" : pl.Float64,
+
+    "Reference Spot" : pl.Float64,
+    "Counterparty" : pl.Utf8,
+    "MV" : pl.Utf8,
+    "Total Premium" : pl.Float64,
+
+    "Days Remaining" : pl.UInt32,
+
+}
+
+EXPIRIES_COLUMNS_HV = EXPIRIES_COLUMNS.copy()
+EXPIRIES_COLUMNS_HV.update({"Trigger 2" : pl.Float64, "As Of" : pl.Utf8})
