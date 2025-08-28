@@ -1,7 +1,13 @@
 import os, re
 import hashlib
+from pathlib import Path
+import time
 import polars as pl
 import datetime as dt
+
+from typing import Dict, List, Optional, Tuple, Any
+
+from src.utils.logger import log
 
 
 def date_to_str (date : str | dt.datetime = None, format : str = "%Y-%m-%d") -> str :
@@ -16,7 +22,7 @@ def date_to_str (date : str | dt.datetime = None, format : str = "%Y-%m-%d") -> 
         str: Date string in "YYYY-MM-DD" format.
     """
     if date is None :
-        
+
         return dt.datetime.now().strftime(format)
 
     if isinstance(date, str) :
@@ -140,3 +146,133 @@ def get_closest_file_timestamp (file_abs_path : str , suffix : str, date : str |
             return max(same_day) # latest of the day
 
     return min(dates, key=lambda d: abs(d - date))
+
+
+def get_most_recent_file_for_date (
+        
+        date : str | dt.datetime | dt.date,
+        fundation : str,
+        directory_map : Dict,
+        regex : re.Pattern,
+        extension : str = ".xlsx", 
+    
+    ) -> Optional[str] :
+    """
+    
+    """
+    start = time.time()
+
+    date = date_to_str(date)
+    target_day = dt.datetime.strptime(date, "%Y-%m-%d").date()
+
+    dir_abs_path = directory_map.get(fundation)
+
+    # Track best candidate as (timestamp, path)
+    best_ts : Optional[dt.datetime] = None
+    best_path : Optional[Path] = None
+
+    root = Path(dir_abs_path)
+    with os.scandir(root) as it :
+
+        for entry in it :
+
+            if not entry.is_file() :
+                continue
+
+            name = entry.name
+
+            if not name.lower().endswith(extension) :
+                continue
+
+            stem = os.path.splitext(name)[0]
+            m = regex.match(stem)
+
+            if not m :
+                continue
+
+            day_str, hhmm_str = m.group(1), m.group(2)
+
+            try :
+
+                d = dt.datetime.strptime(day_str, "%Y-%m-%d").date()
+                t = dt.datetime.strptime(hhmm_str, "%H-%M").time()
+
+            except ValueError :
+
+                continue
+
+            if d != target_day :
+                continue
+
+            ts = dt.datetime.combine(d, t)
+
+            if (best_ts is None) or ts > best_ts :
+
+                best_ts = ts
+                best_path = Path(entry.path)
+
+    log(f"[*] Search done in {time.time() - start:.2f} seconds")
+    
+    return best_path
+
+
+def get_most_recent_file (
+    
+        fundation : str,
+        directory_map : Dict,
+        regex : re.Pattern,
+        extension : str = ".xlsx",
+    
+    ) -> Optional[str] :
+    """
+    
+    """
+    start = time.time()
+
+    dir_abs_path = directory_map.get(fundation)
+
+    root = Path(dir_abs_path)
+
+    # Track best candidate as (timestamp, path)
+    best_ts : Optional[dt.datetime] = None
+    best_path : Optional[Path] = None
+
+    with os.scandir(root) as it :
+
+        for entry in it :
+
+            if not entry.is_file() :
+                continue
+
+            name = entry.name
+
+            if not name.lower().endswith(extension) :
+                continue
+
+            stem = os.path.splitext(name)[0]
+            m = regex.match(stem)
+
+            if not m :
+                continue
+            
+            day_str, hhmm_str = m.group(1), m.group(2)
+
+            try :
+
+                d = dt.datetime.strptime(day_str, "%Y-%m-%d").date()
+                t = dt.datetime.strptime(hhmm_str, "%H-%M").time()
+
+            except ValueError :
+
+                continue
+
+            ts = dt.datetime.combine(d, t)
+
+            if (best_ts is None) or ts > best_ts :
+
+                best_ts = ts
+                best_path = Path(entry.path)
+
+    log(f"[*] Search most recent file done in {time.time() - start:.2f} seconds")
+    
+    return best_path

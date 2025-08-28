@@ -1,4 +1,4 @@
-import os, sys
+import os, re
 import polars as pl
 
 from src.config.env import load_dotenv
@@ -141,6 +141,8 @@ TARF_COLUMNS={
 
 
 # -------- Expiries --------
+
+EXPIRIES_FILENAME_REGEX = re.compile(r"^expiries_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2})")
 
 EXPIRIES_COLUMNS = {
 
