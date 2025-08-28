@@ -47,7 +47,7 @@ def load_upcomming_expiries_from_file (
     schema_override = (EXPIRIES_COLUMNS_HV if fundation_name == "HV" else EXPIRIES_COLUMNS) if schema_override is None else schema_override
     columns_list = list(schema_override.keys()) if columns_list is None else columns_list
     
-    dataframe = load_excel_to_dataframe(file_abs_path, specific_cols=columns_list, )#schema_overrides=schema_override)
+    dataframe = load_excel_to_dataframe(file_abs_path, specific_cols=columns_list, schema_overrides=schema_override)
 
     if dataframe is None :
         log("[-] Error during reading excel file operation", "error")

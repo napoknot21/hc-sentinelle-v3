@@ -149,7 +149,7 @@ EXPIRIES_COLUMNS = {
     "Termination Date" : pl.Utf8,
 
     "Buy/Sell" : pl.Utf8,
-    "Notional" : pl.UInt64,
+    "Notional" : pl.Utf8,
     "Portfolio Name" : pl.Utf8,
     "Call/Put" : pl.Utf8,
 
@@ -159,9 +159,9 @@ EXPIRIES_COLUMNS = {
     "Reference Spot" : pl.Float64,
     "Counterparty" : pl.Utf8,
     "MV" : pl.Utf8,
-    "Total Premium" : pl.Float64,
+    "Total Premium" : pl.Utf8,
 
-    "Days Remaining" : pl.UInt32,
+    "Days Remaining" : pl.UInt64,
 
 }
 

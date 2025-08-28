@@ -15,7 +15,7 @@ def render_payments () :
 
     if file_abs_path is None :
         file_abs_path = get_most_recent_file()
-        
+
     # Load and display dataframe
     try:
 
@@ -25,8 +25,13 @@ def render_payments () :
         
         st.error(f"Failed to load expiries: {e}")
         return
+    
     st.warning(f"Used file from : {file_abs_path}")
+    
     if df is not None :
+        print(df.dtypes)
         st.dataframe(df, use_container_width=True)
+    
     else:
+    
         st.info("No expiries found for the selected date.")
