@@ -1,8 +1,8 @@
 import logging, os
 from datetime import datetime
 
-from src.config.paths import LOG_DIR
-os.makedirs(LOG_DIR, exist_ok=True)
+from src.config.paths import LOGS_DIR_PATH
+os.makedirs(LOGS_DIR_PATH, exist_ok=True)
 
 
 def get_logger (name: str = "sentinelle") -> logging.Logger:
@@ -30,7 +30,7 @@ def get_logger (name: str = "sentinelle") -> logging.Logger:
 
         # File handler
         date_str = datetime.now().strftime("%Y-%m-%d")
-        LOG_FILE_NAME=os.path.join(LOG_DIR, f"sentinelle_{datetime.now().strftime('%Y-%m-%d')}.log")
+        LOG_FILE_NAME=os.path.join(LOGS_DIR_PATH, f"sentinelle_{datetime.now().strftime('%Y-%m-%d')}.log")
         file_handler = logging.FileHandler(LOG_FILE_NAME)
 
         file_handler.setFormatter(formatter)

@@ -4,7 +4,7 @@ from src.config.env import load_dotenv
 load_dotenv()
 
 LIBAPI_ABS_PATH=os.getenv("LIBAPI_PATH")
-LOG_DIR=os.getenv("LOG_DIR")
+LOGS_DIR_PATH=os.getenv("LOGS_DIR_PATH")
 
 MESSAGE_SAVE_DIRECTORY=os.getenv("MESSAGE_SAVE_DIRECTORY")
 

@@ -1,16 +1,16 @@
 import os, re
 import hashlib
-from pathlib import Path
 import time
 import polars as pl
 import datetime as dt
+from pathlib import Path
 
 from typing import Dict, List, Optional, Tuple, Any
 
 from src.utils.logger import log
 
 
-def date_to_str (date : str | dt.datetime = None, format : str = "%Y-%m-%d") -> str :
+def date_to_str (date : Optional[str | dt.datetime | dt.date] = None, format : str = "%Y-%m-%d") -> str :
     """
     Convert a date or datetime object to a string in specific ("YYYY-MM-DD" default) format.
 

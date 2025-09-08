@@ -1,11 +1,23 @@
+from __future__ import annotations
+
 import os, time
+import hashlib
 import polars as pl
+
+from typing import Dict, Optional, List, Tuple
 
 from src.config.parameters import *
 from src.utils.logger import *
 
 
-def load_excel_to_dataframe (excel_file_abs_pth : str, sheet_name : str = "Sheet1", specific_cols : list = None, schema_overrides : dict = None) -> pl.DataFrame | None  :
+def load_excel_to_dataframe (
+        
+        excel_file_abs_pth : str,
+        sheet_name : str = "Sheet1",
+        specific_cols : Optional[List] = None,
+        schema_overrides : dict = None
+        
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]]  :
     """
     Loads an Excel file and returns it as a Polars dataframe, applying schema overrides.
 
@@ -21,7 +33,7 @@ def load_excel_to_dataframe (excel_file_abs_pth : str, sheet_name : str = "Sheet
     if not os.path.isfile(excel_file_abs_pth) :
         
         log(f"[-] File not found : {excel_file_abs_pth}", "error")
-        return None
+        return None, None
 
     if sheet_name is None or sheet_name == "" :
         sheet_name = 0 # The default sheet index
@@ -39,19 +51,28 @@ def load_excel_to_dataframe (excel_file_abs_pth : str, sheet_name : str = "Sheet
             schema_overrides=schema_overrides   # If None, Polars manages this case
         
         )
-        
+
+        csv_bytes = df.write_csv().encode("utf-8")
+        md5_hash = hashlib.md5(csv_bytes).hexdigest()
+
         log(f"[*] [POLARS] Read in {time.time() - start:.2f} seconds from {excel_file_abs_pth}", "info")
 
-        return df
+        return df, md5_hash
     
     except Exception as e :
 
         log(f"[-] Error while converting the Excel file : {e}", "error")
         
-        return None
+        return None, None
 
 
-def load_csv_to_dataframe (csv_abs_path : str, specific_cols : list = None, schema_overrides : dict = None) -> pl.DataFrame | None :
+def load_csv_to_dataframe (
+        
+        csv_abs_path : str,
+        specific_cols : Optional[List] = None,
+        schema_overrides : Optional[Dict] = None
+    
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
     """
     Loads a CSV file into a Polars DataFrame, with optional column filtering and type overrides.
 
@@ -66,7 +87,7 @@ def load_csv_to_dataframe (csv_abs_path : str, specific_cols : list = None, sche
     if not os.path.isfile(csv_abs_path) :
 
         log(f"\n[-] File not found : {csv_abs_path}\n", "error")
-        return None
+        return None, None
     
     try :
 
@@ -83,18 +104,26 @@ def load_csv_to_dataframe (csv_abs_path : str, specific_cols : list = None, sche
 
         )
 
+        csv_bytes = df.write_csv().encode("utf-8")
+        md5_hash = hashlib.md5(csv_bytes).hexdigest()
+
         log(f"[*] [POLARS] Read in {time.time() - start:.2f} seconds from CSV {csv_abs_path}", "info")
 
-        return df
+        return df, md5_hash
     
     except Exception as e :
 
         log(f"[-] Error during convertion of CSV {csv_abs_path} : {e}", "error")
     
-        return None
+        return None, None
 
 
-def load_json_to_dataframe (json_abs_path : str, schema_overrides : dict = None) -> pl.DataFrame | None :
+def load_json_to_dataframe (
+        
+        json_abs_path : str,
+        schema_overrides : Optional[Dict] = None
+    
+    ) -> Optional[pl.DataFrame]  :
     """
     Loads a JSON file into a Polars DataFrame.
 
@@ -108,7 +137,7 @@ def load_json_to_dataframe (json_abs_path : str, schema_overrides : dict = None)
     if not os.path.isfile(json_abs_path) :
 
         log(f"[-] File {json_abs_path} not found...", "error")
-        return None
+        return None, None
 
 
     try :
@@ -122,18 +151,21 @@ def load_json_to_dataframe (json_abs_path : str, schema_overrides : dict = None)
 
         )
 
+        csv_bytes = df.write_csv().encode("utf-8")
+        md5_hash = hashlib.md5(csv_bytes).hexdigest()
+
         log(f"[*] [POLARS] Read in {time.time() - start:.2f} seconds from JSON {json_abs_path}", "info")
 
-        return df
+        return df, md5_hash
 
     except Exception as e :
 
         log(f"[-] Error during convertion of {json_abs_path} : {e}", "error")
     
-        return None
+        return None, None
 
 
-def export_dataframe_to_excel (df : pl.DataFrame, sheet_name : str = "Sheet1", output_abs_path : str = None) -> dict :
+def export_dataframe_to_excel (df : pl.DataFrame, sheet_name : str = "Sheet1", output_abs_path : str = None) -> Dict :
     """
     Exports a Polars DataFrame to an Excel file.
 
@@ -191,7 +223,7 @@ def export_dataframe_to_excel (df : pl.DataFrame, sheet_name : str = "Sheet1", o
         return response
     
 
-def export_dataframe_to_json (df : pl.DataFrame, output_abs_path : str = None) -> dict :
+def export_dataframe_to_json (df : pl.DataFrame, output_abs_path : Optional[str] = None) -> Dict :
     """
     Exports a Polars DataFrame to a JSON file.
 
@@ -246,7 +278,7 @@ def export_dataframe_to_json (df : pl.DataFrame, output_abs_path : str = None) -
         return response
     
 
-def export_dataframe_to_csv (df : pl.DataFrame, separator : str = ",", output_abs_path : str = None) -> dict :
+def export_dataframe_to_csv (df : pl.DataFrame, separator : str = ",", output_abs_path : Optional[str] = None) -> Dict :
     """
     Exports a Polars DataFrame to a CSV file.
 

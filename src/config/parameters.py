@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os, re
 import polars as pl
 
@@ -34,7 +36,7 @@ FUND_NAME_MAP = {
 
 # -------- SIMM values -------
 
-SIMM_HIST_NAME_DEFAULT=os.getenv("SIMM_HIST_NAME")
+SIMM_HIST_NAME_DEFAULT=os.getenv("SIMM_HIST_NAME_DEFAULT")
 SIMM_CUTOFF_DATE=os.getenv("SIMM_CUTOFF_DATE") 
 
 SIMM_COLUMNS = {
@@ -148,11 +150,11 @@ EXPIRIES_COLUMNS = {
 
     "Trade Type" : pl.Utf8,
     "Underlying Asset" : pl.Utf8,
-    "Termination Date" : pl.Utf8,
+    "Termination Date" : pl.Datetime,
 
     "Buy/Sell" : pl.Utf8,
     "Notional" : pl.Utf8,
-    "Portfolio Name" : pl.Utf8,
+
     "Call/Put" : pl.Utf8,
 
     "Strike" : pl.Float64,
@@ -163,9 +165,19 @@ EXPIRIES_COLUMNS = {
     "MV" : pl.Utf8,
     "Total Premium" : pl.Utf8,
 
+    "Trigger 2" : pl.Float64,
+
     "Days Remaining" : pl.UInt64,
 
+    "As Of" : pl.Utf8,
 }
 
 EXPIRIES_COLUMNS_HV = EXPIRIES_COLUMNS.copy()
-EXPIRIES_COLUMNS_HV.update({"Trigger 2" : pl.Float64, "As Of" : pl.Utf8})
+EXPIRIES_COLUMNS_HV.update(
+    {
+        "Portfolio Name" : pl.Utf8,
+        "Strike 1" : pl.Float64,
+        "Strike 2" : pl.Float64,
+
+    }
+)
