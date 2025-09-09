@@ -181,3 +181,20 @@ EXPIRIES_COLUMNS_HV.update(
 
     }
 )
+
+
+# -------- NAV --------
+
+NAV_CUTOFF_DATE=os.getenv("NAV_CUTOFF_DATE")
+NAV_HIST_NAME_DEFAULT=os.getenv("NAV_HIST_NAME_DEFAULT")
+
+NAV_COLUMNS = {
+
+    "Portfolio Name": pl.Utf8,
+    "MV": pl.Float64,
+    "MV/NAV%": pl.Float64,
+    "Comment": pl.Utf8,
+    "Date": pl.Date,
+
+}
+

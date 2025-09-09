@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import time
 import hashlib
@@ -19,8 +21,8 @@ from src.utils.logger import log
 @st.cache_data(ttl=60000, show_spinner=False)
 def fetch_raw_simm_data (
     
-        date : Optional[str | dt.datetime | dt.date] = None,
         fund : Optional[str] = None,
+        date : Optional[str | dt.datetime | dt.date] = None,
     
     ) -> Optional[Tuple[pl.DataFrame, str]] :
     """

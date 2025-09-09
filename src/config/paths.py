@@ -34,3 +34,16 @@ EXPIRIES_FUNDS_DIR_PATHS = {
     os.getenv("FUND_WR") : EXPIRIES_FUND_WR_DIR_PATH
 
 }
+
+
+# -------- NAV Paths -------- 
+
+NAV_FUND_HV_DIR_PATH=os.getenv("NAV_FUND_HV_DIR_PATH")
+NAV_FUND_WR_DIR_PATH=os.getenv("NAV_FUND_WR_DIR_PATH")
+
+NAV_FUNDS_DIR_PATHS = {
+
+    os.getenv("FUND_HV") : EXPIRIES_FUND_HV_DIR_PATH,
+    os.getenv("FUND_WR") : EXPIRIES_FUND_WR_DIR_PATH
+
+}

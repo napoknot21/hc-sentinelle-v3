@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import hashlib
 import polars as pl
@@ -12,7 +14,7 @@ from src.utils.data_io import load_excel_to_dataframe
 from src.utils.formatters import date_to_str
 
 from src.config.paths import SIMM_FUNDS_DIR_PATHS
-from src.config.parameters import FUND_HV, FUND_NAME_MAP, SIMM_HIST_NAME_DEFAULT, SIMM_CUTOFF_DATE, SIMM_COLUMNS, SIMM_RENAME_COLUMNS
+from src.config.parameters import FUND_HV, SIMM_HIST_NAME_DEFAULT, SIMM_CUTOFF_DATE, SIMM_COLUMNS, SIMM_RENAME_COLUMNS
 
 
 SCHEMA_OVERRIDES = {v["name"] : v["type"] for v in SIMM_COLUMNS.values()}
@@ -29,7 +31,7 @@ def read_simm_history_from_excel (
         schema_overrides : Optional[Dict] = None, # SCHEMA_OVERRIDES
         cutoff_date : Optional[str] = None # SIMM_CUTOFF_DATE
 
-    ) -> Optional[pl.DataFrame] :
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
     """
     Read historical SIMM data for a given fund from a local Excel file.
 
@@ -58,7 +60,7 @@ def read_simm_history_from_excel (
 
     if excel_file_abs_pth is None :
 
-        log(f"[-] {excel_file_abs_pth} does not exist or not found.")
+        log(f"[-] SIMM {excel_file_abs_pth} does not exist or not found.")
         return None, None
     
     try :
@@ -96,7 +98,7 @@ def read_simm_history_from_excel (
     return simm_history_df, md5_hash
 
 
-def write_simm_history_from_df (
+def export_simm_history_from_df (
         
         fund : Optional[str] = None,
         simm_fund_paths : Optional[Dict] = None, # SIMM_FUNDS_DIR_PATHS,
@@ -120,7 +122,7 @@ def write_simm_history_from_df (
 def is_simm_history_updated_from_df (
 
         _df : pl.DataFrame,
-        md5hash : Optional[str] = None,
+        md5_hash : Optional[str] = None,
         date : Optional[str | dt.datetime | dt.date] = None,
         specific_col : str = "Date",
     
@@ -142,7 +144,7 @@ def is_simm_history_updated_from_df (
     if _df is None :
 
         log("[-] The dataframe is NULL. Impossible to get information.","error")
-        return None
+        return False
         
     date_str = date_to_str(date)
     lastest_date = _df.select(specific_col).to_series()[-1] # This line is exclusevely for today's date. Not general purpose
@@ -183,7 +185,7 @@ def get_updated_all_simm_history (
         schema_overrides : Optional[Dict] = None,
         type = int
     
-    ) -> Optional[pl.DataFrame] :
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
     """
     Function to get all leverages from the leverage folder and save them in a single file.
     """
@@ -198,7 +200,7 @@ def get_updated_all_simm_history (
 
     simm_history_df, md5_hash = update_simm_date_from_df(simm_history_df, md5_hash, fund)
 
-    return simm_history_df
+    return simm_history_df, md5_hash
 
 
 def get_simm_abs_path_by_fund (
