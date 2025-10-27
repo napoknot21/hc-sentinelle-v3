@@ -7,10 +7,10 @@ from src.ui.components.header import render_header
 from src.ui.components.sidebar import render_sidebar
 
 from src.ui.pages.Payments.payments import render_payments
-
+from src.ui.pages.Risks.render import render_risk_page
 
 PAGES = [
-    #("Risks", "exclamation-triangle-fill", render_risks),
+    ("Risks", "exclamation-triangle-fill", render_risk_page),
     #("Reconciliation", "arrow-repeat", render_reco),
     #("Ice API (but better)", "server", render_trading),
     ("Payment Machine", "cash", render_payments),

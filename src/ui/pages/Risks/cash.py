@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import polars as pl
 import streamlit as st
+import pandas as pd
 import datetime as dt
 
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
 from src.ui.tools.st_functions import center
-
+from src.core.data.expiries import load_upcomming_expiries
 
 from typing import Optional
 
@@ -24,33 +25,34 @@ def cash (date : Optional[str | dt.date | dt.datetime], fundation : str) :
     with col1 :
 
         # TODO
-        st.write(" ")
-        st.write(" ")
+        st.write("Hello World")
+        st.write("Hello world")
         center("Cash per counterparty, type, account and currency", "p", "font-weight: bold")
-        history_cash_per_counterparty()
+        #history_cash_per_counterparty()
 
 
     with col2 :
 
         # TODO
+        df, md5 = load_upcomming_expiries(date, fundation)
         st.write(" ")
         st.write(" ")
         center("Cash per counterparty, type, account and currency", "p", "font-weight: bold")
-        cash_per_counterparty()
-    
+        #cash_per_counterparty(df, md5, date, fundation)
+        st.dataframe(df)
 
     return None
 
 
 
-@st.cache_data()
+#@st.cache_data()
 def cash_per_counterparty (_dataframe : pl.DataFrame, md5 : str, date : Optional[str | dt.date | dt.datetime], fundation : str) :
     """
     
     """
     center("Cash per counterparty, type, account and currency", "p", "font-weight: bold")
-    
-    gb = GridOptionsBuilder.from_dataframe(_dataframe)
+    df = pd.DataFrame(_dataframe)
+    gb = GridOptionsBuilder.from_dataframe(df)
     grid_options = gb.build()
     
     AgGrid(_dataframe, gridOptions=grid_options, fit_columns_on_grid_load=True)
