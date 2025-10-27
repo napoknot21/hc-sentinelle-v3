@@ -1,46 +1,56 @@
-import os, re
-import hashlib
+from __future__ import annotations
+
+import os
+import re
 import time
+import hashlib
+
 import polars as pl
 import datetime as dt
-from pathlib import Path
 
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
 
 from src.utils.logger import log
 
 
-def date_to_str (date : Optional[str | dt.datetime | dt.date] = None, format : str = "%Y-%m-%d") -> str :
+def date_to_str (date : Optional[str | dt.date | dt.datetime] = None, format : str = "%Y-%m-%d") -> str :
     """
-    Convert a date or datetime object to a string in specific ("YYYY-MM-DD" default) format.
+    Convert a date or datetime object to a string in "YYYY-MM-DD" format.
 
     Args:
         date (str | datetime): The input date.
-        format (str) : The string format for the date
 
     Returns:
         str: Date string in "YYYY-MM-DD" format.
     """
-    if date is None :
+    if date is None:
+        date_obj = dt.datetime.now()
 
-        return dt.datetime.now().strftime(format)
+    elif isinstance(date, dt.datetime):
+        date_obj = date
 
-    if isinstance(date, str) :
+    elif isinstance(date, dt.date):  # handles plain date (without time)
+        date_obj = dt.datetime.combine(date, dt.time.min) # This will add 00 for the time
 
-        try :
+    elif isinstance(date, str) :
 
-            # try to parse common formats
-            parsed = dt.datetime.fromisoformat(date.strip())
-            return parsed.strftime(format)
-        
+        try:
+            date_obj = dt.datetime.strptime(date, format)
+
         except ValueError :
-            return date.strip()  # fallback: assume already good
+            
+            try :
+                date_obj = dt.datetime.fromisoformat(date)
+            
+            except ValueError :
+                raise ValueError(f"Unrecognized date format: '{date}'")
     
-    # works for both date & datetime
-    if isinstance(date, dt.date) :
+    else :
+        raise TypeError("date must be a string, datetime, or None")
 
-        return date.strftime(format)
-    
+    return date_obj.strftime(format)
+
 
 def check_email_format (email : str) -> bool :
     """
@@ -276,3 +286,77 @@ def get_most_recent_file (
     log(f"[*] Search most recent file done in {time.time() - start:.2f} seconds")
     
     return best_path
+
+
+
+
+def numeric_cast_expr_from_utf8 (
+        
+        col : str,
+        target_dtype : pl.PolarsDataType,
+
+        decimal : str = ".",          # "." for 1,234.56  / "," for 1.234,56
+        int_rounding : str = "nearest"  # "nearest" | "floor" | "ceil" | "truncate"
+
+    ) -> pl.Expr:
+    """
+    Clean common artefacts (spaces, NBSP, %, currency, parentheses negativity, thousands sep)
+    and cast to Float/Int as requested by target_dtype.
+    Example handled: "-123,254.58" -> -123254.58 (decimal=".")
+    """
+    e = pl.col(col).cast(pl.Utf8, strict=False)
+
+    # Common cleaning pipeline on strings
+    e = (
+        
+        #.cast(pl.Utf8, strict=False)
+        e.str.strip_chars()
+        .str.replace_all(r"\s+", "")              # remove all spaces (incl NBSP)
+        .str.replace_all(r"[%€$£]", "")           # drop currency/percent
+        .str.replace_all(r"\(([^)]+)\)", r"-$1")  # (123) -> -123
+        
+    )
+
+    if decimal == ".":
+        # strip thousands separators commonly used with dot-decimal
+        e = (e
+             .str.replace_all(",", "")              # 1,234.56 -> 1234.56
+             )
+        
+    # decimal point is already "."
+    elif decimal == "," :
+
+        # EU style: 1.234,56 -> 1234.56
+        e = (e
+             .str.replace_all(r"\.", "")           # remove thousands dots
+             .str.replace_all(",", ".")            # comma decimal -> dot
+             )
+    
+    else :
+        raise ValueError('decimal must be "." or ","')
+
+    # First cast to float to normalize; then handle integers if needed
+    e_float = e.cast(pl.Float64, strict=False)
+
+    # Decide on integer vs float target
+    if isinstance(target_dtype, pl.Float32.__class__) or target_dtype in (pl.Float32, pl.Float64) :
+        return e_float.alias(col)
+
+    # Integer targets (Int*/UInt*)
+    if int_rounding == "nearest" :
+        e_int_base = e_float.round(0)
+
+    elif int_rounding == "floor" :
+        e_int_base = e_float.floor()
+
+    elif int_rounding == "ceil" :
+        e_int_base = e_float.ceil()
+
+    elif int_rounding == "truncate" :
+        # toward zero
+        e_int_base = pl.when(e_float < 0).then(e_float.ceil()).otherwise(e_float.floor())
+    
+    else :
+        raise ValueError('int_rounding must be "nearest" | "floor" | "ceil" | "truncate"')
+
+    return e_int_base.cast(target_dtype, strict=False).alias(col)

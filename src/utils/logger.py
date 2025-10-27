@@ -1,8 +1,43 @@
-import logging, os
+from __future__ import annotations
+
+import os
+import logging
+
 from datetime import datetime
 
 from src.config.paths import LOGS_DIR_PATH
 os.makedirs(LOGS_DIR_PATH, exist_ok=True)
+
+
+def log (message: str, level: str = "info", module: str = "sentinelle"):
+    """
+    Log a message with the desired log level and module name.
+
+    Args:
+        message (str): The log message.
+        level (str): Logging level ("info", "debug", "warning", "error", "critical").
+        module (str): Logger name or module name.
+    """
+    logger = get_logger(module)
+
+    level = level.lower()
+
+    if level == "debug" :
+        logger.debug(message) # [*]
+
+    elif level == "warning" :
+        logger.warning(message) # [!]
+
+    elif level == "error" :
+        logger.error(message) # [-]
+
+    elif level == "critical" :
+        logger.critical(message) # [-]
+
+    else :
+        logger.info(message) # [+] or [*]
+
+    print(f"\n{message}")
 
 
 def get_logger (name: str = "sentinelle") -> logging.Logger:
@@ -43,34 +78,3 @@ def get_logger (name: str = "sentinelle") -> logging.Logger:
         #logger.addHandler(console_handler)
 
     return logger
-
-
-def log (message: str, level: str = "info", module: str = "sentinelle"):
-    """
-    Log a message with the desired log level and module name.
-
-    Args:
-        message (str): The log message.
-        level (str): Logging level ("info", "debug", "warning", "error", "critical").
-        module (str): Logger name or module name.
-    """
-    logger = get_logger(module)
-
-    level = level.lower()
-
-    if level == "debug" :
-        logger.debug(message) # [*]
-
-    elif level == "warning" :
-        logger.warning(message) # [!]
-
-    elif level == "error" :
-        logger.error(message) # [-]
-
-    elif level == "critical" :
-        logger.critical(message) # [-]
-
-    else :
-        logger.info(message) # [+] or [*]
-
-    print('\n' + message + '\n')

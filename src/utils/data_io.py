@@ -8,6 +8,7 @@ from typing import Dict, Optional, List, Tuple
 
 from src.config.parameters import *
 from src.utils.logger import *
+from src.utils.formatters import numeric_cast_expr_from_utf8
 
 
 def load_excel_to_dataframe (
@@ -15,7 +16,8 @@ def load_excel_to_dataframe (
         excel_file_abs_pth : str,
         sheet_name : str = "Sheet1",
         specific_cols : Optional[List] = None,
-        schema_overrides : dict = None
+        schema_overrides : Optional[Dict] = None,
+        cast_num : bool = True
         
     ) -> Tuple[Optional[pl.DataFrame], Optional[str]]  :
     """
@@ -48,9 +50,58 @@ def load_excel_to_dataframe (
             source=excel_file_abs_pth,
             sheet_name=sheet_name,
             columns=specific_cols,              # If None, pl manage this case
-            schema_overrides=schema_overrides   # If None, Polars manages this case
+            schema_overrides=None if cast_num is True else schema_overrides   # If None, Polars manages this case
         
         )
+
+        if cast_num is False or schema_overrides is None :
+
+            csv_bytes = df.write_csv().encode("utf-8")
+            md5_hash = hashlib.md5(csv_bytes).hexdigest()
+            
+            return df, md5_hash 
+
+
+        actual = dict(zip(df.columns, df.dtypes))
+        exprs: list[pl.Expr] = []
+
+        for col, target_dtype in schema_overrides.items() :
+
+            if col not in actual :
+                continue  # column not present in this sheet
+
+            actual_dtype = actual[col]
+
+            # If matches already, skip
+            if actual_dtype == target_dtype :
+                continue
+
+            # If target is numeric and actual is Utf8 → clean+cast from string
+            is_target_float = target_dtype in (pl.Float32, pl.Float64)
+            is_target_int = target_dtype in (pl.Int8, pl.Int16, pl.Int32, pl.Int64,
+                                                pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64)
+            
+            if (is_target_float or is_target_int) and actual_dtype == pl.Utf8 :
+
+                exprs.append(
+
+                    numeric_cast_expr_from_utf8(
+                        col,
+                        target_dtype,
+                        decimal=".",            # change to "," if your inputs are EU-style
+                        int_rounding="nearest", # or "truncate"/"floor"/"ceil"
+                    )
+
+                )
+
+            else :
+
+                # Fallback: try a permissive cast (won’t crash on bad values)
+                exprs.append(pl.col(col).cast(target_dtype, strict=False).alias(col))
+
+        if exprs :
+            df = df.with_columns(exprs)
+
 
         csv_bytes = df.write_csv().encode("utf-8")
         md5_hash = hashlib.md5(csv_bytes).hexdigest()

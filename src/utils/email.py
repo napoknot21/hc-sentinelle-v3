@@ -1,6 +1,6 @@
-import os
-import re
+from __future__ import annotations
 
+import os
 import requests
 import base64
 import json
@@ -12,7 +12,7 @@ from typing import Dict, Optional, List, Any
 
 from src.config.parameters import (
     CLIENT_ID, CLIENT_SECRET_VALUE, TENANT_ID, EMAIL_URL_GET_TOKEN, EMAIL_URL_SEND_MAIL,
-    DEFAULT_TO_EMAIL, DEFAULT_CC_EMAIL, DEFAULT_FROM_EMAIL
+    EMAIL_DEFAULT_TO, EMAIL_DEFAULT_CC, EMAIL_DEFAULT_FROM
 )
 from src.config.paths import MESSAGE_SAVE_DIRECTORY
 from src.utils.formatters import check_email_format
@@ -20,15 +20,20 @@ from src.utils.formatters import check_email_format
 
 def get_token_azure (
     
-        client_id : str = CLIENT_ID,
-        client_secret_value : str = CLIENT_SECRET_VALUE,
-        tenant_id : str = TENANT_ID,
-        url : str = EMAIL_URL_GET_TOKEN
+        client_id : Optional[str] = None,
+        client_secret_value : Optional[str] = None,
+        tenant_id : Optional[str] = None,
+        url : Optional[str] = None
     
     ) -> Optional[str] :
     """
     
     """
+    client_id = CLIENT_ID if client_id is None else client_id
+    client_secret_value = CLIENT_SECRET_VALUE if client_secret_value is None else client_secret_value
+    tenant_id = TENANT_ID if tenant_id is None else tenant_id
+
+    url = EMAIL_URL_GET_TOKEN if url is None else url
     url = url.replace("TENANT_ID", tenant_id)
 
     payload = {
@@ -41,11 +46,11 @@ def get_token_azure (
     try :
 
         response = requests.post(url=url, data=payload)
-        print("[+] POST request for token successfull")
+        print("\n[+] POST request for token successfull")
 
     except Exception as e :
 
-        print("[-] Error during requestin the Azure token.")
+        print("\n[-] Error during requestin the Azure token.")
         return None
     
     
@@ -55,30 +60,39 @@ def get_token_azure (
         print("[-] Error during Azure token extraction")
 
     else :
-        print("[*] Token extraction successfully.")
+        print("\n[*] Token extraction successfully.")
 
     return token
 
 
 def send_mail (
         
-        token : str | None = None,
-        from_email : str = DEFAULT_FROM_EMAIL,
-        cc_email : List[str] = None,
-        to_email : List[str] | None = None,
+        token : Optional[str] = None,
+        
+        from_email : Optional[str] = None,
+        
+        cc_email : Optional[List[str]] = None,
+        to_email : Optional[List[str]] = None,
+        
         subject : str = "",
         content : str = "",
-        file_abs_path : str | None = None,
-        endpoint : str = EMAIL_URL_SEND_MAIL,
+        
+        file_abs_path : Optional[List[str] | str] = None,
+        endpoint : Optional[str] = None,
 
     ) -> bool :
     """
     
     """
     token = get_token_azure() if token is None else token
+
+    from_email = EMAIL_DEFAULT_FROM if from_email is None else from_email
+
+    to_email = EMAIL_DEFAULT_FROM if to_email is None else to_email
+    cc_email = EMAIL_DEFAULT_CC if cc_email is None else cc_email
+    
+    endpoint = EMAIL_URL_SEND_MAIL if endpoint is None else endpoint
     endpoint = endpoint.replace("SENDER_MAIL", from_email)
-    to_email = [DEFAULT_TO_EMAIL] if to_email is None else to_email
-    cc_email = [DEFAULT_CC_EMAIL] if cc_email is None else cc_email
 
     headers = {
 
@@ -95,6 +109,7 @@ def send_mail (
     }
 
     recipients = []
+
     for email in to_email :
 
         if check_email_format(email) :
@@ -106,6 +121,7 @@ def send_mail (
             )
 
     cc_recipients = []
+
     for email in cc_email :
 
         if check_email_format(email) :
@@ -163,10 +179,10 @@ def send_mail (
     
     except Exception as e :
         
-        print("[-] error while sending email")
+        print("\n[-] error while sending email")
         return False
     
-    print("[+] Email send.")
+    print("\n[+] Email send")
 
     return True
 

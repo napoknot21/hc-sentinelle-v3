@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import time
 import hashlib
+
 import polars as pl
 import datetime as dt
 import streamlit as st
@@ -18,11 +19,12 @@ from src.utils.formatters import date_to_str
 from src.utils.logger import log
 
 
-@st.cache_data(ttl=60000, show_spinner=False)
 def fetch_raw_simm_data (
     
         fund : Optional[str] = None,
         date : Optional[str | dt.datetime | dt.date] = None,
+
+        fund_map : Optional[Dict] = None
     
     ) -> Optional[Tuple[pl.DataFrame, str]] :
     """
@@ -44,8 +46,8 @@ def fetch_raw_simm_data (
     date = date_to_str(date)
     fund = FUND_HV if fund is None else fund
 
-    fund_map = FUND_NAME_MAP # We need to hardcode this value in order to get cache parameters of this function
-    fund_name = fund_map.get(fund) # We get the fundation in initials (HV, etc)
+    fund_map = FUND_NAME_MAP if fund is None else fund_map # We need to hardcode this value in order to get cache parameters of this function
+    fund_name = fund_map.get(fund, "HV") # We get the fundation in initials (HV, etc)
 
     if not fund_name :
 

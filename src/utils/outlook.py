@@ -8,7 +8,7 @@ import pythoncom as pycom
 from typing import Dict, List, Optional
 
 from src.utils.formatters import check_email_format
-from src.config.parameters import DEFAULT_TO_EMAIL, DEFAULT_CC_EMAIL, DEFAULT_FROM_EMAIL
+from src.config.parameters import EMAIL_DEFAULT_TO, EMAIL_DEFAULT_CC, EMAIL_DEFAULT_FROM
 from src.config.paths import MESSAGE_SAVE_DIRECTORY
 
 
@@ -16,7 +16,7 @@ def create_email_item (
         
         to_email : List[str] = None,
         cc_email : List[str] = None,
-        from_email : str = DEFAULT_FROM_EMAIL,
+        from_email : str = EMAIL_DEFAULT_FROM,
         subject : str = "",
         body : str = "",
         content_file_paths : List[str] = None
@@ -46,11 +46,11 @@ def create_email_item (
     mail_item = outlook_app.CreateItem(0)
 
     # Set up recipeients and CCs (Assumes that emails are in correct format)
-    mail_item.To = DEFAULT_TO_EMAIL if (len(to_email) == 0 or to_email is None) else "; ".join(to_email)
-    mail_item.CC = DEFAULT_CC_EMAIL if (len(cc_email) == 0 or cc_email is None) else "; ".join(cc_email)
+    mail_item.To = EMAIL_DEFAULT_TO if (len(to_email) == 0 or to_email is None) else "; ".join(to_email)
+    mail_item.CC = EMAIL_DEFAULT_CC if (len(cc_email) == 0 or cc_email is None) else "; ".join(cc_email)
 
     # Set up sender email
-    mail_item.SendOnBehalfOfName = DEFAULT_FROM_EMAIL if from_email == "" else from_email
+    mail_item.SendOnBehalfOfName = EMAIL_DEFAULT_FROM if from_email == "" else from_email
 
     # Set up of subject email
     mail_item.Subject = subject

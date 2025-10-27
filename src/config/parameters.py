@@ -16,9 +16,9 @@ EMAIL_URL_GET_TOKEN=os.getenv("EMAIL_URL_GET_TOKEN")
 EMAIL_URL_SEND_MAIL=os.getenv("EMAIL_URL_SEND_MAIL")
 
 # Defaults for Email
-DEFAULT_TO_EMAIL=os.getenv("DEFAULT_TO_EMAIL")
-DEFAULT_CC_EMAIL=os.getenv("DEFAULT_CC_EMAIL")
-DEFAULT_FROM_EMAIL=os.getenv("DEFAULT_FROM_EMAIL")
+EMAIL_DEFAULT_TO=os.getenv("EMAIL_DEFAULT_TO")
+EMAIL_DEFAULT_CC=os.getenv("EMAIL_DEFAULT_CC")
+EMAIL_DEFAULT_FROM=os.getenv("EMAIL_DEFAULT_FROM")
 
 
 # -------- Fundations --------
@@ -150,10 +150,10 @@ EXPIRIES_COLUMNS = {
 
     "Trade Type" : pl.Utf8,
     "Underlying Asset" : pl.Utf8,
-    "Termination Date" : pl.Datetime,
+    "Termination Date" : pl.Utf8,
 
     "Buy/Sell" : pl.Utf8,
-    "Notional" : pl.Utf8,
+    "Notional" : pl.Float64,
 
     "Call/Put" : pl.Utf8,
 
@@ -162,8 +162,9 @@ EXPIRIES_COLUMNS = {
 
     "Reference Spot" : pl.Float64,
     "Counterparty" : pl.Utf8,
-    "MV" : pl.Utf8,
-    "Total Premium" : pl.Utf8,
+
+    "MV" : pl.Float64,
+    "Total Premium" : pl.Float64,
 
     "Trigger 2" : pl.Float64,
 
@@ -175,6 +176,7 @@ EXPIRIES_COLUMNS = {
 EXPIRIES_COLUMNS_HV = EXPIRIES_COLUMNS.copy()
 EXPIRIES_COLUMNS_HV.update(
     {
+        
         "Portfolio Name" : pl.Utf8,
         "Strike 1" : pl.Float64,
         "Strike 2" : pl.Float64,
@@ -195,6 +197,42 @@ NAV_COLUMNS = {
     "MV/NAV%": pl.Float64,
     "Comment": pl.Utf8,
     "Date": pl.Date,
+
+}
+
+
+# -------- Cash --------
+
+CASH_COLUMNS = {
+
+    "Fundation" : pl.Utf8,
+    "Account" : pl.Utf8,
+    "Date" : pl.Date,
+    "Bank" : pl.Utf8,
+    "Currency" : pl.Utf8,
+    "Type" : pl.Utf8,
+    "Amount in CCY" : pl.Float64,
+    "Exchange" : pl.Float64,
+    "Amount in EUR" : pl.Float64
+
+}
+
+
+
+# 
+
+COLLATERAL_COLUMNS = {
+
+    "Fundation" : pl.Utf8,
+    "Account" : pl.Utf8,
+    "Date" : pl.Date,
+    "Bank" : pl.Utf8,
+    "Currency" : pl.Utf8,
+    "Total" : pl.Float64,
+    "IM" : pl.Float64,
+    "VM" : pl.Float64,
+    "Requirement" : pl.Float64,
+    "Net Exess/Deficit" : pl.Float64
 
 }
 

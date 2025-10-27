@@ -7,7 +7,7 @@ def custom_option_menu (options_list : list) :
     Creates a custom option menu for a certain options
 
     Args :
-        - options : List[disct] -> list of options where each option is composed by a 'name' and 'page'
+        - options : List[disct] : list of options where each option is composed by a 'name' and 'page'
     """
     option_menu = option_menu(
         
@@ -17,3 +17,16 @@ def custom_option_menu (options_list : list) :
         orientation="horizontal",
 
     )
+
+
+def center (text :  str, tag :  str, additional_css_rules : str = "") :
+    """
+    
+    """
+    st.write(
+    
+        f"<{tag} style='text-align: center;{additional_css_rules}'>{text}</{tag}>",
+        unsafe_allow_html=True
+    
+    )
+

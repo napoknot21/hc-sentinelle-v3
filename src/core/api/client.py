@@ -4,15 +4,15 @@ import streamlit as st
 from src.config.paths import LIBAPI_ABS_PATH
 sys.path.append(LIBAPI_ABS_PATH)
 
-from libapi.pricers.fx import PricerFX
-from libapi.pricers.eq import PricerEQ
+from libapi.pricers.fx import PricerFX # type:ignore
+from libapi.pricers.eq import PricerEQ # type:ignore
 
-from libapi.ice.calculator import IceCalculator
-from libapi.ice.trade_manager import TradeManager
+from libapi.ice.calculator import IceCalculator # type:ignore
+from libapi.ice.trade_manager import TradeManager# type:ignore
 
 
 # Function to initialize the API
-@st.cache_resource()
+#@st.cache_resource()
 def get_ice_calculator () :
     """
     Initializes and returns a cached instance of IceCalculator.
@@ -26,7 +26,7 @@ def get_ice_calculator () :
     return ice_calculator
 
 
-@st.cache_resource()
+#@st.cache_resource()
 def get_trade_manager () :
     """
     Initializes and returns a cached instance of TradeManager.
@@ -39,7 +39,7 @@ def get_trade_manager () :
     return trade_manager
 
 
-@st.cache_resource()
+#@st.cache_resource()
 def get_pricer_fx () :
     """
     Initializes and returns a cached instance of PricerFX.
@@ -52,7 +52,7 @@ def get_pricer_fx () :
     return pricer_fx
 
 
-@st.cache_resource()
+#@st.cache_resource()
 def get_pricer_eq () :
     """
     Initializes and returns a cached instance of PricerEQ.

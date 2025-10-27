@@ -25,6 +25,7 @@ SCHEMA_OVERRIDES_WTH_DATE["Date"] = pl.Date
 
 def read_simm_history_from_excel (
         
+        date : Optional[str | dt.date | dt.datetime] =  None,
         fund : Optional[str] = None, # FUND_HV
         simm_fund_paths : Optional[Dict] = None, # SIMM_FUNDS_DIR_PATHS,
         specific_cols : Optional[List] = None,

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from src.config.env import load_dotenv
 
@@ -47,3 +49,19 @@ NAV_FUNDS_DIR_PATHS = {
     os.getenv("FUND_WR") : EXPIRIES_FUND_WR_DIR_PATH
 
 }
+
+# -------- Cash --------
+
+CASH_FUND_HV_FILE_PATH=os.getenv("CASH_FUND_HV_FILE_PATH")
+CASH_FUND_WR_FILE_PATH=os.getenv("CASH_FUND_WR_FILE_PATH")
+
+CASH_FUNDS_FILE_PATHS = {
+
+    os.getenv("FUND_HV") : CASH_FUND_HV_FILE_PATH,
+    os.getenv("FUND_WR") : CASH_FUND_WR_FILE_PATH
+
+}
+
+# -------- Cash --------
+
+COLLATERAL_FUND_HV_DIR_PATH=os.getenv("COLLATERAL_FILE_ABS_PATH")
