@@ -384,3 +384,16 @@ def export_dataframe_to_csv (df : pl.DataFrame, separator : str = ",", output_ab
     finally :
 
         return response
+    
+
+def export_excel_to_pdf (file_abs_path : str , output_abs_path : Optional[str] = None) :
+    """
+    
+    """
+    response = {
+
+        'success' : False,
+        'message' : None,
+        'path' : None
+
+    }

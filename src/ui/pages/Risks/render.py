@@ -20,7 +20,8 @@ from src.ui.pages.Risks.portfolio import *
 from src.ui.pages.Risks.cash import *
 
 from src.ui.styles.base import risk_menu
-
+from src.ui.components.selector import date_selector
+from src.ui.components.text import center_h1
 
 risk_subpages = [
 
@@ -39,12 +40,17 @@ def render_risk_page (title : str = "Risks", fundation_map : Optional[Dict] = No
     fund_options = list(fundation_map.keys())
 
     # Title here
-    st.title(title)
+    center_h1(title)
 
     date_col, fund_col = st.columns(2)
 
-    date = date_col.date_input("Select a date: ")
-    fundation = fund_col.selectbox("Select a fund: ", fund_options)
+    
+    with date_col :
+        date = date_selector(label="Select a date ")
+        print(date)
+        print(type(date))
+
+    fundation = fund_col.selectbox("Select a fund ", fund_options)
 
     st.cache_data.clear()
 

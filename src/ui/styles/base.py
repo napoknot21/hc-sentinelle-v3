@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 
-# Styles 
+# Styles
+
+bold_text = "font-weight : bold"
 
 risk_menu = {
 

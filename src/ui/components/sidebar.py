@@ -26,7 +26,7 @@ def render_sidebar (
 
     with st.sidebar:
         if show_logo and logo_path:
-            st.image(logo_path, use_container_width=True)
+            st.image(logo_path, width='stretch')
 
         st.markdown("### " + app_title)
 

@@ -5,9 +5,12 @@ import streamlit as st
 import pandas as pd
 import datetime as dt
 
+
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 
-from src.ui.tools.st_functions import center
+from src.ui.components.text import center_bold_paragraph, center_h1, center_h2
+
+
 from src.core.data.expiries import load_upcomming_expiries
 
 from typing import Optional
@@ -18,7 +21,7 @@ def cash (date : Optional[str | dt.date | dt.datetime], fundation : str) :
     
     
     """
-    st.title("Cash Per Counterparty")
+    center_h2("Cash Per Counterparty")
 
     col1, col2 = st.columns(2)
 
@@ -27,7 +30,7 @@ def cash (date : Optional[str | dt.date | dt.datetime], fundation : str) :
         # TODO
         st.write("Hello World")
         st.write("Hello world")
-        center("Cash per counterparty, type, account and currency", "p", "font-weight: bold")
+        center_bold_paragraph("Cash per counterparty, type, account and currency")
         #history_cash_per_counterparty()
 
 
@@ -37,7 +40,7 @@ def cash (date : Optional[str | dt.date | dt.datetime], fundation : str) :
         df, md5 = load_upcomming_expiries(date, fundation)
         st.write(" ")
         st.write(" ")
-        center("Cash per counterparty, type, account and currency", "p", "font-weight: bold")
+        center_bold_paragraph("Cash per counterparty, type, account and currency")
         #cash_per_counterparty(df, md5, date, fundation)
         st.dataframe(df)
 
@@ -50,7 +53,7 @@ def cash_per_counterparty (_dataframe : pl.DataFrame, md5 : str, date : Optional
     """
     
     """
-    center("Cash per counterparty, type, account and currency", "p", "font-weight: bold")
+    center_bold_paragraph("Cash per counterparty, type, account and currency")
     df = pd.DataFrame(_dataframe)
     gb = GridOptionsBuilder.from_dataframe(df)
     grid_options = gb.build()
