@@ -12,7 +12,7 @@ from typing import Dict, Optional
 from src.utils.formatters import date_to_str
 from src.config.parameters import FUND_NAME_MAP
 
-from src.ui.pages.Risks.expiries import *
+from src.ui.pages.Risks.expiries import expiries
 from src.ui.pages.Risks.performance import *
 from src.ui.pages.Risks.fx_screeners import *
 from src.ui.pages.Risks.greeks import *
@@ -24,9 +24,9 @@ from src.ui.components.selector import date_selector
 from src.ui.components.text import center_h1
 
 risk_subpages = [
-
     
-    {"name" : "Cash",           "page" : cash,   "icon" : "cash-stack"}
+    {"name" : "Expiries",       "page" : expiries,  "icon" : "calendar-check"},
+    {"name" : "Cash",           "page" : cash,      "icon" : "cash-stack"},
 
 ]
 
@@ -46,9 +46,9 @@ def render_risk_page (title : str = "Risks", fundation_map : Optional[Dict] = No
 
     
     with date_col :
+        
         date = date_selector(label="Select a date ")
-        print(date)
-        print(type(date))
+        st.cache_data.clear()
 
     fundation = fund_col.selectbox("Select a fund ", fund_options)
 

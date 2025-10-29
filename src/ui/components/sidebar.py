@@ -1,4 +1,6 @@
 # src/ui/components/sidebar.py
+from __future__ import annotations
+
 import streamlit as st
 from streamlit_option_menu import option_menu
 
@@ -24,7 +26,10 @@ def render_sidebar (
     names = [p[0] for p in pages]
     icons = [p[1] for p in pages]
 
-    with st.sidebar:
+    sidebar = st.sidebar
+
+    with sidebar:
+
         if show_logo and logo_path:
             st.image(logo_path, width='stretch')
 
@@ -43,10 +48,12 @@ def render_sidebar (
                 "nav-link-selected": {"background-color": "#7645FF", "color": "white"},
             },
         )
+        st.cache_data.clear()
 
         if aegis_url:
             st.link_button("Access Heroics Aegis", aegis_url)
 
     # update query params for deep linking
     st.query_params["page"] = selected
+    
     return selected

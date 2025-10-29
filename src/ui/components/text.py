@@ -67,6 +67,13 @@ def left_h3 (text : str) :
     left(text, "h3")
 
 
+def left_h5 (text : str) :
+    """
+    
+    """
+    left(text, "h5")
+
+
 
 # --------- General Functions --------- 
 
@@ -103,7 +110,7 @@ def right (text : str, tag : str, extra_css : str = "") :
 
         f"<{tag} style='text-align: right;{extra_css}'>{text}</{tag}>",
         unsafe_allow_html=True   
-        
+
     )
 
 

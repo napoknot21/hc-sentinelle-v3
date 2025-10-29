@@ -150,7 +150,7 @@ EXPIRIES_COLUMNS = {
 
     "Trade Type" : pl.Utf8,
     "Underlying Asset" : pl.Utf8,
-    "Termination Date" : pl.Utf8,
+    "Termination Date" : pl.Date,
 
     "Buy/Sell" : pl.Utf8,
     "Notional" : pl.Float64,
@@ -184,6 +184,19 @@ EXPIRIES_COLUMNS_HV.update(
     }
 )
 
+EXPIRIES_COLUMNS_SPECIFIC = {
+
+    "Trade Type" : pl.Utf8,
+    "Underlying Asset" : pl.Utf8,
+
+    "Buy/Sell" : pl.Utf8,
+    "Call/Put" : pl.Utf8,
+
+    "Strike" : pl.Float64,
+
+    "Termination Date" : pl.Date,
+
+}
 
 # -------- NAV --------
 
@@ -216,7 +229,6 @@ CASH_COLUMNS = {
     "Amount in EUR" : pl.Float64
 
 }
-
 
 
 # 

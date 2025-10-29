@@ -288,6 +288,75 @@ def get_most_recent_file (
     return best_path
 
 
+def date_cast_expr_from_utf8 (
+        
+        col: str,
+        *,
+        to_datetime: bool = False,
+        formats: list[str] | None = None,
+
+        allow_us_mdy: bool = False,
+        enable_excel_serial: bool = True,
+
+    ) -> pl.Expr:
+    """
+    Parse messy date/datetime strings with multiple formats + Excel-serial fallback.
+    Works for ANY column name; returns an Expr aliasing `col`.
+    """
+    fmts = formats or [
+
+        "%d/%m/%Y",      # 30/10/2025
+        "%Y-%m-%d",      # 2025-10-30
+        "%b %e, %Y",     # Oct 30, 2025 (space-padded day)
+        "%b %-d, %Y",    # Oct 9, 2025 (no zero-pad)
+        "%Y.%m.%d",      # 2025.10.30
+    
+    ]
+    
+    if allow_us_mdy :
+        fmts.append("%m/%d/%Y")  # enable only if you truly have US dates
+
+    txt = (
+
+        pl.col(col).cast(pl.Utf8, strict=False)
+        .str.replace_all("\u00A0", " ")         # NBSP → space
+        .str.replace_all(r"[ ]{2,}", " ")
+        .str.strip_chars()
+
+    )
+
+    parsed = [
+
+        txt.str.strptime(
+        
+            pl.datetime if to_datetime else pl.Date,
+            format=f,
+            strict=False,
+            exact=False
+        
+        )
+        for f in fmts
+    ]
+
+    out = parsed[0]
+
+    for p in parsed[1:] :
+        out = out.fill_null(p)
+
+    if enable_excel_serial :
+
+        excel_fallback = (
+
+            pl.when(pl.col(col).cast(pl.Float64, strict=False).is_not_null())
+            .then(
+                (pl.datetime(1899, 12, 30) + pl.duration(
+                    days=pl.col(col).cast(pl.Float64, strict=False).round(0).cast(pl.Int64)
+                )).cast(pl.Datetime if to_datetime else pl.Date, strict=False)
+            )
+        )
+        out = out.fill_null(excel_fallback)
+
+    return out.alias(col)
 
 
 def numeric_cast_expr_from_utf8 (
