@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-import os, time
+import os
+import time
 import hashlib
+import xlwings as xw
 import polars as pl
 
 from typing import Dict, Optional, List, Tuple
 
 from src.config.parameters import *
+from src.config.paths import *
 from src.utils.logger import *
 from src.utils.formatters import numeric_cast_expr_from_utf8
 
@@ -386,14 +389,40 @@ def export_dataframe_to_csv (df : pl.DataFrame, separator : str = ",", output_ab
         return response
     
 
-def export_excel_to_pdf (file_abs_path : str , output_abs_path : Optional[str] = None) :
+def export_excel_to_pdf (file_abs_path : Optional[str] = None, output_filename : Optional[str] = None, output_dir_path : Optional[str] = None) :
     """
     
     """
     response = {
 
-        'success' : False,
-        'message' : None,
-        'path' : None
+        "success" : False,
+        "message" : None,
+        "path" : None
 
     }
+
+    if not os.path.exists(file_abs_path) :
+
+        # No file existed. Error returned
+        return response
+    
+    output_dir_path = PAYMENTS_DIR_PATH if output_dir_path is None else output_dir_path
+    os.makedirs(output_dir_path, exist_ok=True)
+
+    with xw.App() as app :
+
+        # user will not even see the excel opening up
+        app.visible = False
+        
+        book = app.books.open(file_abs_path)
+        sheet = book.sheets[0]
+
+        # Save excel workbook as pdf
+        full_path = os.path.join(output_dir_path, output_filename)
+        sheet.to_pdf(path=full_path, show=False)
+        
+        response["success"] = True
+        response["path"] = full_path
+
+    return response
+

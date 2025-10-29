@@ -10,6 +10,7 @@ LOGS_DIR_PATH=os.getenv("LOGS_DIR_PATH")
 
 MESSAGE_SAVE_DIRECTORY=os.getenv("MESSAGE_SAVE_DIRECTORY")
 
+PAYMENTS_DIR_PATH=os.getenv("PAYMENTS_DIR_PATH")
 
 # -------- SIMM paths -------- 
 
