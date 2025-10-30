@@ -28,6 +28,7 @@ def render_payments_page (title : str = "Payments", subtitle : str = "Back Offic
     # title here
     center_h1(title)
     center_h3(subtitle)
+    st.write('')
 
     menu = option_menu(
 

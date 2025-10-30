@@ -11,14 +11,15 @@ from src.core.data.expiries import load_upcomming_expiries, get_upcomming_expiri
 
 from src.ui.components.charts import expiries_plot
 from src.ui.components.tables import show_last_n_expiries
-from src.ui.components.text import center_h1, left_h3, left_h5
+from src.ui.components.text import center_h2, left_h3, left_h5
 
 
 def expiries (date : Optional[str | dt.date | dt.datetime] = None, fundation : Optional[str] = None) :
     """
     
     """
-    center_h1("Upcoming Expiries")
+    center_h2("Upcoming Expiries")
+    st.write('')
 
     col1, col2 = st.columns(2)
     
@@ -32,14 +33,11 @@ def expiries (date : Optional[str | dt.date | dt.datetime] = None, fundation : O
 
 
 
-        
-
-def chart_experies_per_week (date : Optional[str | dt.date | dt.datetime] = None, fundation : Optional[str] = None, title : str = "Number of Expiries per Week") :
+def chart_experies_per_week (date : Optional[str | dt.date | dt.datetime] = None, fundation : Optional[str] = None, title : str = "Number of Expiries per Day") :
     """
     
     """
     dataframe, md5 = load_upcomming_expiries(date, fundation)
-
     fig = expiries_plot(dataframe, title, "Termination Date", md5)
 
     return fig

@@ -51,6 +51,19 @@ NAV_FUNDS_DIR_PATHS = {
 
 }
 
+
+# -------- NAV Estimate Paths ----------
+
+NAV_ESTIMATE_FUND_HV_DIR_PATH=os.getenv("NAV_ESTIMATE_FUND_HV_DIR_PATH")
+NAV_ESTIMATE_FUND_WR_DIR_PATH=os.getenv("NAV_ESTIMATE_FUND_WR_DIR_PATH")
+
+NAV_ESTIMATE_FUNDS_DIR_PATHS = {
+
+    os.getenv("FUND_HV") : NAV_ESTIMATE_FUND_HV_DIR_PATH,
+    os.getenv("FUND_WR") : NAV_ESTIMATE_FUND_WR_DIR_PATH,
+
+}
+
 # -------- Cash --------
 
 CASH_FUND_HV_FILE_PATH=os.getenv("CASH_FUND_HV_FILE_PATH")

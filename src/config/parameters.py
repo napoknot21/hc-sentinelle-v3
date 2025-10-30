@@ -213,6 +213,25 @@ NAV_COLUMNS = {
 
 }
 
+# -------- NAV Estimate --------
+
+NAV_ESTIMATE_CUTOFF_DATE=os.getenv("NAV_ESTIMATE_CUTOFF_DATE")
+NAV_ESTIMATE_HIST_NAME_DEFAULT=os.getenv("NAV_ESTIMATE_HIST_NAME_DEFAULT")
+
+NAV_ESTIMATE_COLUMNS = {
+
+    "NAV Estimate": pl.Float64,
+    "NAV Estimate Weighted by Time": pl.Float64,
+    "date": pl.Date,
+
+}
+
+NAV_ESTIMATE_RENAME_COLUMNS = {
+
+    "NAV Estimate" : "GAV",
+    "NAV Estimate Weighted by Time" : "Weighted Performance"
+
+}
 
 # -------- Cash --------
 

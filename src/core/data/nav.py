@@ -11,8 +11,11 @@ from src.utils.logger import log
 from src.utils.data_io import load_excel_to_dataframe
 from src.utils.formatters import date_to_str
 
-from src.config.parameters import FUND_HV, NAV_COLUMNS, NAV_HIST_NAME_DEFAULT, NAV_CUTOFF_DATE
-from src.config.paths import NAV_FUND_HV_DIR_PATH, NAV_FUNDS_DIR_PATHS
+from src.config.parameters import (
+    FUND_HV, NAV_COLUMNS, NAV_HIST_NAME_DEFAULT, NAV_CUTOFF_DATE,
+    NAV_ESTIMATE_HIST_NAME_DEFAULT, NAV_ESTIMATE_COLUMNS, NAV_ESTIMATE_RENAME_COLUMNS
+)
+from src.config.paths import NAV_FUND_HV_DIR_PATH, NAV_FUNDS_DIR_PATHS, NAV_ESTIMATE_FUNDS_DIR_PATHS
 
 
 def read_history_nav_from_excel (
@@ -67,6 +70,73 @@ def read_history_nav_from_excel (
         log(f"[!] 'Date' column not found in DataFrame. Cannot apply cutoff.", "warning")
 
     return nav_history_df, md5_hash
+
+
+def read_nav_estimate_by_fund (
+        
+        fundation : Optional[str] = None,
+
+        filename : Optional[str] = None,
+        fund_dict : Optional[Dict[str, str]] = None,
+        
+        schema_override : Optional[Dict] = None
+    
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
+    """
+    
+    """
+    fundation = FUND_HV if fundation is None else fundation
+    fund_dict = NAV_ESTIMATE_FUNDS_DIR_PATHS if fund_dict is None else fund_dict
+
+    dir_abs_path = fund_dict.get(fundation)
+    filename = NAV_ESTIMATE_HIST_NAME_DEFAULT if filename is None else filename
+
+    fullname = os.path.join(dir_abs_path, filename)
+    schema_override = NAV_ESTIMATE_COLUMNS if schema_override is None else schema_override
+    columns = list(schema_override.keys())
+
+    dataframe, md5 = load_excel_to_dataframe(fullname, schema_overrides=schema_override, specific_cols=columns)
+
+    return dataframe, md5
+
+
+def rename_nav_estimate_columns (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        original_cols : Optional[Dict] = None,
+        rename_cols : Optional[Dict] = None,
+
+        fundation : Optional[str] = None
+
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
+    """
+    
+    """
+    dataframe, md5 = read_nav_estimate_by_fund(fundation) if dataframe is None else dataframe, md5
+
+    original_cols = NAV_ESTIMATE_COLUMNS if original_cols is None else original_cols
+    rename_cols = NAV_ESTIMATE_RENAME_COLUMNS if rename_cols is None else rename_cols
+
+    dataframe = dataframe.with_columns(
+        [
+            pl.col(c).cast(dtype, strict=False).alias(c)
+            for c, dtype in original_cols.items()
+            if c in dataframe.columns
+        ]
+    )
+
+    rename_valid = {k: v for k, v in rename_cols.items() if k in dataframe.columns}
+    dataframe = dataframe.rename(rename_valid)
+
+    df_fill = dataframe.with_columns(
+        [
+            pl.col(list(rename_cols.values())).forward_fill()
+        ]
+    )
+
+    return df_fill, md5
 
 
 def treat_string_nav_cols_df (

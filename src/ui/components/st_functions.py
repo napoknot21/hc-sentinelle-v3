@@ -18,15 +18,3 @@ def custom_option_menu (options_list : list) :
 
     )
 
-
-def center (text :  str, tag :  str, additional_css_rules : str = "") :
-    """
-    
-    """
-    st.write(
-    
-        f"<{tag} style='text-align: center;{additional_css_rules}'>{text}</{tag}>",
-        unsafe_allow_html=True
-    
-    )
-

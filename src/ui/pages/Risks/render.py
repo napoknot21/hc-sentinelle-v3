@@ -25,8 +25,9 @@ from src.ui.components.text import center_h1
 
 risk_subpages = [
     
-    {"name" : "Expiries",       "page" : expiries,  "icon" : "calendar-check"},
-    {"name" : "Cash",           "page" : cash,      "icon" : "cash-stack"},
+    {"name" : "Expiries",       "page" : expiries,      "icon" : "calendar-check"},
+    {"name" : "Performance",     "page" : performance,  "icon" : "calendar-check"},
+    {"name" : "Cash",           "page" : cash,          "icon" : "cash-stack"},
 
 ]
 
