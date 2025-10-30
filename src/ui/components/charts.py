@@ -108,7 +108,7 @@ def nav_estimate_performance_graph (
     for y_colonne in y_colonnes :
         
         y_colonne_data = _dataframe[y_colonne]
-        print(y_colonne_data)
+
         fig.add_trace(
 
             go.Scatter(

@@ -7,7 +7,7 @@ import streamlit as st
 from typing import Dict, List, Optional, Dict
 
 from src.ui.components.selector import date_selector
-from src.ui.components.text import center_h2
+from src.ui.components.text import center_h2, left_h5
 from src.ui.components.charts import nav_estimate_performance_graph
 
 from src.config.parameters import NAV_ESTIMATE_RENAME_COLUMNS
@@ -20,7 +20,7 @@ def performance (date : Optional[str | dt.datetime | dt.date] = None, fundation 
     """
     center_h2("Performances")
     st.write('')
-
+    
     nav_estimate_section(fundation)
 
     return None
@@ -32,6 +32,23 @@ def nav_estimate_section (fundation : Optional[str] = None) :
     
     """
 
+    start_date, end_date = performance_date_selectors()
+
+
+    left_h5(f"{fundation} Performance between {start_date} and {end_date}")
+    st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
+
+    st.write('')
+
+    left_h5(f"{fundation} Realized Volatility between {start_date} and {end_date}")
+    st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
+
+
+def performance_date_selectors () :
+    """
+    
+    """
+    #st.set_page_config(layout="centered")
     col1 , col2 = st.columns(2)
 
     with col1 :
@@ -41,8 +58,7 @@ def nav_estimate_section (fundation : Optional[str] = None) :
     with col2 :
         end_date = date_selector("End Date", key="end_date_perf")
     
-    st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
-
+    return start_date, end_date
 
 
 def performance_charts_section (
@@ -82,3 +98,8 @@ def performance_charts_section (
     return fig
 
 
+def realized_volatilty_chart_section (
+        
+
+    ) :
+    return None
