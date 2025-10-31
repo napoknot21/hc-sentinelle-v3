@@ -98,6 +98,13 @@ def nav_estimate_performance_graph (
     """
     
     """
+    if _dataframe is None :
+        
+        log("No dataframe entered. Returning a None chart...", "error")
+        st.cache_data.clear()
+
+        return None
+
     end_date = date_to_str() if end_date is None else end_date
     start_date = date_to_str() if start_date is None else start_date
     
