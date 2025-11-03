@@ -4,6 +4,7 @@ import os
 import re
 import time
 import hashlib
+import calendar
 
 import polars as pl
 import datetime as dt
@@ -50,6 +51,52 @@ def date_to_str (date : Optional[str | dt.date | dt.datetime] = None, format : s
         raise TypeError("date must be a string, datetime, or None")
 
     return date_obj.strftime(format)
+
+
+def str_to_date (date : Optional[str | dt.date | dt.datetime] = None, format : str = "%Y-%m-%d") -> dt.date :
+    """
+    
+    """
+    if date is None :
+        date_obj = dt.date.today()
+    
+    if isinstance (date, dt.datetime):
+        date_obj = date.date()
+
+    if isinstance(date, dt.date) :
+        date_obj = date
+    
+    if isinstance(date, str) :
+        date_obj = dt.datetime.strptime(date, format).date()
+    
+    return date_obj
+
+
+def shift_months (date : Optional[str | dt.date | dt.datetime] = None, months : int = 1) -> dt.date :
+    """
+    
+    """
+    date_obj = str_to_date(date)
+
+    y0, m0 = date_obj.year, date_obj.month
+    
+    i = (m0 - 1) + months
+    y = y0 + i // 12
+    m = (i % 12) + 1
+    
+    last = calendar.monthrange(y, m)[1]
+
+    return dt.date(y, m, min(date_obj.day, last))
+
+
+def monday_of_week (date : Optional[str | dt.date | dt.datetime] = None) -> dt.date :
+    """
+    
+    """
+    date_obj = str_to_date(date)
+    monday = date_obj - dt.timedelta(days=date_obj.weekday())
+    
+    return monday  # Monday..Sunday = 0..6
 
 
 def check_email_format (email : str) -> bool :

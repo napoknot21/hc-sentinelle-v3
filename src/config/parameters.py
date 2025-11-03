@@ -213,6 +213,10 @@ NAV_COLUMNS = {
 
 }
 
+# -------- Performances --------
+
+PERF_DEFAULT_DATE=os.getenv("PERF_DEFAULT_DATE")
+
 # -------- NAV Estimate --------
 
 NAV_ESTIMATE_CUTOFF_DATE=os.getenv("NAV_ESTIMATE_CUTOFF_DATE")
