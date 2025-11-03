@@ -63,8 +63,10 @@ def load_excel_to_dataframe (
 
             csv_bytes = df.write_csv().encode("utf-8")
             md5_hash = hashlib.md5(csv_bytes).hexdigest()
+
+            log(f"[*] [POLARS] Read in {time.time() - start:.2f} seconds from {excel_file_abs_pth}", "info")
             
-            return df, md5_hash 
+            return df, md5_hash
 
 
         actual = dict(zip(df.columns, df.dtypes))

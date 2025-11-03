@@ -26,8 +26,13 @@ def expiries (date : Optional[str | dt.date | dt.datetime] = None, fundation : O
     with col1 :
 
         fig = chart_experies_per_week(date, fundation)
-        st.plotly_chart(fig)
+        
+        if fig is not None :
+            st.plotly_chart(fig)
 
+        else :
+            st.warning("No file was founded. Relaunch")
+        
     with col2 :
         table_n_last_expiries(date, fundation)
 

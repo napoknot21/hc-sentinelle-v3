@@ -28,3 +28,24 @@ def show_full_expiries (_dataframe : pl.DataFrame, md5 : str, ) :
     
     """
     return None
+
+
+def plot_gross_perf_table (_dataframe : pl.DataFrame) :
+    """
+    """
+    return None
+
+
+@st.cache_data()
+def display_payments_table (_dataframe : pl.DataFrame, md5 : str, height : int = 800):
+    """
+    
+    """
+    if _dataframe is None :
+        
+        st.cache_data.clear()
+        return None
+    
+    table = st.dataframe(_dataframe, height=height)
+
+    return table

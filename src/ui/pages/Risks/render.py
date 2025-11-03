@@ -13,11 +13,13 @@ from src.utils.formatters import date_to_str
 from src.config.parameters import FUND_NAME_MAP
 
 from src.ui.pages.Risks.expiries import expiries
-from src.ui.pages.Risks.performance import *
-from src.ui.pages.Risks.fx_screeners import *
-from src.ui.pages.Risks.greeks import *
-from src.ui.pages.Risks.portfolio import *
-from src.ui.pages.Risks.cash import *
+from src.ui.pages.Risks.performance import performance
+from src.ui.pages.Risks.fx_screeners import fx_screeners
+from src.ui.pages.Risks.leverages import leverages
+from src.ui.pages.Risks.greeks import greeks
+from src.ui.pages.Risks.concentration import concentration
+from src.ui.pages.Risks.simm import simm
+from src.ui.pages.Risks.cash import cash
 
 from src.ui.styles.base import risk_menu
 from src.ui.components.selector import date_selector
@@ -26,14 +28,19 @@ from src.ui.components.text import center_h1
 risk_subpages = [
     
     {"name" : "Expiries",       "page" : expiries,      "icon" : "calendar-check"},
-    {"name" : "Performance",     "page" : performance,  "icon" : "calendar-check"},
+    {"name" : "Performance",    "page" : performance,   "icon" : "cash-coin"},
+    {"name" : "FX Screeners",   "page" : fx_screeners,  "icon" : "calendar-check"},
+    {"name" : "Leverages",      "page" : leverages,     "icon" : "gear"},
+    {"name" : "Concentration",  "page" : concentration, "icon" : "bullseye"},
+    {"name" : "Greeks",         "page" : greeks,        "icon" : "bar-chart"},
+    {"name" : "SIMM",           "page" : simm,          "icon" : "bar-chart-line"},
     {"name" : "Cash",           "page" : cash,          "icon" : "cash-stack"},
 
 ]
 
 
 
-def render_risk_page (title : str = "Risks", fundation_map : Optional[Dict] = None) -> None :
+def render_risks (title : str = "Risks", fundation_map : Optional[Dict] = None) -> None :
     """
     
     """

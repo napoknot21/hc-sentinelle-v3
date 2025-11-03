@@ -108,7 +108,8 @@ def rename_nav_estimate_columns (
         original_cols : Optional[Dict] = None,
         rename_cols : Optional[Dict] = None,
 
-        fundation : Optional[str] = None
+        fundation : Optional[str] = None,
+        forward_fill :  bool = True
 
     ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
     """
@@ -130,13 +131,18 @@ def rename_nav_estimate_columns (
     rename_valid = {k: v for k, v in rename_cols.items() if k in dataframe.columns}
     dataframe = dataframe.rename(rename_valid)
 
-    df_fill = dataframe.with_columns(
-        [
-            pl.col(list(rename_cols.values())).forward_fill()
-        ]
-    )
+    if forward_fill :
+            
+        dataframe = dataframe.with_columns(
+            [
+                pl.col(list(rename_cols.values())).forward_fill()
+            ]
+        )
 
-    return df_fill, md5
+    return dataframe, md5
+
+
+
 
 
 def treat_string_nav_cols_df (

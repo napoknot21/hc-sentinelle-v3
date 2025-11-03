@@ -29,6 +29,11 @@ def expiries_plot (
     """
     
     """
+    if _dataframe is None or _dataframe.is_empty() :
+        
+        st.cache_data.clear()
+        return None
+    
     # Validate
     if group_by not in _dataframe.columns :
         

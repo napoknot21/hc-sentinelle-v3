@@ -1,26 +1,27 @@
 from __future__ import annotations
 
+import streamlit as st
 from streamlit_option_menu import option_menu
-
+from typing import Optional, Dict
 
 from src.ui.pages.Payments.booker import *
-from src.ui.pages.Payments.display import *
-from src.ui.pages.Payments.payments import *
+from src.ui.pages.Payments.display import display
+from src.ui.pages.Payments.process import process
 
 from src.ui.components.text import center_h1, center_h3
 from src.ui.styles.base import risk_menu
 
 payments_subpages = [
 
-    {"name" : "Process",},
-    {"name" : "Security",},
-    {"name" : "Display"},
-    {"name" : "Booker"}
+    {"name" : "Process",    'page': process,   'icon': 'cash-coin'},
+    #{"name" : "Security",},
+    {"name" : "Display",    "page" : display,   "icon" : "eye"},
+    {"name" : "Booker",     "page" : booker,    "icon" : "book"},
 
 ]
 
 
-def render_payments_page (title : str = "Payments", subtitle : str = "Back Office Tool", fundation_map : Optional[Dict] = None) :
+def render_payments (title : str = "Payments", subtitle : str = "Back Office Tool", fundation_map : Optional[Dict] = None) :
     """
     
     """
@@ -40,3 +41,8 @@ def render_payments_page (title : str = "Payments", subtitle : str = "Back Offic
         styles=risk_menu
 
     )
+
+    for subpage in payments_subpages :
+
+        if subpage["name"] == menu and not subpage["page"] is None :
+            subpage["page"]()

@@ -7,7 +7,6 @@ import datetime as dt
 from typing import Optional
 
 
-
 def date_selector (
         
         label : str,
@@ -23,9 +22,27 @@ def date_selector (
     return st.date_input(label, value=default_value, key=key)
 
 
-
 def fundation_selector () :
     """
     
     """
     return None
+
+
+def number_of_payments_selector (
+        
+        label : str = "Select number of Payments",
+        min_value : int = 1,
+        max_value : int = 7 ,   
+    ) :
+    """
+    
+    """
+    nb_payments = st.number_input(
+        label,
+        min_value=min_value,
+        max_value=max_value,
+        value=min_value
+    )
+
+    return nb_payments

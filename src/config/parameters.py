@@ -6,6 +6,8 @@ import polars as pl
 from src.config.env import load_dotenv
 load_dotenv()
 
+# ---------------- MS Azure ----------------
+
 # Azure info for Microsoft Graph API
 CLIENT_ID=os.getenv("CLIENT_ID") # or APP_ID
 CLIENT_SECRET_VALUE=os.getenv("CLIENT_SECRET_VALUE")
@@ -21,7 +23,7 @@ EMAIL_DEFAULT_CC=os.getenv("EMAIL_DEFAULT_CC")
 EMAIL_DEFAULT_FROM=os.getenv("EMAIL_DEFAULT_FROM")
 
 
-# -------- Fundations --------
+# ---------------- Fundations ----------------
 
 FUND_WR=os.getenv("FUND_WR")
 FUND_HV=os.getenv("FUND_HV")
@@ -34,7 +36,7 @@ FUND_NAME_MAP = {
 }
 
 
-# -------- SIMM values -------
+# ---------------- SIMM values ----------------
 
 SIMM_HIST_NAME_DEFAULT=os.getenv("SIMM_HIST_NAME_DEFAULT")
 SIMM_CUTOFF_DATE=os.getenv("SIMM_CUTOFF_DATE") 
@@ -95,7 +97,8 @@ SIMM_COLUMNS = {
 # Mapping: raw_name -> final_name
 SIMM_RENAME_COLUMNS : dict[str, str] = {k: v["name"] for k, v in SIMM_COLUMNS.items()}
 
-# -------- FX Screeners (Tarf) --------
+
+# ---------------- FX Screeners (Tarf) ----------------
 
 TARF_COLUMNS={
 
@@ -142,7 +145,7 @@ TARF_COLUMNS={
 }
 
 
-# -------- Expiries --------
+# ---------------- Expiries ----------------
 
 EXPIRIES_FILENAME_REGEX = re.compile(r"^expiries_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2})")
 
@@ -198,7 +201,8 @@ EXPIRIES_COLUMNS_SPECIFIC = {
 
 }
 
-# -------- NAV --------
+
+# ---------------- NAV ----------------
 
 NAV_CUTOFF_DATE=os.getenv("NAV_CUTOFF_DATE")
 NAV_HIST_NAME_DEFAULT=os.getenv("NAV_HIST_NAME_DEFAULT")
@@ -213,11 +217,13 @@ NAV_COLUMNS = {
 
 }
 
-# -------- Performances --------
+
+# ---------------- Performances ----------------
 
 PERF_DEFAULT_DATE=os.getenv("PERF_DEFAULT_DATE")
 
-# -------- NAV Estimate --------
+
+# ---------------- NAV Estimate ----------------
 
 NAV_ESTIMATE_CUTOFF_DATE=os.getenv("NAV_ESTIMATE_CUTOFF_DATE")
 NAV_ESTIMATE_HIST_NAME_DEFAULT=os.getenv("NAV_ESTIMATE_HIST_NAME_DEFAULT")
@@ -237,7 +243,8 @@ NAV_ESTIMATE_RENAME_COLUMNS = {
 
 }
 
-# -------- Cash --------
+
+# ---------------- Cash ----------------
 
 CASH_COLUMNS = {
 
@@ -253,9 +260,6 @@ CASH_COLUMNS = {
 
 }
 
-
-# 
-
 COLLATERAL_COLUMNS = {
 
     "Fundation" : pl.Utf8,
@@ -268,6 +272,76 @@ COLLATERAL_COLUMNS = {
     "VM" : pl.Float64,
     "Requirement" : pl.Float64,
     "Net Exess/Deficit" : pl.Float64
+
+}
+
+
+# ---------------- Payments ----------------
+
+PAYMENTS_COLUMNS = {
+
+    "Fondsname" : pl.Utf8,
+    
+    #"KA" : pl.Utf8,
+    "KONTONR" : pl.Int64,
+    "DEVISE" : pl.Utf8,
+    "BETRAG" : pl.Float64,
+    "VALUTA" : pl.Datetime,
+    "AUFTRAGGEBER" : pl.Utf8,
+    "SPESENDETAIL" : pl.Utf8,
+    
+    "BEGUENSTIGTER" : pl.Utf8,
+    #"BEGUENSTIGTER.1" : pl.Utf8,
+    #"BEGUENSTIGTER.2" : pl.Utf8,
+    #"BEGUENSTIGTER.3" : pl.Utf8,
+
+    "ZAHLUNGSTEXT" : pl.Utf8,
+    #"ZAHLUNGSTEXT.1" : pl.Utf8,
+    #"ZAHLUNGSTEXT.2" : pl.Utf8,
+    #"ZAHLUNGSTEXT.3" : pl.Utf8,
+
+    "IBAN" : pl.Utf8,
+
+    "MIT BANK" : pl.Utf8,
+    "MIT BANK.1" : pl.Utf8,
+    #"MIT BANK.2" : pl.Utf8,
+    #"MIT BANK.3" : pl.Utf8,
+
+    #"NOSTROKONTO" : pl.Utf8,
+    #"BEAUFTR. BANK" : pl.Utf8,
+    "KORRESPONDENT" : pl.Utf8,
+
+    #"UEBERTR.-SPESEN" : pl.Utf8,
+    "TEXT KONTOAUSZUG" : pl.Utf8
+
+}
+
+SECURITIES_COLUMNS = {
+
+    "Transref. AM" : pl.Int64,
+    "fund" : pl.Utf8,
+    
+    "NEWM/CANC" : pl.Utf8,
+    "Portfolio ID  AM" : pl.Int64,
+    "BUY/SELL" : pl.Utf8,
+    
+    "Quantity" : pl.Int64,
+    
+    "Sec. ID" : pl.Utf8,
+    "Sec. name" : pl.Utf8,
+
+    "Price" : pl.Float64,
+    "Trade CCY" : pl.Utf8,
+
+    "Interest" : pl.Float64,
+
+    "Trade date" : pl.Datetime,
+    "Settlement date" : pl.Datetime,
+
+    "Sett. CCY" : pl.Utf8,
+
+    "Broker ID" : pl.Utf8,
+    "Settl. amount" : pl.Float64
 
 }
 

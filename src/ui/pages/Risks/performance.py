@@ -35,9 +35,23 @@ def performance (
     
     center_h2("Performances")
     st.write('')
-    
+
+    estimated_gross_perf_section(date, fundation)
     nav_estimate_section(fundation)
 
+    return None
+
+
+def estimated_gross_perf_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None
+    
+    ) -> None :
+    """
+    
+    """
+    st.write("Hello World")
     return None
 
 
@@ -199,9 +213,33 @@ def performance_charts_section (
 
     return fig
 
-
+# TODO : Need a best formula for computing this results (window fixed ?)
 def realized_volatilty_chart_section (
         
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None,
+
+        fundation : Optional[str] = None,
+        rename_cols : Optional[Dict] = None,
+
+        window : int = 252,
+        annual_factor : int = (252 ** 0.5) * 100,
 
     ) :
+    """
+    
+    """
+    rename_cols = NAV_ESTIMATE_RENAME_COLUMNS if rename_cols is None else rename_cols
+    columns = list(rename_cols.values())
+
+    dataframe, md5 = read_nav_estimate_by_fund(fundation)
+    rename_df , md5 = rename_nav_estimate_columns(dataframe, md5)
+
+    df_filterd = rename_df.filter(
+        
+        (pl.col("date") >= pl.lit(start_date)) &
+        (pl.col("date") <= pl.lit(end_date))
+    
+    )
+
     return None

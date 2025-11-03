@@ -6,17 +6,18 @@ from pathlib import Path
 from src.ui.components.layout import header, sidebar
 from src.ui.styles.base import risk_menu
 
-from src.ui.pages.Payments.payments import render_payments
-from src.ui.pages.Payments.render import render_payments_page
-from src.ui.pages.Risks.render import render_risk_page
+from src.ui.pages.Payments.render import render_payments
+from src.ui.pages.Risks.render import render_risks
 
 
 PAGES = [
-    ("Risks", "exclamation-triangle-fill", render_risk_page),
-    #("Reconciliation", "arrow-repeat", render_reco),
-    #("Ice API (but better)", "server", render_trading),
-    ("Payments", "cash", render_payments_page),
-    #("Statistics", "graph-up", render_stats),
+
+    ("Risks",           "exclamation-triangle-fill",    render_risks),
+    #("Reconciliation", "arrow-repeat",                 render_reco),
+    #("Ice API",        "server",                       render_trading),
+    ("Payments",        "cash",                         render_payments),
+    #("Statistics",     "graph-up",                     render_stats),
+
 ]
 
 
