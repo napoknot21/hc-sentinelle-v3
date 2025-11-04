@@ -13,7 +13,7 @@ from src.ui.styles.base import risk_menu
 
 payments_subpages = [
 
-    {"name" : "Process",    'page': process,   'icon': 'cash-coin'},
+    {"name" : "Process",    "page": process,   "icon": "cash-coin"},
     #{"name" : "Security",},
     {"name" : "Display",    "page" : display,   "icon" : "eye"},
     {"name" : "Booker",     "page" : booker,    "icon" : "book"},
@@ -35,7 +35,7 @@ def render_payments (title : str = "Payments", subtitle : str = "Back Office Too
 
         menu_title=None,
         options=[subpage["name"] for subpage in payments_subpages],
-        #icons=[subpage["icon"] for subpage in payments_subpages],
+        icons=[subpage["icon"] for subpage in payments_subpages],
         orientation="horizontal",
         default_index=0, 
         styles=risk_menu

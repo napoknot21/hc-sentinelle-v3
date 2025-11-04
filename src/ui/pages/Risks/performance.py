@@ -16,6 +16,8 @@ from src.utils.formatters import date_to_str, str_to_date, shift_months, monday_
 from src.core.data.nav import read_nav_estimate_by_fund, rename_nav_estimate_columns
 
 
+# Main function
+
 def performance (
     
         date : Optional[str | dt.datetime | dt.date] = None,
@@ -42,6 +44,19 @@ def performance (
     return None
 
 
+def nav_estimate_section (fundation : Optional[str] = None) :
+    """
+    
+    """
+
+    start_date, end_date = date_selectors_section()
+
+    charts_performance_section(fundation, start_date, end_date)
+    
+
+
+# Table Estimated Perf Section
+
 def estimated_gross_perf_section (
         
         date : Optional[str | dt.datetime | dt.date] = None,
@@ -55,21 +70,7 @@ def estimated_gross_perf_section (
     return None
 
 
-def nav_estimate_section (fundation : Optional[str] = None) :
-    """
-    
-    """
-
-    start_date, end_date = date_selectors_section()
-
-    left_h5(f"{fundation} Performance between {start_date} and {end_date}")
-    st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
-
-    st.write('')
-
-    left_h5(f"{fundation} Realized Volatility between {start_date} and {end_date}")
-    st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
-
+# Date selector section    
 
 def date_selectors_section () :
     """
@@ -177,6 +178,29 @@ def performance_date_quick_selectors (
     return st.session_state.start_date_perf, st.session_state.end_date_perf
 
 
+# Charts Perf Section
+
+def charts_performance_section (
+    
+        fundation : Optional[str] = None,
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None
+    
+    ) :
+    """
+    
+    """
+    left_h5(f"{fundation} Performance between {start_date} and {end_date}")
+    st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
+
+    st.write('')
+
+    left_h5(f"{fundation} Realized Volatility between {start_date} and {end_date}")
+    st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
+
+    return None
+
+
 def performance_charts_section (
         
         start_date : Optional[str | dt.datetime | dt.date] = None,
@@ -243,3 +267,6 @@ def realized_volatilty_chart_section (
     )
 
     return None
+
+
+# 

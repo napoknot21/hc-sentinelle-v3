@@ -8,7 +8,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Tuple
 
 from src.utils.logger import log
 from src.utils.formatters import date_to_str
@@ -165,5 +165,74 @@ def nav_estimate_performance_graph (
     
     )
     print(_dataframe)
+
+    return fig
+
+
+@st.cache_data()
+def cash_chart (
+        
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+        group_by : Optional[Tuple] = ("Bank", "Type"),
+        currency : Optional[str] = "EUR"
+    ) :
+    """
+    
+    """
+    if _dataframe is None :
+        
+        log("[-] Error loading the dataframe to plot", "error")
+        st.cache_data.clear()
+
+        return None
+    
+    agents = _dataframe.select(list(group_by)).unique()
+
+    # Plot using Plotly
+    fig = go.Figure()
+
+    # Iterate through columns and add each one as a trace to the figure
+    for row in agents.iter_rows() :
+
+        bank, type_ = row[0], row[1]
+
+        filtered_df = _dataframe.filter(
+            (pl.col('Bank') == bank) & (pl.col('Type') == type_)
+        )
+
+        # Extract Date and EUR values for this combination
+        filtered_df = filtered_df.sort("Date")
+
+        dates = filtered_df['Date'].to_list()
+        ccy_values = filtered_df[currency].to_list()
+
+        fig.add_trace(
+
+            go.Scatter(
+
+                x=dates,
+                y=ccy_values,
+                mode='lines',
+                stackgroup='one',
+                name=f"{bank} - {type_}"
+            )
+            
+        )
+
+    # Layout settings for the plot
+    fig.update_layout(
+
+        title="Stacked Area: Summed Amount in EUR Over Time by Bank and Type",
+
+        xaxis_title="Date",
+        yaxis_title=f"Amount in {currency}",
+
+        legend_title="Bank - Type",
+        template="plotly_white",
+        
+        xaxis=dict(showgrid=True),  # Display grid on x-axis
+        yaxis=dict(showgrid=True)   # Display grid on y-axis
+    )
 
     return fig

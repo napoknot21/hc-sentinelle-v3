@@ -6,11 +6,13 @@ from src.config.env import load_dotenv
 load_dotenv()
 
 LIBAPI_ABS_PATH=os.getenv("LIBAPI_PATH")
-LOGS_DIR_PATH=os.getenv("LOGS_DIR_PATH")
+LOGS_DIR_ABS_PATH=os.getenv("LOGS_DIR_ABS_PATH")
+LOGS_DIR_REL_PATH=os.getenv("LOGS_DIR_REL_PATH")
 
 MESSAGE_SAVE_DIRECTORY=os.getenv("MESSAGE_SAVE_DIRECTORY")
 
-PAYMENTS_DIR_PATH=os.getenv("PAYMENTS_DIR_PATH")
+PAYMENTS_DIR_ABS_PATH=os.getenv("PAYMENTS_DIR_ABS_PATH")
+PAYMENTS_DIR_REL_PATH=os.getenv("PAYMENTS_DIR_REL_PATH")
 
 # -------- SIMM paths -------- 
 
@@ -76,9 +78,17 @@ CASH_FUNDS_FILE_PATHS = {
 
 }
 
-# -------- Cash --------
+# -------- Collateral --------
 
-COLLATERAL_FUND_HV_DIR_PATH=os.getenv("COLLATERAL_FILE_ABS_PATH")
+COLLAT_FUND_HV_FILE_PATH=os.getenv("COLLAT_FUND_HV_FILE_PATH")
+COLLAT_FUND_WR_FILE_PATH=os.getenv("COLLAT_FUND_WR_FILE_PATH")
+
+COLLATERAL_FUNDS_FILE_PATHS = {
+
+    os.getenv("FUND_HV") : COLLAT_FUND_HV_FILE_PATH,
+    os.getenv("FUND_WR") : COLLAT_FUND_WR_FILE_PATH
+
+}
 
 
 # -------- Payments --------

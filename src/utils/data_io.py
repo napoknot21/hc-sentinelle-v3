@@ -429,7 +429,7 @@ def export_excel_to_pdf (file_abs_path : Optional[str] = None, output_filename :
         # No file existed. Error returned
         return response
     
-    output_dir_path = PAYMENTS_DIR_PATH if output_dir_path is None else output_dir_path
+    output_dir_path = PAYMENTS_DIR_ABS_PATH if output_dir_path is None else output_dir_path
     os.makedirs(output_dir_path, exist_ok=True)
 
     with xw.App() as app :

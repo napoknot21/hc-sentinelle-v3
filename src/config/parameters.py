@@ -271,7 +271,7 @@ COLLATERAL_COLUMNS = {
     "IM" : pl.Float64,
     "VM" : pl.Float64,
     "Requirement" : pl.Float64,
-    "Net Exess/Deficit" : pl.Float64
+    "Net Excess/Deficit" : pl.Float64
 
 }
 

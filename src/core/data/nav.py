@@ -9,7 +9,7 @@ from typing import List, Optional, Dict, Tuple
 
 from src.utils.logger import log
 from src.utils.data_io import load_excel_to_dataframe
-from src.utils.formatters import date_to_str
+from src.utils.formatters import date_to_str, str_to_date
 
 from src.config.parameters import (
     FUND_HV, NAV_COLUMNS, NAV_HIST_NAME_DEFAULT, NAV_CUTOFF_DATE,
@@ -56,7 +56,7 @@ def read_history_nav_from_excel (
         log(f"[-] Error getting the NAV data : {e}", "error")
         return None, None
     
-    cutoff_date_parsed = dt.datetime.strptime(cutoff_date, "%Y-%m-%d").date()
+    cutoff_date_parsed = str_to_date(cutoff_date)
 
     if "Date" in nav_history_df.columns :
 
@@ -140,9 +140,6 @@ def rename_nav_estimate_columns (
         )
 
     return dataframe, md5
-
-
-
 
 
 def treat_string_nav_cols_df (

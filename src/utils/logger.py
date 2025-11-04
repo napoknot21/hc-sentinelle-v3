@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import os
 import logging
+import datetime as dt
 
-from datetime import datetime
-
-from src.config.paths import LOGS_DIR_PATH
-os.makedirs(LOGS_DIR_PATH, exist_ok=True)
+from src.config.paths import LOGS_DIR_REL_PATH
+os.makedirs(LOGS_DIR_REL_PATH, exist_ok=True)
 
 
 def log (message: str, level: str = "info", module: str = "sentinelle"):
@@ -64,8 +63,7 @@ def get_logger (name: str = "sentinelle") -> logging.Logger:
         )
 
         # File handler
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        LOG_FILE_NAME=os.path.join(LOGS_DIR_PATH, f"sentinelle_{datetime.now().strftime('%Y-%m-%d')}.log")
+        LOG_FILE_NAME=os.path.join(LOGS_DIR_REL_PATH, f"sentinelle_{dt.datetime.now().strftime('%Y-%m-%d')}.log")
         file_handler = logging.FileHandler(LOG_FILE_NAME)
 
         file_handler.setFormatter(formatter)
