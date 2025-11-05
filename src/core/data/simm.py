@@ -11,7 +11,7 @@ from src.core.api.simm import update_simm_date_from_df
 
 from src.utils.logger import log
 from src.utils.data_io import load_excel_to_dataframe
-from src.utils.formatters import date_to_str
+from src.utils.formatters import date_to_str, str_to_date
 
 from src.config.paths import SIMM_FUNDS_DIR_PATHS
 from src.config.parameters import FUND_HV, SIMM_HIST_NAME_DEFAULT, SIMM_CUTOFF_DATE, SIMM_COLUMNS, SIMM_RENAME_COLUMNS
@@ -23,13 +23,16 @@ SCHEMA_OVERRIDES_WTH_DATE = SCHEMA_OVERRIDES.copy()
 SCHEMA_OVERRIDES_WTH_DATE["Date"] = pl.Date
 
 
-def read_simm_history_from_excel (
+def get_simm_history (
         
         date : Optional[str | dt.date | dt.datetime] =  None,
         fund : Optional[str] = None, # FUND_HV
+
         simm_fund_paths : Optional[Dict] = None, # SIMM_FUNDS_DIR_PATHS,
-        specific_cols : Optional[List] = None,
+        
         schema_overrides : Optional[Dict] = None, # SCHEMA_OVERRIDES
+        specific_cols : Optional[List] = None,
+        
         cutoff_date : Optional[str] = None # SIMM_CUTOFF_DATE
 
     ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
@@ -52,9 +55,12 @@ def read_simm_history_from_excel (
                              or None if the fund path could not be resolved.
     """
     # Checks for the fundation path
-    
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
     schema_overrides = SCHEMA_OVERRIDES_WTH_DATE if schema_overrides is None else schema_overrides
     specific_cols = list(schema_overrides.keys()) if specific_cols is None else specific_cols
+
     cutoff_date = SIMM_CUTOFF_DATE if cutoff_date is None else cutoff_date
 
     excel_file_abs_pth = get_simm_abs_path_by_fund(fund, simm_fund_paths)
@@ -66,7 +72,7 @@ def read_simm_history_from_excel (
     
     try :
 
-        simm_history_df, _ = load_excel_to_dataframe(excel_file_abs_pth, specific_cols=specific_cols, schema_overrides=schema_overrides)
+        simm_history_df, md5 = load_excel_to_dataframe(excel_file_abs_pth, specific_cols=specific_cols, schema_overrides=schema_overrides)
 
         if simm_history_df is None :
             
@@ -81,22 +87,61 @@ def read_simm_history_from_excel (
     
     try :
 
-        cutoff_date_parsed = dt.datetime.strptime(cutoff_date, "%Y-%m-%d").date()
-        
         if "Date" in simm_history_df.columns :
-
-            simm_history_df = simm_history_df.filter(pl.col("Date") >= pl.lit(cutoff_date_parsed))
-            md5_hash = hashlib.md5(simm_history_df.write_parquet()).hexdigest()
+            
+            cutoff_date = str_to_date(cutoff_date)
+            simm_history_df = simm_history_df.filter(pl.col("Date") >= (cutoff_date))
 
         else :
-            
             log(f"[!] 'Date' column not found in DataFrame. Cannot apply cutoff.", "warning")
     
     except Exception as e :
-
         return None, None
 
-    return simm_history_df, md5_hash
+    print(simm_history_df)
+
+    return simm_history_df, md5
+
+
+def get_simm_by_date (
+        
+        date : Optional[str | dt.date | dt.datetime] =  None,
+        fund : Optional[str] = None, # FUND_HV
+
+        simm_fund_paths : Optional[Dict] = None, # SIMM_FUNDS_DIR_PATHS,
+        
+        schema_overrides : Optional[Dict] = None, # SCHEMA_OVERRIDES
+        specific_cols : Optional[List] = None,
+        
+        cutoff_date : Optional[str] = None # SIMM_CUTOFF_DATE
+
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
+    """
+    
+    """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    schema_overrides = SCHEMA_OVERRIDES_WTH_DATE if schema_overrides is None else schema_overrides
+    specific_cols = list(schema_overrides.keys()) if specific_cols is None else specific_cols
+
+    cutoff_date = SIMM_CUTOFF_DATE if cutoff_date is None else cutoff_date
+
+    try :
+        dataframe, md5 = get_simm_history(date, fund, simm_fund_paths, schema_overrides, specific_cols, cutoff_date)
+
+    except Exception as e :
+        return None, None
+    
+    # Filter by date
+    date = str_to_date(date)
+    df_filter = dataframe.filter(pl.col("Date") == (date))
+
+    print(df_filter)
+
+    return df_filter, md5
+
+
 
 
 def export_simm_history_from_df (
@@ -172,7 +217,7 @@ def is_simm_history_updated_from_file (
     fund = FUND_HV if fund is None else fund
     date = date_to_str(date)
 
-    df_simm, md5_hash = read_simm_history_from_excel(fund)
+    df_simm, md5_hash = get_simm_history(fund)
     updated = is_simm_history_updated_from_df(df_simm, md5_hash, date, specific_col)
 
     return updated
@@ -193,7 +238,7 @@ def get_updated_all_simm_history (
     specific_cols = list(SCHEMA_OVERRIDES_WTH_DATE.keys())
     schema_overrides = SCHEMA_OVERRIDES if schema_overrides is None else schema_overrides
 
-    simm_history_df, md5_hash = read_simm_history_from_excel(fund, simm_fund_paths, specific_cols, schema_overrides)
+    simm_history_df, md5_hash = get_simm_history(fund, simm_fund_paths, specific_cols, schema_overrides)
     updated = is_simm_history_updated_from_df(simm_history_df, md5_hash)
 
     if updated :

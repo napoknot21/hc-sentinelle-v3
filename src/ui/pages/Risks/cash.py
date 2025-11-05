@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import polars as pl
 import streamlit as st
 import pandas as pd
@@ -7,12 +8,18 @@ import datetime as dt
 
 from typing import Optional, List
 
+# Add of CCYs from LibApi
+from src.config.paths import LIBAPI_ABS_PATH
+sys.path.append(LIBAPI_ABS_PATH)
+from libapi.config.parameters import CCYS_ORDER # type: ignore
+
+from src.utils.formatters import str_to_date
+
 from src.ui.components.text import center_bold_paragraph, center_h2, left, left_h5
 from src.ui.components.charts import cash_chart
 
 from src.core.data.cash import load_all_cash, load_all_collateral, aggregate_n_groupby, pivot_currency_historic
 
-from src.utils.formatters import str_to_date
 
 # -------- Main function --------
 
@@ -39,14 +46,12 @@ def cash (
     return None
 
 
-def currency_chart_section (
-        
-        options_ccys : Optional[List[str]] = ["EUR", "USD", "CAD"]
-
-    ) -> Optional[str] :
+def currency_chart_section (options_ccys : Optional[List[str]] = None) -> Optional[str] :
     """
     
     """
+    options_ccys = CCYS_ORDER if options_ccys is None else options_ccys
+    
     col1, _ = st.columns(2)
 
     with col1 :

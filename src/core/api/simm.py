@@ -21,8 +21,8 @@ from src.utils.logger import log
 
 def fetch_raw_simm_data (
     
-        fund : Optional[str] = None,
         date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
 
         fund_map : Optional[Dict] = None
     
@@ -58,7 +58,7 @@ def fetch_raw_simm_data (
     try :
 
         calculator = get_ice_calculator()
-        log(f"[+] ICE API client ready | fund={fund_name} | date={date}", "info")
+        log(f"[+] ICE API client ready | fund : {fund_name} | date : {date}", "info")
 
     except Exception as e :
 
@@ -81,6 +81,7 @@ def fetch_raw_simm_data (
         return None, None
 
     log("[+] Bilateral IM data request successful")
+    
     try :
 
         # Dictionarry billateral IM normalization

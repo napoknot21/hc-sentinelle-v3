@@ -236,3 +236,56 @@ def cash_chart (
     )
 
     return fig
+
+
+@st.cache_data()
+def simm_ctpy_im_vm_chart (
+        
+
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        date : Optional[str | dt.datetime | dt.date] = None,
+
+        x_axis : Optional[str] = None,
+        columns : Optional[Tuple] = None,
+
+    ) :
+    """
+    
+    """
+    if _dataframe is None :
+        
+        log("[-] Error loading the dataframe to SIMM chart", "error")
+        st.cache_data.clear()
+
+        return None
+    
+    counterparties = list(_dataframe[x_axis].unique())
+    columns = list(columns)
+    print(columns)
+    
+    # Plot using Plotly
+    fig = go.Figure()
+
+    for column in columns :
+        fig.add_trace(go.Bar(x=counterparties, y=_dataframe[column], name=column))
+
+    fig.update_layout(
+
+        title=f"Most Recent SIMM Data at {date} (ICE Data)",
+        xaxis=dict(title=x_axis),
+        yaxis=dict(title='Amount'),
+        hovermode="x unified",
+        
+        hoverlabel=dict(
+
+            bgcolor="white",
+            font_color="black",
+            #font_size=16,
+        ),
+
+    )
+    
+    return fig
+

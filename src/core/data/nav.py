@@ -15,7 +15,7 @@ from src.config.parameters import (
     FUND_HV, NAV_COLUMNS, NAV_HIST_NAME_DEFAULT, NAV_CUTOFF_DATE,
     NAV_ESTIMATE_HIST_NAME_DEFAULT, NAV_ESTIMATE_COLUMNS, NAV_ESTIMATE_RENAME_COLUMNS
 )
-from src.config.paths import NAV_FUND_HV_DIR_PATH, NAV_FUNDS_DIR_PATHS, NAV_ESTIMATE_FUNDS_DIR_PATHS
+from src.config.paths import NAV_PORTFOLIO_FUND_HV_DIR_PATH, NAV_PORTFOLIO_FUNDS_DIR_PATHS, NAV_ESTIMATE_FUNDS_DIR_PATHS
 
 
 def read_history_nav_from_excel (
@@ -225,9 +225,9 @@ def get_nav_abs_path_by_fund (
     
     """
     fund = FUND_HV if fund is None else fund
-    nav_fund_paths = NAV_FUNDS_DIR_PATHS if nav_fund_paths is None else nav_fund_paths 
+    nav_fund_paths = NAV_PORTFOLIO_FUNDS_DIR_PATHS if nav_fund_paths is None else nav_fund_paths 
     
-    fund_abs_path = nav_fund_paths.get(fund, NAV_FUND_HV_DIR_PATH)
+    fund_abs_path = nav_fund_paths.get(fund, NAV_PORTFOLIO_FUND_HV_DIR_PATH)
     basename_file = NAV_HIST_NAME_DEFAULT if basename_file is None else basename_file
 
     nav_abs_path = os.path.join(fund_abs_path, basename_file)
