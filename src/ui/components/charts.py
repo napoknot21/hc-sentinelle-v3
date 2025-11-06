@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 from typing import Any, Optional, List, Tuple
 
 from src.utils.logger import log
-from src.utils.formatters import date_to_str
+from src.utils.formatters import date_to_str, str_to_date
 
 
 @st.cache_data()
@@ -263,7 +263,6 @@ def simm_ctpy_im_vm_chart (
     
     counterparties = list(_dataframe[x_axis].unique())
     columns = list(columns)
-    print(columns)
     
     # Plot using Plotly
     fig = go.Figure()
@@ -288,4 +287,215 @@ def simm_ctpy_im_vm_chart (
     )
     
     return fig
+
+
+@st.cache_data()
+def simm_over_time_chart (
+        
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        title : Optional[str] = None,
+        date : Optional[str | dt.datetime | dt.date] = None,
+
+        x_axis : Optional[str] = None,
+        column : Optional[str] = None,
+
+    ) :
+    """
+    
+    """
+    if _dataframe is None :
+        
+        log(f"[-] Error loading the dataframe to {column} chart", "error")
+        st.cache_data.clear()
+
+        return None
+    
+    _dataframe = _dataframe.sort("Date")
+
+    counterparties = list(_dataframe[x_axis].unique())
+
+    # Plot using Plotly
+    fig = go.Figure()
+
+    traces = []
+    for counterparty in counterparties :
+        
+        subset = _dataframe.filter(pl.col(x_axis) == counterparty)
+        
+        trace = go.Scatter(x=subset['Date'], y=subset.get_column(column), mode='lines', name=counterparty, line_shape='spline')
+        traces.append(trace)
+       
+        #fig.add_trace(go.Bar(x=counterparties, y=_dataframe[column], name=column))
+
+    layout = go.Layout(
+
+        title=title,
+        xaxis=dict(title='Date'),
+        yaxis=dict(title='Amount'),
+        hovermode="x unified",
+
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        ),
+        
+    )
+
+    # Create figure
+    fig = go.Figure(data=traces, layout=layout)
+
+    return fig
+
+
+@st.cache_data()
+def total_nav_over_time_chart (
+        
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+        title : Optional[str]  = None,
+
+    ) :
+    """
+    
+    """
+    if _dataframe is None :
+
+        st.cache_data.clear()
+        return None
+    
+    date = str_to_date(date) if date is None else date
+    dataframe = _dataframe.filter(pl.col("Date") <= date)
+    
+    trace_nav = go.Scatter(
+
+        x=dataframe.get_column("Date"),
+        y=dataframe.get_column("NAV"),
+        
+        mode='lines',
+        name=title,
+        line_shape='spline',
+        line=dict(color='blue', width=2)  # Set line color to red
+
+    )
+
+    layout_nav = go.Layout(
+
+        title=title,
+    
+        xaxis=dict(title='Date'),
+        yaxis=dict(title='NAV'),
+
+        hovermode="x unified",
+
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        ),
+
+        legend=dict(
+            title="Sources",
+            x=0.01,
+            y=0.99,
+        ),
+    
+    )
+    
+    fig = go.Figure(data=[trace_nav], layout=layout_nav)
+
+    return fig
+
+
+@st.cache_data()
+def im_mv_over_nav_with_rolling (
+
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5_1 : Optional[str] = None,
+        md5_2 : Optional[str] = None,
+
+        column : Optional[str] = None,
+
+) :
+    """
+    
+    """
+    if _dataframe is None :
+        
+        st.cache_data.clear()
+        return None
+
+    columns = [
+
+        {
+            "name" : f"{column}/NAV %",
+            "title" : f"Total {column} Over NAV %",
+            "color" : "red"
+        },
+
+        {
+            "name" : f"Rolling {column}/NAV %",
+            "title" : f"Total Rolling {column} Over NAV %",
+            "color" : "blue"
+        },
+        
+    ]
+
+    df_rolling = _dataframe.clone()
+    df_rolling = df_rolling.sort("Date").with_columns(
+
+        pl.col(f"{column}/NAV %")
+            .rolling_mean(window_size=30, center=True)
+            .alias(f"Rolling {column}/NAV %")
+
+    )
+
+    traces = []
+
+    for column_nav in columns :
+
+        trace = go.Scatter(
+
+            x=df_rolling.get_column("Date"),
+            y=df_rolling.get_column(column_nav["name"]),
+
+            mode='lines',
+            name=column_nav["title"],
+
+            line_shape='spline',
+            line=dict(color=column_nav["color"], width=2) # Set line color to red
+            
+        )
+
+        traces.append(trace)
+
+    # Create layout for the figure
+    layout1 = go.Layout(
+
+        title=f"Total {column} Over NAV %",
+        xaxis=dict(title='Date'),
+        yaxis=dict(title=f'{column}/NAV %'),
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        ),
+        legend=dict(
+            title="Sources",
+            x=0.01,
+            y=0.99,
+        ),
+    )
+
+    fig = go.Figure(data=traces, layout=layout1)
+
+    return fig
+
 

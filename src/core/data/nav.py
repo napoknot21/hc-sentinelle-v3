@@ -44,7 +44,7 @@ def read_history_nav_from_excel (
 
     try :
 
-        nav_history_df, _ = load_excel_to_dataframe(excel_file_abs_path, specific_cols=specific_cols, schema_overrides=schema_overrides)
+        nav_history_df, md5 = load_excel_to_dataframe(excel_file_abs_path, specific_cols=specific_cols, schema_overrides=schema_overrides)
 
         if nav_history_df is None :
 
@@ -59,9 +59,10 @@ def read_history_nav_from_excel (
     cutoff_date_parsed = str_to_date(cutoff_date)
 
     if "Date" in nav_history_df.columns :
-
+        
         nav_history_df = nav_history_df.filter(pl.col("Date") >= pl.lit(cutoff_date_parsed))
-        md5_hash = hashlib.md5(nav_history_df.write_parquet()).hexdigest()
+        #print(nav_history_df)
+        #md5_hash = hashlib.md5(nav_history_df.write_parquet()).hexdigest()
         
         log(f"[+] NAV file read successfully")
 
@@ -69,7 +70,7 @@ def read_history_nav_from_excel (
         
         log(f"[!] 'Date' column not found in DataFrame. Cannot apply cutoff.", "warning")
 
-    return nav_history_df, md5_hash
+    return nav_history_df, md5
 
 
 def read_nav_estimate_by_fund (
