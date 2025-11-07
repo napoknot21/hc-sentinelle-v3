@@ -37,6 +37,12 @@ def expiries (date : Optional[str | dt.date | dt.datetime] = None, fundation : O
         table_n_last_expiries(date, fundation)
 
 
+def chart_table_expiries_section () :
+    """
+    
+    """
+    return None
+
 
 def chart_experies_per_week (date : Optional[str | dt.date | dt.datetime] = None, fundation : Optional[str] = None, title : str = "Number of Expiries per Day") :
     """
@@ -69,3 +75,14 @@ def table_n_last_expiries (
 
     return table
 
+
+
+def all_expiries_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+    ) :
+    """
+
+    """
