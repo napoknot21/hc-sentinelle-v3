@@ -1,10 +1,20 @@
 from __future__ import annotations
 
-import os, re
+import os
+import re
+import sys
 import polars as pl
 
 from src.config.env import load_dotenv
 load_dotenv()
+
+# --------------- LibApi ------------------
+
+from src.config.paths import LIBAPI_ABS_PATH
+
+sys.path.append(LIBAPI_ABS_PATH)
+from libapi.config.parameters import CCYS_ORDER # type: ignore
+
 
 # ---------------- MS Azure ----------------
 
@@ -345,3 +355,22 @@ SECURITIES_COLUMNS = {
 
 }
 
+HV_FUND_PAYMENTS = os.getenv("HV_FUND_PAYMENTS")
+WR_FUND_PAYMENTS = os.getenv("WR_FUND_PAYMENTS")
+
+PAYMENTS_FUNDS = [
+
+    HV_FUND_PAYMENTS,
+    WR_FUND_PAYMENTS
+
+]
+
+PAYMENTS_CONCURRENCIES = CCYS_ORDER
+
+PAYMENTS_TYPES = {
+
+    "" : [],
+    "" : [],
+    "" : [],
+
+}

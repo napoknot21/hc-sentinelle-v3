@@ -76,7 +76,6 @@ def table_n_last_expiries (
     return table
 
 
-
 def all_expiries_section (
         
         date : Optional[str | dt.datetime | dt.date] = None,

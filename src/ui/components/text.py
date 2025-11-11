@@ -29,6 +29,20 @@ def center_h3 (text : str) :
     center(text, "h3")
 
 
+def center_h5 (text : str) :
+    """
+    
+    """
+    center(text, "h5")
+
+
+def center_h7 (text : str) :
+    """
+    
+    """
+    center(text, "h7")
+
+
 def center_paragraph (text : str) :
     """
     
@@ -72,6 +86,13 @@ def left_h5 (text : str) :
     
     """
     left(text, "h5")
+
+
+def left_h7 (text : str) :
+    """
+    
+    """
+    left(text, "h7") 
 
 
 
