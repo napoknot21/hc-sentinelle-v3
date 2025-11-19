@@ -8,7 +8,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
-from typing import Any, Optional, List, Tuple
+from typing import Any, Optional, List, Tuple, Dict
 
 from src.utils.logger import log
 from src.utils.formatters import date_to_str, str_to_date
@@ -422,7 +422,7 @@ def im_mv_over_nav_with_rolling (
 
         column : Optional[str] = None,
 
-) :
+    ) :
     """
     
     """
@@ -495,6 +495,203 @@ def im_mv_over_nav_with_rolling (
     )
 
     fig = go.Figure(data=traces, layout=layout1)
+
+    return fig
+
+
+@st.cache_data()
+def leverage_line_chart (
+        
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+        
+        title : str = "Leverage over time",
+        date : Optional[str | dt.datetime | dt.date] = None,
+        
+        columns : Optional[List[str]] = None,
+        x_axis : Optional[str] = "Date"
+
+    ) :
+    """
+    
+    """
+    if _dataframe is None :
+
+        st.cache_data.clear()
+        log("[-] No Dataframe available", "error")
+
+        return None
+    
+    if not columns :
+        
+        st.cache_data.clear()
+        log("[-] No columns provided to plot", "error")
+        
+        return None
+
+    date = str_to_date(date)
+
+    df = _dataframe.sort(x_axis)
+    df = df.filter(
+        pl.any_horizontal([pl.col(c).is_not_null() for c in columns])
+    )
+    df = df.filter(pl.col(x_axis) <= pl.lit(date))
+
+    x_values = df.get_column(x_axis).to_list()
+
+    # Plot using Plotly
+    fig = go.Figure()
+
+    for column in columns :
+
+        if column not in df.columns :
+
+            log(f"[-] Column '{column}' not in dataframe", "warning")
+            continue
+        
+        y_values = df.get_column(column).to_list()
+
+        fig.add_trace(
+
+            go.Scatter(
+            
+                x=x_values,
+                y=y_values,
+                mode="lines",
+                name=column,
+                line_shape="spline",
+            
+            )
+
+        )
+
+        
+    fig.update_layout(
+
+        title=title,
+        xaxis=dict(title=x_axis),
+        yaxis=dict(title="Leverages"),
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        ),
+    )
+        
+    return fig
+    
+
+@st.cache_data()
+def leverage_per_underlying_histogram (
+        
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+        
+        title : Optional[str] = None,
+
+        x_axis : Optional[str] = None,
+        y_axis : Optional[str] = None
+
+    ) :
+    """
+    
+    """
+
+    if _dataframe is None :
+
+        log("Error during Leverage per Underlying histogram, DF is empty.")
+        st.cache_data.clear()
+
+        return None
+    
+    _dataframe = _dataframe.with_columns(
+        ((pl.col(y_axis) + 500)  // 1000 * 1000).alias(y_axis)
+    )
+
+    hist = px.histogram(
+
+        _dataframe,
+        title=title,
+        x=x_axis,
+        y=y_axis,
+        text_auto=True
+    
+    )
+
+    hist.update_layout(
+
+        height=800,
+        width=1700,
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        )
+
+    )
+
+    hist.update_yaxes(showgrid=False)
+
+    return hist
+
+
+@st.cache_data()
+def leverage_per_trade_histogram (
+        
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+        
+        title : Optional[str] = None,
+
+        x_axis : Optional[str] = None,
+        y_axis : Optional[str] = None,
+
+        color : Optional[str] = None,
+
+    ) :
+    """
+    
+    """
+
+    if _dataframe is None :
+
+        log("Error during Leverage per Underlying histogram, DF is empty.")
+        st.cache_data.clear()
+
+        return None
+
+    df_grouped = _dataframe.group_by(x_axis).agg(
+        pl.col(y_axis).sum().alias(y_axis)
+    )
+    
+    df_grouped = df_grouped.sort(x_axis)
+
+    print(df_grouped)
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        
+        go.Bar(
+
+            name=y_axis,
+            x=df_grouped.get_column(x_axis),
+            y=df_grouped.get_column(y_axis),
+            marker_color=color
+        
+        )
+    
+    )
+
+    fig.update_layout(
+
+        title=title,
+        xaxis_title=x_axis,
+        yaxis_title=y_axis
+
+    )
 
     return fig
 

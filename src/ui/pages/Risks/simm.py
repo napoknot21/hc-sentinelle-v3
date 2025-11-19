@@ -152,6 +152,26 @@ def mv_over_time_section (
     st.plotly_chart(fig, use_container_width=True,)
 
 
+# Counterparty ICE / data (IM / MV)
+
+def total_im_mv_section () :
+    """
+    
+    """
+
+
+def total_im_across_ctpy () :
+    """
+    
+    """
+
+
+def total_mv_across_ctpy () :
+    """
+    
+    """
+
+
 # NAV over time
 
 def total_nav_section (
@@ -242,7 +262,6 @@ def im_over_nav_section (
     return None
 
 
-    
 def mv_over_nav_section (
         
         date : Optional[str | dt.datetime | dt.date] = None,
@@ -259,7 +278,6 @@ def mv_over_nav_section (
     st.plotly_chart(fig)
 
     return None
-
 
 
 def _im_or_mv_over_nav (

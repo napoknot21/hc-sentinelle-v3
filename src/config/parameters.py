@@ -254,6 +254,24 @@ NAV_ESTIMATE_RENAME_COLUMNS = {
 }
 
 
+# ---------------- EXO HYBRID ----------------
+
+X_HYBRID_COLUMNS = {
+
+    "Portfolio Name" : pl.Utf8,
+    "Asset Class" : pl.Utf8,
+    "Trade Type" : pl.Utf8,
+    "Instrument" : pl.Utf8,
+    "Trade Code" : pl.Utf8,
+    "Underlying Asset" : pl.Utf8,
+    "Trade Name" : pl.Utf8,
+    "Counterparty" : pl.Utf8,
+    "Remaining Notional" : pl.Float64,
+    "MV" : pl.Float64,
+
+}
+
+
 # ---------------- Cash ----------------
 
 CASH_COLUMNS = {
@@ -372,5 +390,53 @@ PAYMENTS_TYPES = {
     "" : [],
     "" : [],
     "" : [],
+
+}
+
+
+# ------------------ Leverages ------------------
+
+
+LEVERAGES_ALL_FILENAME=os.getenv("LEVERAGES_ALL_FILENAME")
+
+LEVERAGES_COLUMNS = {
+
+    "Gross Leverage" : pl.Float64,
+    "Commitment Leverage" : pl.Float64,
+    "Date" : pl.Datetime,
+    "File" : pl.Utf8
+
+}
+
+LEVERAGES_UNDERL_REGEX = re.compile(r"^Leverage_Per_Underlying_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})\.xlsx$", re.IGNORECASE)
+
+LEVERAGES_UNDERL_COLUMNS = {
+
+    "Asset Class" : pl.Utf8,
+    "Underlying Asset" : pl.Utf8,
+    "Gross Leverage" : pl.Float64,
+    "Exposure % NAV" : pl.Float64
+
+}
+
+LEVERAGES_TRADE_REGEX = re.compile(r"^Leverage_Per_Trade_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})\.xlsx$", re.IGNORECASE)
+
+
+LEVERAGES_TRADE_COLUMNS = {
+
+    "Trade ID" : pl.Int64,
+    "Asset Class" : pl.Utf8,
+    "Trade Type" : pl.Utf8,
+    "Underlying Asset" : pl.Utf8,
+    "Termination Date" : pl.Date,
+    "Buy/Sell" : pl.Utf8,
+    "Notional" : pl.Float64,
+    "Call/Put" : pl.Utf8,
+    "Strike" : pl.Float64,
+    "Trigger" : pl.Float64,
+    "Reference Spot" :  pl.Float64,
+    "Counterparty" : pl.Utf8,
+    "Gross Leverage" : pl.Float64,
+    "Exposure % NAV" : pl.Float64
 
 }
