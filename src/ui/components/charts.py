@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 from typing import Any, Optional, List, Tuple, Dict
 
 from src.utils.logger import log
-from src.utils.formatters import date_to_str, str_to_date
+from src.utils.formatters import date_to_str, str_to_date, filter_token_col_from_df
 
 
 @st.cache_data()
@@ -696,3 +696,122 @@ def leverage_per_trade_histogram (
     return fig
 
 
+@st.cache_data()
+def show_history_greeks_graph (
+        
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        asset_class : Optional[str] = None,
+        greek : Optional[str] = None,
+
+        greek_rules : Optional[Dict] = None,
+        format : str = "%Y/%m/%d"
+    
+    ) :
+    """
+    
+    """
+    if _dataframe is None :
+
+        st.cache_data.clear()
+        return None
+    
+
+    token = greek_rules.get(asset_class)
+    df_filtered = filter_token_col_from_df(_dataframe, "Underlying", token)
+
+    if df_filtered.is_empty() :
+        return None
+
+    if df_filtered["Date"].dtype == pl.Utf8 :
+        # adapte le format si 
+        df_filtered = df_filtered.with_columns(
+            pl.col("Date").str.strptime(pl.Date, format="%Y/%m/%d", strict=False)
+        )
+    
+    df_filtered = df_filtered.sort("Date")
+
+    underlyings = df_filtered.get_column("Underlying").unique().to_list()
+    
+    fig = go.Figure()
+
+    for ul in underlyings :
+
+        df_ul = df_filtered.filter(pl.col("Underlying") == ul).sort("Date")
+
+        # Convert Polars Series -> Python lists for Plotly
+        x_vals = df_ul.get_column("Date").to_list()
+        y_vals = df_ul.get_column(greek).to_list()
+
+
+        # Ligne plus épaisse pour les Totaux
+        width = 2 if "Total" in str(ul) else 1
+
+        fig.add_trace(
+
+            go.Scatter(
+                x=x_vals,
+                y=y_vals,
+                mode="lines",
+                name=str(ul),
+                line_shape="spline",
+                line=dict(width=width),
+            )
+
+        )
+
+    n_traces = len(fig.data)
+
+    fig.update_layout(
+
+        title=f"{greek} history by Underlying ({asset_class})",
+        xaxis=dict(title="Date"),
+        yaxis=dict(title=greek),
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        ),
+
+        legend=dict(
+            font=dict(size=10),
+            yanchor="top",
+            y=1.02,
+            xanchor="left",
+            x=0,
+            bgcolor="rgba(255,255,255,0.8)",
+            bordercolor="black",
+            borderwidth=1,
+            itemsizing="trace",
+            orientation="v",
+        ),
+
+        updatemenus=[
+
+            dict(
+                type="buttons",
+                direction="right",
+                x=0.7,
+                y=1.15,
+                showactive=False,
+                buttons=[
+                    dict(
+                        label="Select All",
+                        method="update",
+                        args=[{"visible": [True] * n_traces}],
+                    ),
+                    dict(
+                        label="Unselect All",
+                        method="update",
+                        args=[{"visible": ["legendonly"] * n_traces}],
+                    ),
+                ],
+            )
+        ],
+
+        height=800,
+    )
+
+    return fig

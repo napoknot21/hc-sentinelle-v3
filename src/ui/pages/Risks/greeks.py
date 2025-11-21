@@ -6,11 +6,11 @@ import datetime as dt
 from typing import Optional, List, Dict
 
 from src.utils.formatters import str_to_date, date_to_str
-from src.config.parameters import GREEKS_DEFAULT_DATE, GREEKS_ASSET_CLASSES
+from src.config.parameters import GREEKS_DEFAULT_DATE, GREEKS_ASSET_CLASSES, GREEKS_COLUMNS, GREEKS_ASSET_CLASSES
 
 from src.ui.components.selector import date_selector
 from src.ui.components.text import center_h2, left_h5
-from src.ui.components.tables import show_history_greeks_table
+from src.ui.components.charts import show_history_greeks_graph
 
 from src.core.data.greeks import read_history_greeks
 
@@ -184,8 +184,11 @@ def history_greeks_section (
     """
     
     """
+    asset_class = history_asset_selector_section()
+    greek = history_greek_selector_section()
 
-    history_greek_graph_section(date, fundation)
+
+    history_greek_graph_section(date, fundation, asset_class, greek)
 
 
 def history_asset_selector_section (asset_classes : Optional[Dict[str]] = None) :
@@ -195,23 +198,44 @@ def history_asset_selector_section (asset_classes : Optional[Dict[str]] = None) 
     asset_classes = GREEKS_ASSET_CLASSES if asset_classes is None else asset_classes
     list_assets = list(asset_classes.keys())
 
-    asset_class = st.selectbox("Choose an Asset Class", )
+    asset_class = st.selectbox("Choose an Asset Class", options=list_assets)
+
+    return asset_class
+
+
+def history_greek_selector_section (greeks : Optional[Dict[str]] = None) :
+    """
+    
+    """
+    greeks = GREEKS_COLUMNS if greeks is None else greeks
+    list_greeks = list(greeks.keys())[1:-1]
+
+    greek = st.selectbox("Choose a Greek", options=list_greeks)
+
+    return greek
 
 
 
 def history_greek_graph_section (
         
         date : Optional[str | dt.date | dt.datetime] = None,
-        fundation : Optional[str] = None
+        fundation : Optional[str] = None,
+
+        asset_class : Optional[str] = None,
+        greek : Optional[str] = None,
+
+        greeks_rules : Optional[Dict] = None,
     
     ) :
     """
     
     """
     dataframe, md5 = read_history_greeks(date, fundation)
+    greeks_rules = GREEKS_ASSET_CLASSES if greeks_rules is None else greeks_rules
     print(dataframe)
-    show_history_greeks_table(dataframe, md5)
-
+    fig = show_history_greeks_graph(dataframe, md5, asset_class, greek, greeks_rules)
+    st.plotly_chart(fig)
+    
     return None
 
 

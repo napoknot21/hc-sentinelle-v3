@@ -454,7 +454,7 @@ GREEKS_COLUMNS = {
     "Gamma" : pl.Float64,
     "Vega" : pl.Float64,
     "Theta" : pl.Float64,
-    "Date" : pl.Date,
+    "Date" : pl.Utf8,
 
 }
 

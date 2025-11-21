@@ -51,26 +51,6 @@ def display_payments_table (_dataframe : pl.DataFrame, md5 : str, height : int =
     return table
 
 
-@st.cache_data()
-def show_history_greeks_table (
-        
-        _dataframe : Optional[pl.DataFrame] = None,
-        md5 : Optional[str] = None
-    
-    ) :
-    """
-    
-    """
-    if _dataframe is None :
-
-        st.cache_data.clear()
-        return None
-    
-    table = st.dataframe(_dataframe)
-
-    return table
-
-
 #@st.cache_data()
 def show_screener_tarf_table (
         
