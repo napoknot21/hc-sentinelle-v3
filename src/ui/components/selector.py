@@ -46,3 +46,4 @@ def number_of_payments_selector (
     )
 
     return nb_payments
+

@@ -476,3 +476,69 @@ def numeric_cast_expr_from_utf8 (
         raise ValueError('int_rounding must be "nearest" | "floor" | "ceil" | "truncate"')
 
     return e_int_base.cast(target_dtype, strict=False).alias(col)
+
+
+def exclude_token_cols_from_df(dataframe : pl.DataFrame, column : str, token : str):
+    """
+    Retourne un DataFrame sans les colonnes contenant un token spécifique dans leur nom.
+    
+    Parameters:
+    - df : pd.DataFrame — le DataFrame d'origine
+    - token : str — le mot ou token à exclure des noms de colonnes
+    
+    Returns:
+    - pd.DataFrame — un DataFrame avec les colonnes filtrées
+    """
+    regex = rf"(?i){token}"
+
+    filtered_cols = dataframe.filter(
+
+        ~pl.col(column).str.contains(regex)
+
+    )
+    return filtered_cols
+
+
+def filter_token_col_from_df (dataframe : pl.DataFrame, column : str, token : str) :
+    """
+    Filters rows in a dataframe where a specific column contains a token (case-insensitive).
+
+    Args:
+        dataframe (pl.DataFrame): Input dataframe.
+        column (str): Column name to apply filter.
+        token (str): Token to search for.
+
+    Returns:
+        clean_df (pl.DataFrame) : Filtered dataframe.
+    """
+    if token is None or column is None :
+        return dataframe
+    
+    regex = rf"(?i){token}"
+
+    clean_df = dataframe.filter(
+
+        pl.col(column).str.contains(regex)
+
+    )
+
+    return clean_df
+
+
+def filter_groupby_col_from_df (dataframe : pl.DataFrame, colum : str) :
+    """
+    Sorts the dataframe by a given column.
+    (Note: Despite the function name, this does not perform a groupby operation.)
+
+    Args:
+        dataframe (pl.DataFrame): Input dataframe.
+        colum (str): Column to sort by.
+
+    Returns:
+        pl.DataFrame: Sorted dataframe.
+    """
+    grouped_df = dataframe.sort(
+        colum
+    )
+
+    return grouped_df

@@ -421,7 +421,6 @@ LEVERAGES_UNDERL_COLUMNS = {
 
 LEVERAGES_TRADE_REGEX = re.compile(r"^Leverage_Per_Trade_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})\.xlsx$", re.IGNORECASE)
 
-
 LEVERAGES_TRADE_COLUMNS = {
 
     "Trade ID" : pl.Int64,
@@ -440,3 +439,123 @@ LEVERAGES_TRADE_COLUMNS = {
     "Exposure % NAV" : pl.Float64
 
 }
+
+
+# ------------ Greeks --------------
+
+GREEKS_DEFAULT_DATE=os.getenv("GREEKS_DEFAULT_DATE")
+
+GREEKS_ALL_FILENAME=os.getenv("GREEKS_ALL_FILENAME")
+
+GREEKS_COLUMNS = {
+
+    "Underlying" : pl.Utf8,
+    "Delta" : pl.Float64,
+    "Gamma" : pl.Float64,
+    "Vega" : pl.Float64,
+    "Theta" : pl.Float64,
+    "Date" : pl.Date,
+
+}
+
+GREEKS_ASSET_CLASSES = {
+
+    "FX" : os.getenv("GREEKS_UNDERL_FX_RULE"),
+    "Equity" : os.getenv("GREEKS_UNDERL_EQ_RULE")
+    
+}
+
+
+# ------------ Screeners --------------
+
+SCREENERS_COLUMNS_FX = {
+
+    "Trade Code" : pl.Utf8,
+    "Trade Description" : pl.Utf8,
+    
+    "Portfolio Name" : pl.Utf8,
+
+    "Underlying Asset" : pl.Utf8,
+    "Instrument Type" : pl.Utf8,
+
+    "Buy/Sell" : pl.Utf8,
+
+    "Reference Spot" : pl.Float64,
+    "Original Spot" : pl.Float64,
+    "FX ForwardRate" : pl.Float64,
+    "Forward" : pl.Float64,
+    "Forward Points" : pl.Float64,
+
+    "Strike" : pl.Float64,
+    "MV" : pl.Float64,
+    "Base Notional" : pl.Float64,
+    "FX Delta Base" : pl.Float64,
+    
+    "Trade Date" : pl.Date ,
+    "Termination Date" : pl.Date,
+
+}
+
+
+SCREENERS_COLUMNS_TARF = {
+
+    # General information
+    "Trade Code" : pl.Utf8,
+    "Trade Description" : pl.Utf8,
+
+    "Portfolio Name" : pl.Utf8,
+    "Instrument Type" : pl.Utf8,
+    "Underlying Asset" : pl.Utf8,
+    "Trade Date" : pl.Date ,
+    "FX Next Fixing Date" : pl.Date,
+    "FX Projected Last Expiry Date" : pl.Date,
+    "FX Remaining Target Term Per Base" : pl.Float64,
+    "Expiry Date" : pl.Date,
+    "Call/Put 1" :  pl.Utf8,
+
+    # Amounts and notionals
+    "Remaining Notional" : pl.Float64,
+    "Base Notional" : pl.Float64,
+    "Notional 1 Base" : pl.Float64,
+    "Total Premium" : pl.Float64,
+    "MV" : pl.Float64,
+
+    # Strat and price
+    "Original Spot" : pl.Float64,
+    "Reference Spot" : pl.Float64,
+    "Strike 1" : pl.Float64,
+    "Trigger" : pl.Float64,
+
+    # Greeks 
+    "FX Delta Base" : pl.Float64,
+    "FX Gamma Base" : pl.Float64,
+    "Theta" : pl.Float64,
+
+    # Fixing and FX echéances
+    "FX Remaining Number of Fixings" : pl.Int64,
+    "FX Projected Number of Expiries Remaining" : pl.Int64,
+    "FX Projected Payout at Next Fixing" : pl.Float64,
+
+    # Performance & Accumulation
+    "FX Accrued Target Term Per Base" : pl.Float64,
+    "FX Total Accumulated Profit" : pl.Float64,
+    "FX Remaining Notional" : pl.Float64,
+    
+}
+
+
+SCREENERS_COLUMNS_TAIL = {
+
+    "Instrument Type" : pl.Utf8,
+    "Underlying Asset" : pl.Utf8,
+    "Trade Code" : pl.Utf8,
+    "Expiry Date" : pl.Date,
+    "Portfolio Name" : pl.Utf8,
+    "MV" : pl.Float64
+
+}
+
+SCREENERS_REGEX = re.compile(r"Trade Legs - (\d{4}\d{2}\d{2}T\d{6}\.\d{3}).xlsx")
+
+SCREENER_TOKEN_EXCLUDE=os.getenv("SCREENER_TOKEN_EXCLUDE")
+SCREENER_TOKEN_FILTER=os.getenv("SCREENER_TOKEN_FILTER")

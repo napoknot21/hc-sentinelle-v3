@@ -131,3 +131,29 @@ LEVERAGES_TRADE_FUNDS_DIR_PATHS = {
     os.getenv("FUND_WR") : LEVERAGES_TRADE_FUND_WR_DIR_PATH,
 
 }
+
+
+# --------- Greeks -----------
+
+GREEKS_FUND_HV_DIR_ABS=os.getenv("GREEKS_FUND_HV_DIR_ABS")
+GREEKS_FUND_WR_DIR_ABS=os.getenv("GREEKS_FUND_WR_DIR_ABS")
+
+GREEKS_FUNDS_DIR_PATHS = {
+
+    os.getenv("FUND_HV") : GREEKS_FUND_HV_DIR_ABS,
+    os.getenv("FUND_WR") : GREEKS_FUND_WR_DIR_ABS,
+
+}
+
+
+# --------- Screeners -----------
+
+SCREENERS_FUND_HV_DIR_ABS=os.getenv("SCREENERS_FUND_HV_DIR_ABS")
+SCREENERS_FUND_WR_DIR_ABS=os.getenv("SCREENERS_FUND_WR_DIR_ABS")
+
+SCREENERS_FUNDS_DIR_PATHS = {
+
+    os.getenv("FUND_HV") : SCREENERS_FUND_HV_DIR_ABS,
+    os.getenv("FUND_WR") : SCREENERS_FUND_WR_DIR_ABS
+
+}

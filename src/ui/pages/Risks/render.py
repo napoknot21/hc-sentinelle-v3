@@ -14,7 +14,7 @@ from src.config.parameters import FUND_NAME_MAP
 
 from src.ui.pages.Risks.expiries import expiries
 from src.ui.pages.Risks.performance import performance
-from src.ui.pages.Risks.fx_screeners import fx_screeners
+from src.ui.pages.Risks.screeners import screeners
 from src.ui.pages.Risks.leverages import leverages
 from src.ui.pages.Risks.greeks import greeks
 from src.ui.pages.Risks.concentration import concentration
@@ -29,7 +29,7 @@ risk_subpages = [
     
     {"name" : "Expiries",       "page" : expiries,      "icon" : "calendar-check"},
     {"name" : "Performance",    "page" : performance,   "icon" : "cash-coin"},
-    {"name" : "FX Screeners",   "page" : fx_screeners,  "icon" : "calendar-check"},
+    {"name" : "Screeners",      "page" : screeners,     "icon" : "calendar-check"},
     {"name" : "Leverages",      "page" : leverages,     "icon" : "gear"},
     {"name" : "Concentration",  "page" : concentration, "icon" : "bullseye"},
     {"name" : "Greeks",         "page" : greeks,        "icon" : "bar-chart"},
