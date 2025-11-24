@@ -35,6 +35,7 @@ EMAIL_DEFAULT_FROM=os.getenv("EMAIL_DEFAULT_FROM")
 
 # ---------------- Fundations ----------------
 
+
 FUND_WR=os.getenv("FUND_WR")
 FUND_HV=os.getenv("FUND_HV")
 
@@ -110,6 +111,7 @@ SIMM_RENAME_COLUMNS : dict[str, str] = {k: v["name"] for k, v in SIMM_COLUMNS.it
 
 # ---------------- FX Screeners (Tarf) ----------------
 
+
 TARF_COLUMNS={
 
     # General information
@@ -156,6 +158,7 @@ TARF_COLUMNS={
 
 
 # ---------------- Expiries ----------------
+
 
 EXPIRIES_FILENAME_REGEX = re.compile(r"^expiries_(\d{4}-\d{2}-\d{2})_(\d{2}-\d{2})")
 
@@ -214,6 +217,7 @@ EXPIRIES_COLUMNS_SPECIFIC = {
 
 # ---------------- NAV ----------------
 
+
 NAV_CUTOFF_DATE=os.getenv("NAV_CUTOFF_DATE")
 NAV_HIST_NAME_DEFAULT=os.getenv("NAV_HIST_NAME_DEFAULT")
 
@@ -230,10 +234,12 @@ NAV_COLUMNS = {
 
 # ---------------- Performances ----------------
 
+
 PERF_DEFAULT_DATE=os.getenv("PERF_DEFAULT_DATE")
 
 
 # ---------------- NAV Estimate ----------------
+
 
 NAV_ESTIMATE_CUTOFF_DATE=os.getenv("NAV_ESTIMATE_CUTOFF_DATE")
 NAV_ESTIMATE_HIST_NAME_DEFAULT=os.getenv("NAV_ESTIMATE_HIST_NAME_DEFAULT")
@@ -255,6 +261,7 @@ NAV_ESTIMATE_RENAME_COLUMNS = {
 
 
 # ---------------- EXO HYBRID ----------------
+
 
 X_HYBRID_COLUMNS = {
 
@@ -443,6 +450,7 @@ LEVERAGES_TRADE_COLUMNS = {
 
 # ------------ Greeks --------------
 
+
 GREEKS_DEFAULT_DATE=os.getenv("GREEKS_DEFAULT_DATE")
 
 GREEKS_ALL_FILENAME=os.getenv("GREEKS_ALL_FILENAME")
@@ -460,13 +468,25 @@ GREEKS_COLUMNS = {
 
 GREEKS_ASSET_CLASSES = {
 
+    "Equity" : os.getenv("GREEKS_UNDERL_EQ_RULE"),
     "FX" : os.getenv("GREEKS_UNDERL_FX_RULE"),
-    "Equity" : os.getenv("GREEKS_UNDERL_EQ_RULE")
     
 }
 
+GREEKS_OVERVIEW_COLUMNS = {
+
+    "Underlying" : pl.Utf8,
+    "Delta" : pl.Float64,
+    "Gamma" : pl.Float64,
+    "Vega" : pl.Float64,
+    "Theta" : pl.Float64,
+}
+
+GREEKS_REGEX = re.compile(r"^Overview_Risks_Equity_FX_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})\.xlsx$", re.IGNORECASE)
+
 
 # ------------ Screeners --------------
+
 
 SCREENERS_COLUMNS_FX = {
 
@@ -495,7 +515,6 @@ SCREENERS_COLUMNS_FX = {
     "Termination Date" : pl.Date,
 
 }
-
 
 SCREENERS_COLUMNS_TARF = {
 
@@ -542,7 +561,6 @@ SCREENERS_COLUMNS_TARF = {
     "FX Remaining Notional" : pl.Float64,
     
 }
-
 
 SCREENERS_COLUMNS_TAIL = {
 

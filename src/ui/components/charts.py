@@ -14,6 +14,8 @@ from src.utils.logger import log
 from src.utils.formatters import date_to_str, str_to_date, filter_token_col_from_df
 
 
+# ---------- Expiries ---------- 
+
 @st.cache_data()
 def expiries_plot (
     
@@ -82,6 +84,8 @@ def expiries_plot (
 
     return fig
 
+
+# ---------- Performances ----------
 
 @st.cache_data()
 def nav_estimate_performance_graph (
@@ -168,6 +172,7 @@ def nav_estimate_performance_graph (
 
     return fig
 
+# ---------- Cash ----------
 
 @st.cache_data()
 def cash_chart (
@@ -237,6 +242,7 @@ def cash_chart (
 
     return fig
 
+# ---------- SIMM ----------
 
 @st.cache_data()
 def simm_ctpy_im_vm_chart (
@@ -498,6 +504,7 @@ def im_mv_over_nav_with_rolling (
 
     return fig
 
+# ---------- Leverages ----------
 
 @st.cache_data()
 def leverage_line_chart (
@@ -580,7 +587,7 @@ def leverage_line_chart (
     )
         
     return fig
-    
+
 
 @st.cache_data()
 def leverage_per_underlying_histogram (
@@ -695,8 +702,9 @@ def leverage_per_trade_histogram (
 
     return fig
 
+# ---------- Greeks ----------
 
-@st.cache_data()
+@st.cache_data(show_spinner=False)
 def show_history_greeks_graph (
         
         _dataframe : Optional[pl.DataFrame] = None,
@@ -812,6 +820,79 @@ def show_history_greeks_graph (
         ],
 
         height=800,
+    )
+
+    return fig
+
+
+@st.cache_data()
+def show_change_greeks_graph (
+    
+        _df_1 : Optional[pl.DataFrame] =  None,
+        md5_1 : Optional[str] = None,
+
+        _df_2 : Optional[pl.Dataframe] = None,
+        md5_2 : Optional[str] = None,
+
+        x_axis : Optional[List[str]] = None,
+        underlying : Optional[str] = None
+
+    ) :
+    """
+    
+    """
+    if _df_1 is None or _df_2 is None :
+
+        st.cache_data.clear()
+        return None
+
+    df_start_u = _df_1.filter(pl.col("Underlying") == underlying)
+    df_end_u   = _df_2.filter(pl.col("Underlying") == underlying)
+
+    # Aggregate (sum) Greeks for the underlying on each date
+    start_sums = df_start_u.select([pl.col(c).sum().alias(c) for c in x_axis])
+    end_sums   = df_end_u.select([pl.col(c).sum().alias(c) for c in x_axis])
+
+    result = pl.DataFrame(
+        {
+            "Greek" : x_axis,
+            "Start" : [start_sums[0, c] for c in x_axis],
+            "End"   : [end_sums[0, c]   for c in x_axis],
+        }
+    ).with_columns(
+        (
+            (pl.col("End") - pl.col("Start")) / pl.col("Start")
+            * 100
+        ).alias("Change (%)")
+    )
+
+    result = result.sort(by=pl.col("Change (%)").abs(), descending=True)
+
+    # Plotly bar chart
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=result["Greek"],
+                y=result["Change (%)"],
+                text=[f"{v:,.2f}%" if v == v else "N/A" for v in result["Change (%)"]],
+                textposition="inside",
+                marker=dict(
+                    color=result["Change (%)"],
+                    colorscale="RdYlGn",
+                    colorbar_title="Change (%)",
+                ),
+            )
+        ]
+    )
+
+    fig.update_layout(
+        title=f"Greek % Change — {underlying}",
+        xaxis_title="Greek",
+        yaxis_title="Change (%)",
+        xaxis_tickangle=0,
+        template="plotly_white",
+        height=400,
+        margin=dict(l=80, r=40, t=60, b=40),
     )
 
     return fig

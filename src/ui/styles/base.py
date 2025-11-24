@@ -6,6 +6,7 @@ from st_aggrid import JsCode
 
 bold_text = "font-weight : bold"
 
+
 risk_menu = {
 
     "container" : {"background-color" : "##d7cafc"},
@@ -27,7 +28,6 @@ risk_menu = {
 }
 
 
-
 screeners_custom_css = {
 
     ".ag-root-wrapper": {"border": "1"},
@@ -35,6 +35,7 @@ screeners_custom_css = {
     ".ag-body-horizontal-scroll-viewport": {"overflow-x": "auto !important"},
 
 }
+
 
 screeners_js_code = JsCode(
     

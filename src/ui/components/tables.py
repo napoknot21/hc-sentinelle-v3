@@ -23,6 +23,21 @@ def show_last_n_expiries (_dataframe : pl.DataFrame, md5 : str, specific_cols : 
 
 
 @st.cache_data()
+def show_expiries_history (_dataframe : pl.DataFrame, md5 : str,  height : int = 800) :
+    """
+    
+    """
+    if _dataframe is None :
+
+        st.cache_data.clear()
+        return None
+
+    table = st.dataframe(_dataframe, height=height)
+
+    return table
+
+
+@st.cache_data()
 def show_full_expiries (_dataframe : pl.DataFrame, md5 : str, ) :
     """
     
