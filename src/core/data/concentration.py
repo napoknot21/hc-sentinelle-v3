@@ -5,60 +5,22 @@ import re
 import polars as pl
 import datetime as dt
 
+from typing import Optional, List, Dict, Tuple, Any
 
-from typing import Optional, List, Dict, Tuple
-
-from src.utils.logger import log
-from src.utils.formatters import date_to_str, str_to_date
+from src.config.parameters import FUND_HV, CONCENTRATION_COLUMNS, CONCENTRATION_REGEX
+from src.config.paths import *
 from src.utils.data_io import load_excel_to_dataframe
-from src.config.parameters import FUND_HV, GREEKS_ALL_FILENAME, GREEKS_COLUMNS, GREEKS_REGEX, GREEKS_OVERVIEW_COLUMNS
-from src.config.paths import GREEKS_FUNDS_DIR_PATHS
+from src.utils.formatters import date_to_str, str_to_date
+from src.utils.logger import log
 
 
-def read_history_greeks (
-
-        date : Optional[str | dt.datetime | dt.date] = None,
-        fund : Optional[str] = None,
-
-        filename : Optional[str] = None,
-        greeks_paths : Optional[Dict] = None,
-        
-        schema_overrides : Optional[Dict] = None,
-
-    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
-    """
-    
-    """
-    date = str_to_date(date)
-    fund = FUND_HV if fund is None else fund
-
-    schema_overrides = GREEKS_COLUMNS if schema_overrides is None else schema_overrides
-    specific_cols = list(schema_overrides.keys())
-
-    greeks_paths = GREEKS_FUNDS_DIR_PATHS if greeks_paths is None else greeks_paths
-    filename = GREEKS_ALL_FILENAME if filename is None else filename
-
-    dir_abs = greeks_paths.get(fund)
-    full_path = os.path.join(dir_abs, filename)
-
-    try :
-        dataframe, md5 = load_excel_to_dataframe(full_path, schema_overrides=schema_overrides, specific_cols=specific_cols)
-
-    except Exception as e :
-        
-        log("[-] Error during greeks history file reading", "error")
-        return None, None
-    
-    return dataframe, md5
-
-
-def read_greeks_by_date (
+def read_ccty_concentration (
         
         date : Optional[str | dt.datetime | dt.date] = None,
         fund : Optional[str] = None,
 
         filename : Optional[str] = None,
-        greeks_paths : Optional[Dict] = None,
+        concentration_paths : Optional[Dict] = None,
         
         schema_overrides : Optional[Dict] = None,
         regex : Optional[re.Pattern] = None
@@ -70,41 +32,48 @@ def read_greeks_by_date (
     date = str_to_date(date)
     fund = FUND_HV if fund is None else fund
 
-    schema_overrides = GREEKS_OVERVIEW_COLUMNS if schema_overrides is None else schema_overrides
+    schema_overrides = CONCENTRATION_COLUMNS if schema_overrides is None else schema_overrides
     specific_cols = list(schema_overrides.keys())
 
-    regex = GREEKS_REGEX if regex is None else regex
+    regex = CONCENTRATION_REGEX if regex is None else regex
+    
+    concentration_paths = CONCENTRATION_FUNDS_DIR_PATHS if concentration_paths is None else concentration_paths
+    dir_abs = concentration_paths.get(fund)
 
-    greeks_paths = GREEKS_FUNDS_DIR_PATHS if greeks_paths is None else greeks_paths
-    dir_abs = greeks_paths.get(fund)
-
-    filename, _ = find_most_recent_file_by_date(date, dir_abs, regex) if filename is None else filename
+    filename, _ = find_most_recent_file_by_date (date, dir_abs, regex) if filename is None else filename
+    
+    if filename is None :
+        return None, None
+    
     full_path = os.path.join(dir_abs, filename)
 
     try :
         dataframe, md5 = load_excel_to_dataframe(full_path, schema_overrides=schema_overrides, specific_cols=specific_cols)
 
     except Exception as e :
-        
-        log(f"[-] Error during greeks {date_to_str(date)} file reading", "error")
+
+        log(f"[-] Error during concentration {date_to_str(date)} file reading", "error")
         return None, None
     
     return dataframe, md5
 
 
 def find_most_recent_file_by_date (
-    
+        
         date : Optional[str | dt.datetime | dt.date] = None,
         dir_abs_path : Optional[str] = None,
         regex : Optional[re.Pattern] = None
-    
+
     ) -> Tuple[Optional[str], Tuple[str]] :
     """
-    Return
+    
     """
     if not os.path.isdir(dir_abs_path) :
         return None, None
     
+    date = date_to_str(date)
+    regex = CONCENTRATION_REGEX  if regex is None else regex
+
     # Best pour la date cible
     best_target_key: Optional[tuple] = None   # (hh, mm, mtime)
     best_target_name: Optional[str] = None
@@ -153,6 +122,6 @@ def find_most_recent_file_by_date (
 
     # Most recent file otherwise
     if best_global_name is not None :
-        return best_global_name, best_global_key[0]
+        return best_global_name, key_g[0]
 
     return None, None

@@ -415,7 +415,8 @@ LEVERAGES_COLUMNS = {
 
 }
 
-LEVERAGES_UNDERL_REGEX = re.compile(r"^Leverage_Per_Underlying_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})\.xlsx$", re.IGNORECASE)
+LEVERAGES_UNDERL_REGEX_PATTERN=os.getenv("LEVERAGES_UNDERL_REGEX_PATTERN")
+LEVERAGES_UNDERL_REGEX = re.compile(LEVERAGES_UNDERL_REGEX_PATTERN, re.IGNORECASE)
 
 LEVERAGES_UNDERL_COLUMNS = {
 
@@ -426,7 +427,8 @@ LEVERAGES_UNDERL_COLUMNS = {
 
 }
 
-LEVERAGES_TRADE_REGEX = re.compile(r"^Leverage_Per_Trade_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})\.xlsx$", re.IGNORECASE)
+LEVERAGES_TRADE_REGEX_PATTERN=os.getenv("LEVERAGES_TRADE_REGEX_PATTERN")
+LEVERAGES_TRADE_REGEX = re.compile(LEVERAGES_TRADE_REGEX_PATTERN, re.IGNORECASE)
 
 LEVERAGES_TRADE_COLUMNS = {
 
@@ -482,7 +484,8 @@ GREEKS_OVERVIEW_COLUMNS = {
     "Theta" : pl.Float64,
 }
 
-GREEKS_REGEX = re.compile(r"^Overview_Risks_Equity_FX_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})\.xlsx$", re.IGNORECASE)
+GREEK_REGEX_PATTERN=os.getenv("GREEK_REGEX_PATTERN")
+GREEKS_REGEX = re.compile(GREEK_REGEX_PATTERN, re.IGNORECASE)
 
 
 # ------------ Screeners --------------
@@ -573,7 +576,24 @@ SCREENERS_COLUMNS_TAIL = {
 
 }
 
-SCREENERS_REGEX = re.compile(r"Trade Legs - (\d{4}\d{2}\d{2}T\d{6}\.\d{3}).xlsx")
+SCREENERS_REGEX_PATTERN=os.getenv("SCREENERS_REGEX_PATTERN")
+SCREENERS_REGEX = re.compile(SCREENERS_REGEX_PATTERN, re.IGNORECASE)
 
 SCREENER_TOKEN_EXCLUDE=os.getenv("SCREENER_TOKEN_EXCLUDE")
+
 SCREENER_TOKEN_FILTER=os.getenv("SCREENER_TOKEN_FILTER")
+
+
+# ------------ Concentration --------------
+
+
+CONCENTRATION_COLUMNS = {
+
+    "Counterparty" : pl.Utf8,
+    "MV" : pl.Float64,
+    "MV/NAV%" : pl.Float64
+
+}
+
+CONCENTRATION_REGEX_PATTERN=os.getenv("CONCENTRATION_REGEX_PATTERN")
+CONCENTRATION_REGEX = re.compile(CONCENTRATION_REGEX_PATTERN, re.IGNORECASE)
