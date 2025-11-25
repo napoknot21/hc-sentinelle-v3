@@ -41,6 +41,8 @@ def simm (
     return None
 
 
+# ----------- SIMM Bar Chart -----------
+
 # TODO  
 def realized_var_cvar_section (
         
@@ -57,6 +59,8 @@ def realized_var_cvar_section (
     fig = simm_ctpy_im_vm_chart(dataframe, md5, date, "Counterparty", ("IM", "MV"))
 
     st.plotly_chart(fig, use_container_width=True)
+
+    return None
 
 
 def date_simm_bar_section (
@@ -78,7 +82,7 @@ def date_simm_bar_section (
     return None
 
 
-# IM and MV over time
+# ----------- IM and MV over time -----------
 
 def im_mv_over_time_section (
         
@@ -152,7 +156,7 @@ def mv_over_time_section (
     st.plotly_chart(fig, use_container_width=True,)
 
 
-# Counterparty ICE / data (IM / MV)
+# ----------- Counterparty ICE / data (IM / MV) -----------
 
 def total_im_mv_section () :
     """
@@ -172,7 +176,7 @@ def total_mv_across_ctpy () :
     """
 
 
-# NAV over time
+# ----------- NAV over time -----------
 
 def total_nav_section (
         
@@ -221,7 +225,7 @@ def _smooth_mv (
     return cleaned
 
 
-# IM & MV Total over NAV
+# ----------- IM & MV Total over NAV -----------
 
 def im_mv_total_over_nav_section (
         

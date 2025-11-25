@@ -26,7 +26,6 @@ def concentration (
     return None
 
 
-
 def concentration_distribution (
         
         date : Optional[str | dt.date | dt.datetime] = None,
@@ -45,7 +44,6 @@ def concentration_distribution (
         ccty_distribution_mv_nav_section(date, fundation)
 
     return None
-
 
 
 def ccty_distribution_abs_section (

@@ -8,16 +8,15 @@ import streamlit as st
 from typing import Optional, List, Tuple
 from st_aggrid import AgGrid
 
-from src.ui.styles.base import screeners_js_code, screeners_custom_css
+from src.config.parameters import SCREENER_TOKEN_FILTER, SCREENER_TOKEN_EXCLUDE
+from src.utils.formatters import filter_token_col_from_df, filter_groupby_col_from_df, exclude_token_cols_from_df, str_to_date, date_to_str
 
+from src.ui.styles.base import screeners_js_code, screeners_custom_css
 from src.ui.components.text import center_h1, center_h2, left_h5
 from src.ui.components.tables import show_screener_tarf_table
 
 from src.core.data.screeners import read_fx_carry_by_date, read_tail_trades_by_date, read_tarf_by_date, find_most_recent_file_by_date
 
-from src.utils.formatters import filter_token_col_from_df, filter_groupby_col_from_df, exclude_token_cols_from_df, str_to_date, date_to_str
-
-from src.config.parameters import SCREENER_TOKEN_FILTER, SCREENER_TOKEN_EXCLUDE
 
 def screeners (
     
@@ -139,7 +138,6 @@ def fx_carry_section (
     return None
 
 
-
 # ---------- Tail Trades ----------  
 
 def tail_trades_section (
@@ -152,8 +150,8 @@ def tail_trades_section (
     
     """
     left_h5("Tail Trades")
-    #dataframe, md5 = read_tail_trades_by_date(date, fundation)
+    dataframe, md5 = read_tail_trades_by_date(date, fundation)
 
-    #st.dataframe(dataframe)
+    st.dataframe(dataframe)
     
     return None

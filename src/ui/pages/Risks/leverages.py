@@ -100,7 +100,6 @@ def leverage_per_trade_section (
     return None
 
 
-
 def leverage_trade_asset_class_section (
         
         date : Optional[str | dt.date | dt.datetime] = None,
@@ -175,7 +174,6 @@ def leverage_trade_asset_class_section (
     return None
 
 
-
 def leverage_trade_full_hist_section (
         
         date : Optional[str | dt.date | dt.datetime] = None,
@@ -196,3 +194,4 @@ def leverage_trade_full_hist_section (
     st.dataframe(df_st)
     
     return None
+

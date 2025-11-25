@@ -42,7 +42,12 @@ risk_subpages = [
 
 def render_risks (title : str = "Risks", fundation_map : Optional[Dict] = None) -> None :
     """
+    Docstring for render_risks
     
+    :param title: Description
+    :type title: str
+    :param fundation_map: Description
+    :type fundation_map: Optional[Dict]
     """
     fundation_map = FUND_NAME_MAP if fundation_map is None else fundation_map
     fund_options = list(fundation_map.keys())
@@ -78,6 +83,8 @@ def render_risks (title : str = "Risks", fundation_map : Optional[Dict] = None) 
 
         if subpage["name"] == menu and not subpage["page"] is None :
             subpage["page"](date, fundation)
+
+    return None
 
 
 

@@ -52,10 +52,9 @@ def nav_estimate_section (fundation : Optional[str] = None) :
     start_date, end_date = date_selectors_section()
 
     charts_performance_section(fundation, start_date, end_date)
-    
 
 
-# Table Estimated Perf Section
+# ----------- Table Estimated Perf Section -----------
 
 def estimated_gross_perf_section (
         
@@ -70,7 +69,7 @@ def estimated_gross_perf_section (
     return None
 
 
-# Date selector section    
+# ----------- Date selector section -----------
 
 def date_selectors_section () :
     """
@@ -178,7 +177,7 @@ def performance_date_quick_selectors (
     return st.session_state.start_date_perf, st.session_state.end_date_perf
 
 
-# Charts Perf Section
+# ----------- Charts Perf Section -----------
 
 def charts_performance_section (
     
@@ -269,4 +268,4 @@ def realized_volatilty_chart_section (
     return None
 
 
-# 
+# -----------
