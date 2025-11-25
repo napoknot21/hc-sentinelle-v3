@@ -542,3 +542,56 @@ def filter_groupby_col_from_df (dataframe : pl.DataFrame, colum : str) :
     )
 
     return grouped_df
+
+
+def format_numeric_columns_to_string(
+        
+        df: pl.DataFrame,
+        columns: Optional[List[str]] = None,
+        decimals: int = 2,
+        thousand_sep: str = ",",
+        decimal_sep: str = ".",
+    
+    ) -> pl.DataFrame:
+    """
+    Convert numeric columns into human-readable formatted strings.
+    Example: 1234567.89 -> "1,234,567.89"
+
+    If `columns=None`, all numeric columns are formatted.
+    """
+    # 1. Detect numeric columns if none provided
+    if columns is None:
+    
+        numeric_types = {
+
+            pl.Int8, pl.Int16, pl.Int32, pl.Int64,
+            pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64,
+            pl.Float32, pl.Float64,
+        }
+
+        columns = [c for c, t in df.schema.items() if t in numeric_types]
+
+    fmt = f"{{:,.{decimals}f}}"  # Python formatting
+
+    exprs = []
+    for col in columns :
+
+        exprs.append(
+        
+            pl.col(col)
+            .cast(pl.Float64, strict=False)        # ensure float
+            .map_elements(
+        
+                lambda x, f=fmt: (
+                    f.format(x)
+                    .replace(",", thousand_sep)
+                    .replace(".", decimal_sep)
+                    if x is not None else None
+                ),
+        
+                return_dtype=pl.Utf8,
+            )
+            .alias(col)
+        )
+
+    return df.with_columns(exprs)

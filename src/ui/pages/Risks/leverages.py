@@ -11,6 +11,7 @@ from src.core.data.leverages import read_history_leverages, read_underlying_leve
 from src.ui.components.charts import leverage_line_chart, leverage_per_underlying_histogram, leverage_per_trade_histogram
 from src.ui.components.text import center_h2, left_h5
 
+from src.utils.formatters import format_numeric_columns_to_string
 
 def leverages (
         
@@ -138,9 +139,7 @@ def leverage_trade_asset_class_section (
 
         for i in range(2) :
             st.write('')
-
         left_h5(f"Leverages per Asset Class Recap at {dt_date}")
-
         for i in range(4) :
             st.write('')
 
@@ -153,8 +152,9 @@ def leverage_trade_asset_class_section (
         )
 
         df_grouped = df_grouped_1.join(df_grouped_3, on=x_axis) #([df_grouped_1, df_grouped_3], how="vertical")
+        df_grouped_st = format_numeric_columns_to_string(df_grouped)
 
-        st.dataframe(df_grouped)
+        st.dataframe(df_grouped_st)
 
     with col3 :
 
@@ -192,6 +192,7 @@ def leverage_trade_full_hist_section (
     st.write('')
     left_h5(f"Leverages per Trades until {dt_date}")
 
-    st.dataframe(dataframe)
+    df_st = format_numeric_columns_to_string(dataframe)
+    st.dataframe(df_st)
     
     return None

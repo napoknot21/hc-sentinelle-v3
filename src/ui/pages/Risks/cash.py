@@ -13,7 +13,7 @@ from src.config.paths import LIBAPI_ABS_PATH
 sys.path.append(LIBAPI_ABS_PATH)
 from libapi.config.parameters import CCYS_ORDER # type: ignore
 
-from src.utils.formatters import str_to_date
+from src.utils.formatters import str_to_date, format_numeric_columns_to_string
 
 from src.ui.components.text import center_bold_paragraph, center_h2, left, left_h5
 from src.ui.components.charts import cash_chart
@@ -123,8 +123,8 @@ def cash_per_ctpy_table (
     """
     left_h5(f"Cash per counterparty, type and currency (Email data) at {date}")
     new_df, md5_hash = aggregate_n_groupby(dataframe, md5, date, group_by, aggregate)
-    
-    st.dataframe(new_df)
+    df_st = format_numeric_columns_to_string(new_df)
+    st.dataframe(df_st)
 
     return None
 
@@ -145,8 +145,9 @@ def collateral_detailed (
     dataframe, md5 = load_all_collateral(fundation=fundation)
 
     dataframe = dataframe.filter(pl.col("Date") == date)
-
-    st.dataframe(dataframe)
+    df_st = format_numeric_columns_to_string(dataframe)
+    
+    st.dataframe(df_st)
 
     return None
 

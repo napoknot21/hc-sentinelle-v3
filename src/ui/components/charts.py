@@ -896,3 +896,135 @@ def show_change_greeks_graph (
     )
 
     return fig
+
+
+@st.cache_data()
+def show_histogram_concentration (
+
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        title : Optional[str] = None,
+
+        x_axis : Optional[str] = None,
+        y_axis : Optional[str] = None,
+
+    ) :
+    """
+    Docstring for show_histogram_concentration
+    
+    :param _dataframe: Description
+    :type _dataframe: pl.DataFrame
+    :param md5: Description
+    :type md5: str
+    :param x_axis: Description
+    :type x_axis: str
+    :param y_axis: Description
+    :type y_axis: str
+    """
+    if _dataframe is None :
+
+        st.cache_data.clean()
+        return None
+    
+    df_grouped = _dataframe.group_by(x_axis).agg(
+        pl.col(y_axis).sum().alias(y_axis)
+    )
+    
+    df_grouped = df_grouped.sort(y_axis, descending=True)
+
+    print(df_grouped)
+
+    fig = go.Figure()
+
+    fig.add_trace(
+        
+        go.Bar(
+
+            name=y_axis,
+            x=df_grouped.get_column(x_axis),
+            y=df_grouped.get_column(y_axis),
+        
+        )
+    
+    )
+
+    fig.update_layout(
+
+        title=title,
+        xaxis_title=x_axis,
+        yaxis_title=y_axis,
+        height=800,
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        ),
+        
+
+    )
+
+    return fig
+
+
+@st.cache_data()
+def show_piechart_concentration (
+
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        title : Optional[str] = None,
+
+        by_column : Optional[str] = None, # x_axis
+        value_column : Optional[str] = None, # y_axis
+
+    ):
+    """
+    Docstring for show_piechart_concentration
+    
+    :param _dataframe: Description
+    :type _dataframe: pl.DataFrame
+    :param md5: Description
+    :type md5: str
+    :param title: Description
+    :type title: str
+    :param by_column: Description
+    :type by_column: str
+    :param value_column: Description
+    :type value_column: str
+    """
+
+    if _dataframe is None :
+
+        st.cache_data.clear()
+        return None
+    
+    df_grouped = _dataframe.group_by(by_column).agg(
+        pl.col(value_column).sum().alias(value_column)
+    )
+    
+
+    fig = px.pie(
+
+        df_grouped,
+        names=by_column,
+        values=value_column,
+        title=title
+
+    )
+
+    fig.update_layout(
+
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        )
+
+    )
+
+    return fig
+
+
