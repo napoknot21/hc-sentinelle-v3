@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import os
+import json
 import hashlib
 import datetime as dt
 import polars as pl
 
 from typing import Optional, Dict, Tuple
 
-from src.config.paths import CASH_FUNDS_FILE_PATHS, COLLATERAL_FUNDS_FILE_PATHS
+from src.config.paths import CASH_FUNDS_FILE_PATHS, COLLATERAL_FUNDS_FILE_PATHS, CASH_UPDATER_FX_VALUES_PATH
 from src.config.parameters import CASH_COLUMNS, COLLATERAL_COLUMNS
 
+from src.utils.logger import log
 from src.utils.data_io import load_excel_to_dataframe
 from src.utils.formatters import date_to_str, str_to_date
 
@@ -219,7 +221,42 @@ def load_collateral_by_date (
     return df_date, md5
 
 
-# ----- Auxiliar -----
+# --------- FX Values ---------
+
+def load_cache_fx_values (
+        
+        file_abs_path : Optional[str] = None
+        
+    ) :
+    """
+    
+    """
+    file_abs_path = CASH_UPDATER_FX_VALUES_PATH if file_abs_path is None else file_abs_path
+
+    if not os.path.exists(file_abs_path) :
+
+        log("[-] The cache file does not exists. Using API...", "error")
+        return None
+
+    with open(file_abs_path, "r", encoding="utf-8") as f :
+
+        try :
+
+            log("[*] Loading FX values from Cash-updater")
+            return json.load(f)
+        
+        except json.JSONDecodeError :
+            
+            log("[-] Error During reading FX values from cache", "error")
+            return None
+
+
+# --------- Collateral Graphs ---------
+
+
+
+
+# --------- Auxiliar ---------
 
 def get_cash_file_per_fundation (fundation : str, dir_dict_fund : Optional[Dict[str, str]] = None) -> Optional[str] :
     """

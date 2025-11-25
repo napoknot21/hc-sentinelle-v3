@@ -180,7 +180,7 @@ def cash_chart (
         _dataframe : Optional[pl.DataFrame] = None,
         md5 : Optional[str] = None,
         group_by : Optional[Tuple] = ("Bank", "Type"),
-        currency : Optional[str] = "EUR"
+        aggregate_col : Optional[str] = "Amount in EUR"
     ) :
     """
     
@@ -192,37 +192,30 @@ def cash_chart (
 
         return None
     
-    agents = _dataframe.select(list(group_by)).unique()
+    _dataframe = _dataframe.sort("Date")
 
     # Plot using Plotly
     fig = go.Figure()
 
     # Iterate through columns and add each one as a trace to the figure
-    for row in agents.iter_rows() :
+    for keys, subdf in _dataframe.group_by(group_by) :
 
-        bank, type_ = row[0], row[1]
+        bank, tx_type = keys  # keys est un tuple (Bank, Type)
 
-        filtered_df = _dataframe.filter(
-            (pl.col('Bank') == bank) & (pl.col('Type') == type_)
-        )
-
-        # Extract Date and EUR values for this combination
-        filtered_df = filtered_df.sort("Date")
-
-        dates = filtered_df['Date'].to_list()
-        ccy_values = filtered_df[currency].to_list()
+        subdf = subdf.sort("Date")
+        dates = subdf["Date"].to_list()                 # liste de datetime.date
+        values = subdf[aggregate_col].to_list()         # liste de float
 
         fig.add_trace(
 
             go.Scatter(
-
                 x=dates,
-                y=ccy_values,
-                mode='lines',
-                stackgroup='one',
-                name=f"{bank} - {type_}"
+                y=values,
+                mode="lines",
+                stackgroup="one",
+                name=f"{bank} - {tx_type}",
             )
-            
+
         )
 
     # Layout settings for the plot
@@ -231,16 +224,104 @@ def cash_chart (
         title="Stacked Area: Summed Amount in EUR Over Time by Bank and Type",
 
         xaxis_title="Date",
-        yaxis_title=f"Amount in {currency}",
+        yaxis_title=aggregate_col,
 
         legend_title="Bank - Type",
         template="plotly_white",
         
         xaxis=dict(showgrid=True),  # Display grid on x-axis
-        yaxis=dict(showgrid=True)   # Display grid on y-axis
+        yaxis=dict(showgrid=True),   # Display grid on y-axis
+
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        ),
     )
 
     return fig
+
+
+@st.cache_data()
+def history_criteria_graph (
+        
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        criteria_col : Optional[str] = None,
+        group_by : Optional[Tuple[str, str]] = ("Bank","Date"),
+        
+        currency : str = "EUR"
+    ) :
+    """
+    Docstring for history_criteria_graph
+    
+    :param _dataframe: Description
+    :type _dataframe: Optional[pl.DataFrame]
+    :param md5: Description
+    :type md5: Optional[str]
+    :param group_by: Description
+    :type group_by: Optional[Tuple[str, str]]
+    :param criteria_col: Description
+    :type criteria_col: Optional[str]
+    :param currency: Description
+    :type currency: str
+    """
+    if _dataframe is None :
+
+        st.cache_data.clear()
+        return None
+    
+    df_eur = _dataframe.filter(pl.col("Currency") == currency)
+
+    df_agg = (
+
+        df_eur
+        .group_by(group_by)
+        .agg(pl.col(criteria_col).sum().alias(criteria_col))
+        .sort("Date")
+
+    )
+    print(df_agg)
+
+    fig = go.Figure()
+
+    for bank, subdf in df_agg.group_by("Bank"):
+
+        subdf = subdf.sort("Date")
+        name = bank[0] if isinstance(bank, tuple) else bank
+
+        fig.add_trace(
+            go.Scatter(
+                x=subdf["Date"].to_list(),
+                y=subdf[criteria_col].to_list(),
+                mode="lines",
+                name=name,
+            )
+        )
+
+    fig.update_layout(
+        
+        title=f"{criteria_col} Evolution Over Time",
+        xaxis_title="Date",
+        yaxis_title=criteria_col,
+        
+        legend_title="Bank",
+        template="plotly_white",
+        
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        ),
+    )
+
+    return fig
+
+
+
 
 # ---------- SIMM ----------
 

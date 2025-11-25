@@ -24,7 +24,7 @@ PAGES = [
 
 def app () :
 
-    st.set_page_config(layout="wide")
+    st.set_page_config(page_title="Sentinelle", layout="wide")
 
     logo = Path(__file__).parent / "assets" / "logos" / "heroics-logo-bleu.png"
     header(title=None, subtitle=None, logo_path=logo) #,  subtitle=None, logo_width=300, center=True)

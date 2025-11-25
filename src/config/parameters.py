@@ -310,6 +310,12 @@ COLLATERAL_COLUMNS = {
 
 }
 
+PAIRS = {
+
+    
+
+}
+
 
 # ---------------- Payments ----------------
 

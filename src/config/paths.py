@@ -6,6 +6,8 @@ from src.config.env import load_dotenv
 load_dotenv()
 
 LIBAPI_ABS_PATH=os.getenv("LIBAPI_ABS_PATH")
+CASH_UPDATER_PATH=os.getenv("CASH_UPDATER_PATH")
+
 LOGS_DIR_ABS_PATH=os.getenv("LOGS_DIR_ABS_PATH")
 LOGS_DIR_REL_PATH=os.getenv("LOGS_DIR_REL_PATH")
 
@@ -66,7 +68,7 @@ NAV_ESTIMATE_FUNDS_DIR_PATHS = {
 
 }
 
-# -------- Cash --------
+# -------- Cash / Collateral --------
 
 CASH_FUND_HV_FILE_PATH=os.getenv("CASH_FUND_HV_FILE_PATH")
 CASH_FUND_WR_FILE_PATH=os.getenv("CASH_FUND_WR_FILE_PATH")
@@ -78,7 +80,7 @@ CASH_FUNDS_FILE_PATHS = {
 
 }
 
-# -------- Collateral --------
+CASH_UPDATER_FX_VALUES_PATH=os.getenv("CASH_UPDATER_FX_VALUES_PATH")
 
 COLLAT_FUND_HV_FILE_PATH=os.getenv("COLLAT_FUND_HV_FILE_PATH")
 COLLAT_FUND_WR_FILE_PATH=os.getenv("COLLAT_FUND_WR_FILE_PATH")
