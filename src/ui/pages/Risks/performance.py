@@ -189,8 +189,7 @@ def charts_performance_section (
     """
     
     """
-    left_h5(f"{fundation} Performance between {start_date} and {end_date}")
-    st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
+    performance_charts_section(start_date, end_date, fundation)
 
     st.write('')
 
@@ -212,6 +211,8 @@ def performance_charts_section (
     """
     
     """
+    left_h5(f"{fundation} Performance between {start_date} and {end_date}")
+
     rename_cols = NAV_ESTIMATE_RENAME_COLUMNS if rename_cols is None else rename_cols
     columns = list(rename_cols.values())
 
@@ -234,7 +235,9 @@ def performance_charts_section (
         df_na, md5, fundation, start_date, end_date, columns, "date"
     )
 
-    return fig
+    st.plotly_chart(fig, use_container_width=True)
+
+    return None
 
 # TODO : Need a best formula for computing this results (window fixed ?)
 def realized_volatilty_chart_section (
@@ -264,6 +267,8 @@ def realized_volatilty_chart_section (
         (pl.col("date") <= pl.lit(end_date))
     
     )
+
+    
 
     return None
 
