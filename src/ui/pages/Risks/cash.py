@@ -123,7 +123,7 @@ def cash_per_ctpy_table (
     """
     
     """
-    left_h5(f"Cash per counterparty, type and currency (Email data) at {date}")
+    left_h5(f"Cash per counterparty, type and currency (Email data) until {date}")
     new_df, md5_hash = aggregate_n_groupby(dataframe, md5, date, group_by, aggregate)
     df_st = format_numeric_columns_to_string(new_df)
     st.dataframe(df_st)
@@ -141,13 +141,34 @@ def collateral_detailed (
     """
     
     """
-    left_h5("Cash per Counterparty Detailed")
-
     date = str_to_date(date)
+    left_h5(f"Collateral per Counterparty Detailed until {date}")
+
     dataframe, md5 = load_all_collateral(fundation=fundation)
 
-    dataframe = dataframe.filter(pl.col("Date") == date)
-    df_st = format_numeric_columns_to_string(dataframe)
+    dataframe_dates = dataframe.filter(pl.col("Date") == date)
+
+    if dataframe_dates.is_empty() :
+
+        dates_series = (
+            dataframe
+            .select(pl.col("Date").unique().sort())
+            .to_series()
+        )
+
+        # garder seulement les dates <= target_date
+        prev_dates = dates_series.filter(dates_series <= date)
+
+        if len(prev_dates) == 0:
+            print("[!] No previous date available in dataframe.")
+            return None, md5
+
+        closest_date = prev_dates.max()
+        print(f"[+] Using closest previous date: {closest_date}")
+
+        dataframe_dates = dataframe.filter(pl.col("Date") == closest_date)
+
+    df_st = format_numeric_columns_to_string(dataframe_dates)
 
     st.dataframe(df_st)
 
@@ -243,7 +264,7 @@ def im_graph_section (fundation : Optional[str] = None) :
     dataframe, md5 = load_all_collateral(fundation)
     fig = history_criteria_graph(dataframe, md5, "IM")
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="content")
 
     return None
 
@@ -258,7 +279,7 @@ def collat_graph_section (fundation : Optional[str] = None) :
     dataframe, md5 = load_all_collateral(fundation)
     fig = history_criteria_graph(dataframe, md5, "Total")
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="content")
 
     return None
     
@@ -291,7 +312,7 @@ def vm_graph_section (fundation : Optional[str] = None) :
     dataframe, md5 = load_all_collateral(fundation)
     fig = history_criteria_graph(dataframe, md5, "VM")
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="content")
 
     return None
 
@@ -306,6 +327,6 @@ def requirement_graph_section (fundation : Optional[str] = None) :
     dataframe, md5 = load_all_collateral(fundation)
     fig = history_criteria_graph(dataframe, md5, "Requirement")
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="content")
 
     return None

@@ -93,10 +93,30 @@ def aggregate_n_groupby (
     print(f"\n[*] Filtering by date: {target_date}")
 
     # Step 2: Filter the DataFrame by the target_date
-    dataframe = dataframe.filter(pl.col("Date") == target_date)
+    dataframe_dates = dataframe.filter(pl.col("Date") == target_date)
+
+    if dataframe_dates.is_empty() :
+
+        dates_series = (
+            dataframe
+            .select(pl.col("Date").unique().sort())
+            .to_series()
+        )
+
+        # garder seulement les dates <= target_date
+        prev_dates = dates_series.filter(dates_series <= target_date)
+
+        if len(prev_dates) == 0:
+            print("[!] No previous date available in dataframe.")
+            return None, md5
+
+        closest_date = prev_dates.max()
+        print(f"[+] Using closest previous date: {closest_date}")
+
+        dataframe_dates = dataframe.filter(pl.col("Date") == closest_date)
 
     # Step 3: Group by the specified columns and 'Currency'
-    grouped_df = dataframe.group_by(list(group_by_columns) + ["Currency"]).agg(
+    grouped_df = dataframe_dates.group_by(list(group_by_columns) + ["Currency"]).agg(
         pl.col(aggregate_column).sum().alias(aggregate_column)  # Sum the "Amount in CCY" for each currency
     )
     

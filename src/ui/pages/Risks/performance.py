@@ -12,9 +12,11 @@ from src.ui.components.text import center_h2, left_h5, left
 from src.ui.components.charts import nav_estimate_performance_graph
 
 from src.config.parameters import NAV_ESTIMATE_RENAME_COLUMNS, PERF_DEFAULT_DATE
-from src.utils.formatters import date_to_str, str_to_date, shift_months, monday_of_week
-from src.core.data.nav import read_nav_estimate_by_fund, rename_nav_estimate_columns
+from src.utils.formatters import date_to_str, str_to_date, shift_months, monday_of_week, format_numeric_columns_to_string
 
+from src.core.data.nav import read_nav_estimate_by_fund, rename_nav_estimate_columns, read_history_nav_from_excel
+from src.core.data.subred import *
+from src.core.api.subred import get_subred_by_date
 
 # Main function
 
@@ -39,6 +41,8 @@ def performance (
     st.write('')
 
     estimated_gross_perf_section(date, fundation)
+    volatility_aum_n_nav_section(date, fundation)
+    st.write('')
     nav_estimate_section(fundation)
 
     return None
@@ -177,6 +181,98 @@ def performance_date_quick_selectors (
     return st.session_state.start_date_perf, st.session_state.end_date_perf
 
 
+# ----------- AUM & NAV -----------
+
+def volatility_aum_n_nav_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None
+
+    ) -> None :
+
+    """
+    
+    """
+    left_h5("Most recent AUM and Estimated NAV")
+    col1, col2= st.columns(2)
+
+    with col1 :
+        total_aum_section(date, fundation)
+
+    with col2 :
+        daily_nav_section(date, fundation)
+
+    return None
+
+
+def total_aum_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+    ) :
+    """
+    
+    """
+    date = date_to_str(date)
+    aum_dict = read_aum_from_cache(date)
+    
+    if aum_dict is None :
+
+        aum_dict = get_subred_by_date(date)
+
+    aum = aum_dict.get(fundation, None)
+
+    if aum is None :
+
+        st.metric(f"No data AUM available", "")
+        return 
+
+    currency = aum.get("currency")
+    amount = aum.get("amount")
+
+    save_aum_to_cache(aum_dict, date)
+    st.metric(f"Total AUM at {date}", f"{amount} {currency}")
+    
+    return None
+
+
+def daily_nav_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+        agg_col : Optional[str] = "MV"
+
+    ) :
+    """
+    
+    """
+    date = str_to_date(date)
+    dataframe, md5 = read_history_nav_from_excel(fundation)
+
+    df_filtered = dataframe.filter(pl.col("Date") == date)
+
+    if df_filtered.is_empty() :
+
+        latest_date = dataframe.select(pl.col("Date")).max().to_pandas().iloc[0, 0]
+        df_filtered = dataframe.filter(pl.col("Date") == latest_date)
+
+    aggregated_data = df_filtered.group_by("Date").agg(pl.col(agg_col).sum().alias(agg_col))
+    
+    aggregated_data = format_numeric_columns_to_string(aggregated_data)
+
+    real_date = aggregated_data.get_column("Date")[0]
+    nav_estimated = (aggregated_data.get_column(agg_col)[0])
+
+    st.metric(f"Estimated NAV at {real_date}", nav_estimated + " EUR")
+
+    return None
+
+
 # ----------- Charts Perf Section -----------
 
 def charts_performance_section (
@@ -195,6 +291,22 @@ def charts_performance_section (
 
     left_h5(f"{fundation} Realized Volatility between {start_date} and {end_date}")
     st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
+
+    return None
+
+
+def anualised_volatility_section (
+        
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None,
+
+        fundation : Optional[str] = None,
+
+    ) -> None :
+    """
+    
+    """
+
 
     return None
 

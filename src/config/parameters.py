@@ -456,6 +456,40 @@ LEVERAGES_TRADE_COLUMNS = {
 }
 
 
+# ------------ Subred --------------
+
+SUBRED_BOOK_HV=os.getenv("SUBRED_BOOK_HV")
+SUBRED_BOOK_WR=os.getenv("SUBRED_BOOK_WR")
+
+SUBRED_FILENAME_PATTERN=os.getenv("SUBRED_FILENAME_PATTERN")
+SUBRED_FILENAME_REGEX = re.compile(SUBRED_FILENAME_PATTERN, re.IGNORECASE)
+
+SUBRED_STRUCT_COLUMNS = {
+
+    "deliveryDate" : pl.Utf8,
+    "notional" : pl.Float64,
+    "currency" : pl.Utf8
+
+}
+
+
+SUBRED_COLS_NEEDED = {
+
+    "tradeLegCode" : pl.Utf8,
+    "bookName" : pl.Utf8,
+    "tradeType" : pl.Utf8,
+    "instrument" : pl.Struct(SUBRED_STRUCT_COLUMNS)
+
+}
+
+
+SUBRED_BOOKS_FUNDS = {
+
+    os.getenv("FUND_HV") : SUBRED_BOOK_HV, 
+    os.getenv("FUND_WR") : SUBRED_BOOK_WR,
+
+}
+
 # ------------ Greeks --------------
 
 
