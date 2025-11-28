@@ -16,6 +16,7 @@ from src.utils.formatters import date_to_str, str_to_date, shift_months, monday_
 
 from src.core.data.nav import read_nav_estimate_by_fund, rename_nav_estimate_columns, read_history_nav_from_excel
 from src.core.data.subred import *
+from src.core.data.volatility import read_realized_vol_by_dates
 from src.core.api.subred import get_subred_by_date
 
 # Main function
@@ -290,6 +291,9 @@ def charts_performance_section (
     st.write('')
 
     left_h5(f"{fundation} Realized Volatility between {start_date} and {end_date}")
+    df = anualised_volatility_section(fundation, start_date, end_date)
+    st.dataframe(df)
+
     st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
 
     return None
@@ -297,18 +301,19 @@ def charts_performance_section (
 
 def anualised_volatility_section (
         
+        fundation : Optional[str] = None,
         start_date : Optional[str | dt.datetime | dt.date] = None,
         end_date : Optional[str | dt.datetime | dt.date] = None,
 
-        fundation : Optional[str] = None,
 
     ) -> None :
     """
     
     """
 
+    df, _ = read_realized_vol_by_dates(fundation, start_date, end_date)
 
-    return None
+    return df
 
 
 def performance_charts_section (
