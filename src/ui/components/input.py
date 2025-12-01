@@ -152,41 +152,32 @@ def bank_benificiary_fields (
 
     # ---------- BANK NAME ----------
     last_bank_default = st.session_state.get(key_bank_def)
-    if bank_name is not None and last_bank_default != bank_name:
-        st.session_state[key_bank] = bank_name
-        st.session_state[key_bank_def] = bank_name
-    elif key_bank not in st.session_state:
-        st.session_state[key_bank] = ""
 
+    if last_bank_default != bank_name :
+        st.session_state[key_bank] = bank_name
+   
     # ---------- BENEFICIARY BANK ----------
     last_benif_default = st.session_state.get(key_benif_def)
-    if benif_default is not None and last_benif_default != benif_default:
+
+    if last_benif_default != benif_default :
         st.session_state[key_benif] = benif_default
-        st.session_state[key_benif_def] = benif_default
-    elif key_benif not in st.session_state:
-        st.session_state[key_benif] = ""
 
     # ---------- SWIFT BANK ----------
     last_swift_default = st.session_state.get(key_swift_def)
-    if swift_bank_default is not None and last_swift_default != swift_bank_default:
+
+    if last_swift_default != swift_bank_default :
         st.session_state[key_swift] = swift_bank_default
-        st.session_state[key_swift_def] = swift_bank_default
-    elif key_swift not in st.session_state:
-        st.session_state[key_swift] = ""
-
-    # ---------- SWIFT BENEFICIARY ----------
+       
     last_swift_ben_default = st.session_state.get(key_swift_ben_def)
-    if swift_benif_default is not None and last_swift_ben_default != swift_benif_default:
-        st.session_state[key_swift_ben] = swift_benif_default
-        st.session_state[key_swift_ben_def] = swift_benif_default
-    elif key_swift_ben not in st.session_state:
-        st.session_state[key_swift_ben] = ""
 
+    if last_swift_ben_default != swift_benif_default:
+        st.session_state[key_swift_ben] = swift_benif_default
+       
     # ---------- RENDER WIDGETS ----------
     col1, col2 = st.columns(2)
 
     with col1:
-        bank = st.text_input("Bank", key=key_bank)
+        bank = st.text_input("Bank", key=f"bank_{number_order}")
         benif = st.text_input("Beneficiary Bank", key=key_benif)
 
     with col2:
@@ -211,10 +202,10 @@ def iban_field (
 
     if iban_default is not None and last_default != iban_default:
         st.session_state[key_iban] = iban_default
-        st.session_state[key_default] = iban_default
+
 
     # Render widget (session_state provides the value)
-    res = st.text_input("IBAN", key=key_iban, max_chars=max_length)
+    res = st.text_input("IBAN", key=key_iban)
 
     return res
 

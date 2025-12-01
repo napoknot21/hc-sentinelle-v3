@@ -14,7 +14,7 @@ from src.ui.components.input import (
     extra_options_fields
 )
 
-from src.core.data.payments import find_beneficiary_by_ctpy_ccy_n_type
+from src.core.data.payments import find_beneficiary_by_ctpy_ccy_n_type, export_payments_to_email
 
 from src.config.parameters import PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_TYPES_MARKET, PAYMENTS_REFERENCES_CTPY, PAYMENTS_ACCOUNTS
 
@@ -30,7 +30,7 @@ def process (default_value : int = 1) :
     payments = payments_section(nb_payments)
     st.write('')
     
-    left_h5("Choose at least one option")
+    left_h5("Export Option")
     email, book = extra_options_section()
     
     st.button("Process Payments", on_click=process_payements_section(payments, email, book))
@@ -69,17 +69,19 @@ def payments_section (nb_payments : int = 1) :
             swift_def, benif_def, swift_ben_def, iban_def = None, None, None, None
 
             row = find_beneficiary_by_ctpy_ccy_n_type(None, None, ctpy, market, currency)
+
             if row is not None :
-                
                 swift_def, benif_def, swift_ben_def, iban_def = row
 
             bank, swift_bank, benif, swift_benif = bank_benificiary_section(ctpy, swift_def, benif_def, swift_ben_def, order_number=i+1)
+            
             iban = iban_section(iban_def, order_number=i+1)
-
             
             payment = (fund, ctpy, acc, type, market, date, amount, currency, name, reference, bank, swift_bank, benif, swift_benif, iban)
-            
+    
             payments.append(payment)
+
+    print(payments)
 
     return payments
 
@@ -234,5 +236,8 @@ def process_payements_section (
         st.warning("You need to choose at least One option !")
         return None 
 
-    
+    if email :
+        
+        bo = export_payments_to_email(payments)
+        st.info("Running and Proceding")
     

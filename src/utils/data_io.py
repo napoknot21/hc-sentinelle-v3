@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import time
 import hashlib
+import openpyxl
 import xlwings as xw
 import polars as pl
 
@@ -449,3 +450,43 @@ def export_excel_to_pdf (file_abs_path : Optional[str] = None, output_filename :
 
     return response
 
+
+def convert_payement_to_excel (
+        
+        payment : Optional[Tuple] = None,
+
+        template_abs_path : Optional[str] = None,
+        dir_abs_path : Optional[str] = None,
+
+    ) :
+
+    """
+    
+    """
+    if payment is None or len(payment) <= 0 :
+        return None
+    
+    template_abs_path = PAYMENTS_EXCEL_TEMPLATE_ABS_PATH if template_abs_path is None else template_abs_path
+    dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
+
+    os.makedirs(dir_abs_path, exist_ok=True)
+
+    workbook = openpyxl.load_workbook(template_abs_path)
+    sheet = workbook.active
+
+    row_idx = 3
+
+    for col_idx, value in enumerate(payment, start=1) :
+
+        cell = sheet.cell(row=row_idx, column=col_idx, value=value)
+
+        # Optionnel : formatting auto pour les dates
+        if isinstance(value, (dt.date, dt.datetime)) :
+            cell.number_format = "DD/MM/YYYY"
+
+    filename = f"payment_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" 
+    filled_path = os.path.join(dir_abs_path, filename)
+        
+    workbook.save(filled_path)
+    
+    return filled_path

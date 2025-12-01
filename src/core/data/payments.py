@@ -10,7 +10,7 @@ from src.config.paths import (
     PAYMENTS_DB_ABS_PATH, PAYMENTS_DB_REL_PATH,
     SECURITIES_DB_REL_PATH, PAYMENTS_BENECIFIARY_DB_ABS_PATH
 )
-from src.utils.data_io import load_excel_to_dataframe
+from src.utils.data_io import load_excel_to_dataframe, convert_payement_to_excel
 
 
 def load_payments_db (
@@ -143,10 +143,24 @@ def find_beneficiary_by_ctpy_ccy_n_type (
     swift_ben   = row[5]
     iban        = row[6]
 
-    print(row)
-
     return swift_code, benef_bank, swift_ben, iban
 
 
+def export_payments_to_email (
+        
+        payments : Optional[List] = None,
 
+    ) :
 
+    """
+    
+    """
+
+    for payment in payments :
+
+        fileout = convert_payement_to_excel(payment)
+
+        print(fileout)
+        return True
+
+    return False
