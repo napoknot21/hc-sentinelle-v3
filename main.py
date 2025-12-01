@@ -4,7 +4,6 @@ from src.ui.app import app
 
 def main () :
 
-    print("\n[*] Welcome ! Starting Streamlit application...\n")
     app()
 
 

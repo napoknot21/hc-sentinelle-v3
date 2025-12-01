@@ -386,25 +386,121 @@ SECURITIES_COLUMNS = {
 
 }
 
-HV_FUND_PAYMENTS = os.getenv("HV_FUND_PAYMENTS")
-WR_FUND_PAYMENTS = os.getenv("WR_FUND_PAYMENTS")
+PAYMENTS_HV_FUND = os.getenv("PAYMENTS_HV_FUND")
+PAYMENTS_WR_FUND = os.getenv("PAYMENTS_WR_FUND")
 
 PAYMENTS_FUNDS = [
 
-    HV_FUND_PAYMENTS,
-    WR_FUND_PAYMENTS
+    PAYMENTS_HV_FUND,
+    PAYMENTS_WR_FUND
 
 ]
 
-PAYMENTS_CONCURRENCIES = CCYS_ORDER
+PAYMENTS_ACCOUNT_1 = os.getenv("PAYMENTS_ACCOUNT_1")
+PAYMENTS_ACCOUNT_2 = os.getenv("PAYMENTS_ACCOUNT_2")
+PAYMENTS_ACCOUNT_3 = os.getenv("PAYMENTS_ACCOUNT_3")
 
-PAYMENTS_TYPES = {
 
-    "" : [],
-    "" : [],
-    "" : [],
+PAYMENTS_ACCOUNTS = [
+
+    PAYMENTS_ACCOUNT_1,
+    PAYMENTS_ACCOUNT_2,
+    PAYMENTS_ACCOUNT_3
+
+]
+
+PAYMENTS_BENEFICIARY_COLUMNS = {
+
+    "Counterparty" : pl.Utf8,
+    "Type Payment" : pl.Utf8,
+    "Currency" : pl.Utf8,
+    #"Bank" : pl.Utf8,
+
+    "Beneficiary Bank" : pl.Utf8,
+    "Swift-Code" : pl.Utf8,
+    "Swift-Code Beneficiary" : pl.Utf8,
+    "IBAN" : pl.Utf8
 
 }
+
+PAYMENTS_BENECIFIARY_SHEET_NAME = os.getenv("PAYMENTS_BENECIFIARY_SHEET_NAME")
+
+PAYMENTS_CONCURRENCIES = CCYS_ORDER
+
+PAYMENTS_COUNTERPARTIES = {
+
+    os.getenv("PAYMENTS_COUNTERPARTY_GS") : {
+
+        "initials" : "GS",
+        "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_GS")
+
+    },
+    
+    os.getenv("PAYMENTS_COUNTERPARTY_MS") : {
+    
+        "initials" : "MS",
+        "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_MS")
+
+    },
+
+    os.getenv("PAYMENTS_COUNTERPARTY_SAXO") : {
+        
+        "initials": os.getenv("PAYMENTS_COUNTERPARTY_SAXO"),
+        "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_SAXO")
+        
+    },
+
+    os.getenv("PAYMENTS_COUNTERPARTY_UBS_L") : {
+    
+        "initials" : os.getenv("PAYMENTS_COUNTERPARTY_UBS_L"),
+        "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_UBS_L")
+
+    },
+
+    os.getenv("PAYMENTS_COUNTERPARTY_UBS_E") : {
+        
+        "initials" : os.getenv("PAYMENTS_COUNTERPARTY_UBS_E"),
+        "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_UBS_E")
+    }
+
+}
+
+
+PAYMENTS_REFERENCES_CTPY = {
+
+    "Margin Call" : {
+
+        os.getenv("PAYMENTS_COUNTERPARTY_GS") : os.getenv("PAYEMENTS_REFERENCE_GS_MC"),
+        os.getenv("PAYMENTS_COUNTERPARTY_MS") : os.getenv("PAYEMENTS_REFERENCE_MS_MC"),       
+
+    },
+
+    "Option Premium" : {
+
+        os.getenv("PAYMENTS_COUNTERPARTY_GS") : os.getenv("PAYEMENTS_REFERENCE_GS_OP"),
+        os.getenv("PAYMENTS_COUNTERPARTY_MS") : os.getenv("PAYEMENTS_REFERENCE_MS_OP"),
+
+    },
+
+    "Option Exercise" : {
+
+        os.getenv("PAYMENTS_COUNTERPARTY_MS") : os.getenv("PAYEMENTS_REFERENCE_MS_OE"),
+
+    },
+
+
+}
+
+
+
+PAYMENTS_TYPES_MARKET = {
+
+    "Margin Call" : ["Margin Call"],
+    "Option Premium" : ["FX", "Equity", "Margin Call"],
+    "Option Exercise" : ["FX", "Equity", "Margin Call"]
+
+}
+
 
 
 # ------------------ Leverages ------------------
