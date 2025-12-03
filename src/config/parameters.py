@@ -260,6 +260,13 @@ NAV_ESTIMATE_RENAME_COLUMNS = {
 }
 
 
+NAV_FUNDS_COLUMNS = {
+
+    FUND_HV : "NAV Estimate",
+    FUND_WR : "NAV Estimate Weighted by Time"
+    
+}
+
 # ---------------- EXO HYBRID ----------------
 
 
@@ -423,6 +430,24 @@ PAYMENTS_BENEFICIARY_COLUMNS = {
 
 }
 
+PAYMENTS_EXCEL_COLUMNS = [
+
+    "A",  # fund
+    "C",  # acc
+    "D",  # currency
+    "E",  # amount
+    "F",  # date
+    "H",  # "SHA"
+    "I",  # bank
+    "M",  # reference
+    "Q",  # iban
+    "R",  # swift_bank
+    "S",  # benif
+    "X",  # swift_benif
+    "Z",  # name
+
+]
+
 PAYMENTS_BENECIFIARY_SHEET_NAME = os.getenv("PAYMENTS_BENECIFIARY_SHEET_NAME")
 
 PAYMENTS_CONCURRENCIES = CCYS_ORDER
@@ -465,7 +490,6 @@ PAYMENTS_COUNTERPARTIES = {
 
 }
 
-
 PAYMENTS_REFERENCES_CTPY = {
 
     "Margin Call" : {
@@ -490,7 +514,6 @@ PAYMENTS_REFERENCES_CTPY = {
 
 
 }
-
 
 
 PAYMENTS_TYPES_MARKET = {

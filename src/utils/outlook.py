@@ -50,7 +50,7 @@ def create_email_item (
     mail_item.CC = EMAIL_DEFAULT_CC if (len(cc_email) == 0 or cc_email is None) else "; ".join(cc_email)
 
     # Set up sender email
-    mail_item.SendOnBehalfOfName = EMAIL_DEFAULT_FROM if from_email == "" else from_email
+    mail_item.SentOnBehalfOfName = from_email# if from_email == "" else from_email
 
     # Set up of subject email
     mail_item.Subject = subject

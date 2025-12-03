@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import re
 import streamlit as st
-import datetime as dt
 
 from typing import List, Optional, Dict, Tuple
 
-from src.ui.components.text import center_h2, center_h3, center_h5, left_h5
+from src.ui.components.text import center_h2, center_h5, left_h5
 from src.ui.components.selector import number_of_payments_selector, date_selector
 from src.ui.components.input import (
     general_payment_fields, type_market_fields, amount_currency_fields,
@@ -14,10 +12,17 @@ from src.ui.components.input import (
     extra_options_fields
 )
 
-from src.core.data.payments import find_beneficiary_by_ctpy_ccy_n_type, export_payments_to_email
+from src.core.data.payments import (
+    find_beneficiary_by_ctpy_ccy_n_type, process_excel_to_pdf, process_payments_to_excel, 
+    create_payement_email
+)
 
-from src.config.parameters import PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_TYPES_MARKET, PAYMENTS_REFERENCES_CTPY, PAYMENTS_ACCOUNTS
+from src.config.parameters import (
+    PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_TYPES_MARKET,
+    PAYMENTS_REFERENCES_CTPY, PAYMENTS_ACCOUNTS
+)
 
+# ----------- Main ------------
 
 def process (default_value : int = 1) :
     """
@@ -28,16 +33,19 @@ def process (default_value : int = 1) :
     nb_payments = nb_of_payments_section(default_value)
 
     payments = payments_section(nb_payments)
+
     st.write('')
-    
     left_h5("Export Option")
+
     email, book = extra_options_section()
     
-    st.button("Process Payments", on_click=process_payements_section(payments, email, book))
+    if st.button("Process Payments") :
+        process_payements_section(payments, email, book)
 
     return None
 
 
+# ----------- Nb of Payement's selector -----------
 
 def nb_of_payments_section (default_value : int = 1) :
     """
@@ -47,6 +55,8 @@ def nb_of_payments_section (default_value : int = 1) :
 
     return nb_payments
 
+
+# ----------- Input Section -----------
 
 def payments_section (nb_payments : int = 1) :
     """
@@ -59,34 +69,42 @@ def payments_section (nb_payments : int = 1) :
 
         with column :
 
-            center_h5(f"Payment {i+1}")
-
-            fund, ctpy, acc = input_payment_section(number_order=i+1)
-            type, market = type_payment_section(number_order=i+1)
-            date, amount, currency = date_n_amount_section(number_order=i+1)
-            name, reference = statement_reference_setion(ctpy, type, number_order=i+1)
-
-            swift_def, benif_def, swift_ben_def, iban_def = None, None, None, None
-
-            row = find_beneficiary_by_ctpy_ccy_n_type(None, None, ctpy, market, currency)
-
-            if row is not None :
-                swift_def, benif_def, swift_ben_def, iban_def = row
-
-            bank, swift_bank, benif, swift_benif = bank_benificiary_section(ctpy, swift_def, benif_def, swift_ben_def, order_number=i+1)
-            
-            iban = iban_section(iban_def, order_number=i+1)
-            
-            payment = (fund, ctpy, acc, type, market, date, amount, currency, name, reference, bank, swift_bank, benif, swift_benif, iban)
-    
+            payment = input_payment_section(i)
             payments.append(payment)
-
-    print(payments)
 
     return payments
 
 
-def input_payment_section (
+# Payment object / Full section
+def input_payment_section (i : int = 0) :
+    """
+    Docstring for input_payment_section
+    """
+
+    center_h5(f"Payment {i+1}")
+
+    fund, ctpy, acc = fund_ctpy_n_acc_section(number_order=i+1)
+    type, market = type_payment_section(number_order=i+1)
+    date, amount, currency = date_n_amount_section(number_order=i+1)
+    name, reference = statement_reference_setion(ctpy, type, number_order=i+1)
+
+    swift_def, benif_def, swift_ben_def, iban_def = None, None, None, None
+
+    row = find_beneficiary_by_ctpy_ccy_n_type(None, None, ctpy, market, currency)
+
+    if row is not None :
+        swift_def, benif_def, swift_ben_def, iban_def = row
+
+    bank, swift_bank, benif, swift_benif = bank_benificiary_section(ctpy, swift_def, benif_def, swift_ben_def, order_number=i+1)
+    iban = iban_section(iban_def, order_number=i+1)
+    
+    # Final payement "object"
+    payment = (fund, acc, currency, amount, date, "SHA", bank, reference, iban, swift_bank, benif, swift_benif, name)
+    
+    return payment
+
+
+def fund_ctpy_n_acc_section (
 
         fundations : Optional[List[str]] = None,
         counterparties : Optional[Dict] = None,
@@ -210,6 +228,8 @@ def iban_section (
     return iban
 
 
+# ----------- Export options (footer) -----------
+
 def extra_options_section () :
     """
     
@@ -238,6 +258,15 @@ def process_payements_section (
 
     if email :
         
-        bo = export_payments_to_email(payments)
-        st.info("Running and Proceding")
-    
+        excel_paths = process_payments_to_excel(payments)
+        pdf_files = process_excel_to_pdf(excel_paths)
+
+        print(f"\n[*] Converted {pdf_files}")
+        msg_path = create_payement_email(files_attached=pdf_files)
+
+        print(f"\n[+] Mesage created and stored in {msg_path}")
+        st.info("Email successfully created. Ready to download")
+
+
+    return None
+

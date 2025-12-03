@@ -45,7 +45,7 @@ def header (
     else :
 
         if p.exists() :
-            st.image(str(p), width="stretch")
+            st.image(str(p))#, width="stretch")
         
         if title :
             st.markdown(f"## {title}")
@@ -68,7 +68,7 @@ def sidebar (groupes : List[Dict[str, str]], title : str = "", logo_header_path 
     with sidebar:
 
         if logo_header_path:
-            st.image(logo_header_path, width='stretch')
+            st.image(logo_header_path)#, width='stretch')
 
         center_h2(title)
         

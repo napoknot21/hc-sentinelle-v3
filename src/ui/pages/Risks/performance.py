@@ -8,15 +8,15 @@ from typing import Dict, List, Optional, Dict
 # from dateutil.relativedelta import relativedelta
 
 from src.ui.components.selector import date_selector
-from src.ui.components.text import center_h2, left_h5, left
+from src.ui.components.text import center_h2, left_h5, left_h3
 from src.ui.components.charts import nav_estimate_performance_graph
 
 from src.config.parameters import NAV_ESTIMATE_RENAME_COLUMNS, PERF_DEFAULT_DATE
 from src.utils.formatters import date_to_str, str_to_date, shift_months, monday_of_week, format_numeric_columns_to_string
 
-from src.core.data.nav import read_nav_estimate_by_fund, rename_nav_estimate_columns, read_history_nav_from_excel
+from src.core.data.nav import read_nav_estimate_by_fund, rename_nav_estimate_columns, read_history_nav_from_excel, estimated_gross_performance, compute_monthly_returns
 from src.core.data.subred import *
-from src.core.data.volatility import read_realized_vol_by_dates
+from src.core.data.volatility import read_realized_vol_by_dates, compute_realized_vol_by_dates, compute_annualized_realized_vol
 from src.core.api.subred import get_subred_by_date
 
 # Main function
@@ -56,7 +56,7 @@ def nav_estimate_section (fundation : Optional[str] = None) :
 
     start_date, end_date = date_selectors_section()
 
-    charts_performance_section(fundation, start_date, end_date)
+    charts_performance_section( fundation, start_date, end_date)
 
 
 # ----------- Table Estimated Perf Section -----------
@@ -70,7 +70,14 @@ def estimated_gross_perf_section (
     """
     
     """
-    st.write("Hello World")
+    left_h3("Estimated Gross Performance")
+
+    dataframe, md5 = estimated_gross_performance(fund=fundation)
+    result, md5 = compute_monthly_returns(dataframe, md5, fundation)
+
+    #fig = 
+    st.dataframe(result)
+
     return None
 
 
@@ -289,31 +296,12 @@ def charts_performance_section (
     performance_charts_section(start_date, end_date, fundation)
 
     st.write('')
+    anualised_volatility_section(fundation, start_date, end_date)
+    st.write('')
 
-    left_h5(f"{fundation} Realized Volatility between {start_date} and {end_date}")
-    df = anualised_volatility_section(fundation, start_date, end_date)
-    st.dataframe(df)
-
-    st.plotly_chart(performance_charts_section(start_date, end_date, fundation))
+    realized_volatilty_chart_section(start_date, end_date, fundation)
 
     return None
-
-
-def anualised_volatility_section (
-        
-        fundation : Optional[str] = None,
-        start_date : Optional[str | dt.datetime | dt.date] = None,
-        end_date : Optional[str | dt.datetime | dt.date] = None,
-
-
-    ) -> None :
-    """
-    
-    """
-
-    df, _ = read_realized_vol_by_dates(fundation, start_date, end_date)
-
-    return df
 
 
 def performance_charts_section (
@@ -352,11 +340,32 @@ def performance_charts_section (
         df_na, md5, fundation, start_date, end_date, columns, "date"
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)
 
     return None
 
-# TODO : Need a best formula for computing this results (window fixed ?)
+
+def anualised_volatility_section (
+        
+        fundation : Optional[str] = None,
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None,
+
+
+    ) -> None :
+    """
+    
+    """
+
+    df, _ = read_realized_vol_by_dates(fundation, start_date, end_date)
+    dataframe = compute_realized_vol_by_dates(df, fundation, start_date, end_date)
+    vol = compute_annualized_realized_vol(dataframe, fundation)
+
+    st.metric(f"{fundation} Realized Volatility between {start_date} and {end_date}", f"{vol}%")
+
+    return None
+
+
 def realized_volatilty_chart_section (
         
         start_date : Optional[str | dt.datetime | dt.date] = None,
@@ -372,20 +381,48 @@ def realized_volatilty_chart_section (
     """
     
     """
+    left_h5(f"{fundation} annualized Volatility (%) between {start_date} and {end_date}")
+
     rename_cols = NAV_ESTIMATE_RENAME_COLUMNS if rename_cols is None else rename_cols
     columns = list(rename_cols.values())
 
     dataframe, md5 = read_nav_estimate_by_fund(fundation)
     rename_df , md5 = rename_nav_estimate_columns(dataframe, md5)
 
-    df_filterd = rename_df.filter(
+
+    df_na = rename_df.drop_nulls(subset=columns)
+    df = df_na.sort("date")
+
+    for column in columns :
         
-        (pl.col("date") >= pl.lit(start_date)) &
-        (pl.col("date") <= pl.lit(end_date))
+        df = df.with_columns(
+            [
+                pl.col(column).pct_change().alias(f"{column}_returns")
+            ]
+        )
+
+    annualization = (window ** 0.5) * 100
+
+    for column in columns :
+
+        df = df.with_columns(
+            [
+                pl.col(f"{column}_returns")
+                .rolling_std(window_size=window, min_periods=window)
+                .mul(annualization)
+                .alias(f"VOL {column}"),
+            ]
+        )
+
+        print(df)
     
+    specific_cols = [f"VOL {column}" for column in columns]
+
+    fig = nav_estimate_performance_graph(
+        df, md5, fundation, start_date, end_date, specific_cols, "date"
     )
 
-    
+    st.plotly_chart(fig)
 
     return None
 

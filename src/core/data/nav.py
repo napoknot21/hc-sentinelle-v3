@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+import math
 import hashlib
+import calendar
 import polars as pl
 import datetime as dt
 
@@ -13,7 +15,8 @@ from src.utils.formatters import date_to_str, str_to_date
 
 from src.config.parameters import (
     FUND_HV, NAV_COLUMNS, NAV_HIST_NAME_DEFAULT, NAV_CUTOFF_DATE,
-    NAV_ESTIMATE_HIST_NAME_DEFAULT, NAV_ESTIMATE_COLUMNS, NAV_ESTIMATE_RENAME_COLUMNS
+    NAV_ESTIMATE_HIST_NAME_DEFAULT, NAV_ESTIMATE_COLUMNS, NAV_ESTIMATE_RENAME_COLUMNS,
+    NAV_FUNDS_COLUMNS
 )
 from src.config.paths import NAV_PORTFOLIO_FUND_HV_DIR_PATH, NAV_PORTFOLIO_FUNDS_DIR_PATHS, NAV_ESTIMATE_FUNDS_DIR_PATHS
 
@@ -61,9 +64,6 @@ def read_history_nav_from_excel (
     if "Date" in nav_history_df.columns :
         
         nav_history_df = nav_history_df.filter(pl.col("Date") >= pl.lit(cutoff_date_parsed))
-        #print(nav_history_df)
-        #md5_hash = hashlib.md5(nav_history_df.write_parquet()).hexdigest()
-        
         log(f"[+] NAV file read successfully")
 
     else :
@@ -234,3 +234,162 @@ def get_nav_abs_path_by_fund (
     nav_abs_path = os.path.join(fund_abs_path, basename_file)
 
     return nav_abs_path
+
+
+def estimated_gross_performance (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        fund :  Optional[str] = None,
+        columns_fund : Optional[Dict] = None,
+    
+    ) :
+    """
+    
+    """
+    fund = FUND_HV if fund is None else fund
+    dataframe, md5 = read_nav_estimate_by_fund(fund) if dataframe is None else dataframe
+    
+    columns_fund = NAV_FUNDS_COLUMNS if columns_fund is None else columns_fund
+    column = columns_fund.get(fund)
+
+    #specific_cols = [column, "date"]
+    #dataframe = dataframe.select(specific_cols)
+
+    df = dataframe.with_columns(pl.col(column).forward_fill())
+    df = df.drop_nulls(subset=[column])
+
+    df = (df.sort("date").group_by("date").agg(pl.all().last()).sort("date"))
+
+    print(df)
+
+    df = df.with_columns(
+        [
+            pl.col("date").dt.year().alias("year"),
+            pl.col("date").dt.month().alias("month"),
+        ]
+    )
+
+    return df, md5
+
+
+def compute_monthly_returns (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        fund :  Optional[str] = None,
+        columns_fund : Optional[Dict] = None,
+
+        year_month : List = ["year", "month"]
+    ) :
+    """
+    Docstring for compute_monthly_returns
+    
+    :param dataframe: Description
+    :type dataframe: Optional[pl.DataFrame]
+    :param md5: Description
+    :type md5: Optional[str]
+    """
+    fund = FUND_HV if fund is None else fund
+    dataframe, _ = estimated_gross_performance(fund=fund, columns_fund=columns_fund) if dataframe is None else dataframe, md5
+
+    columns_fund = NAV_FUNDS_COLUMNS if columns_fund is None else columns_fund
+    column = columns_fund.get(fund)
+
+    monthly = (
+
+        dataframe
+        .group_by(year_month)
+        .agg(
+            pl.count().alias("rows_in_month"),
+            pl.col(column).first().alias("first_nav"),
+            pl.col(column).last().alias("last_nav"),
+        )
+        .sort(year_month)
+
+    )
+
+    monthly = monthly.with_columns(pl.col("last_nav").shift(1).alias("prev_last_nav"))
+
+    monthly = monthly.with_columns(
+
+        pl.when(pl.col("prev_last_nav").is_not_null())
+          .then(pl.col("prev_last_nav"))
+          .otherwise(pl.col("first_nav"))
+          .alias("start_nav")
+
+    )
+
+    valid_month = (
+
+        (pl.col("rows_in_month") >= 2) |
+        ((pl.col("rows_in_month") == 1) & pl.col("prev_last_nav").is_not_null())
+   
+    )
+
+    monthly = monthly.with_columns(
+
+        pl.when(valid_month)
+          .then(((pl.col("last_nav") / pl.col("start_nav")) - 1.0) * 100.0)
+          .otherwise(pl.lit(None))
+          .alias("monthly_return")
+
+    )
+
+    result: Dict[int, Dict[int, float]] = {}
+
+    for year, month, perf in monthly.select(year_month + ["monthly_return"]).iter_rows() :
+
+        year_int = int(year)
+        month_int = int(month)
+
+        if perf is None :
+            perf_value = math.nan
+        
+        else :
+            perf_value = float(perf)
+
+        result.setdefault(year_int, {})[month_int] = perf_value
+
+    # Ensure all years appear in result
+    for year in dataframe.select(pl.col(year_month[0])).unique().to_series().to_list() :
+        result.setdefault(int(year), {})
+
+    month_abbrs = [calendar.month_abbr[m] for m in range(1, 13)]
+    rows = []
+
+    for year, month_dict in result.items() :
+
+        row = {"Year": year}
+        
+        for m, abbr in enumerate(month_abbrs, start=1) :
+        
+            value = month_dict.get(m, math.nan)  # missing month -> NaN
+            row[abbr] = value
+        
+        rows.append(row)
+
+    perf_df = pl.DataFrame(rows).sort("Year")
+    print(perf_df)
+    return perf_df, md5
+
+
+def build_performance_dataframe (
+
+        dataframe : pl.DataFrame,
+        md5 : str,
+
+        fund : Optional[str] = None,
+
+
+    ) :
+    """
+    Docstring for build_performance_dataframe
+    """
+    fund = FUND_HV if fund is None else fund
+
+    
+
+    

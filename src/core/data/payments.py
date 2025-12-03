@@ -1,16 +1,25 @@
 from __future__ import annotations
 
+import os
+import time
 import polars as pl
 import datetime as dt
 
 from typing import Optional, Dict, List
 
-from src.config.parameters import PAYMENTS_COLUMNS, SECURITIES_COLUMNS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME
+from src.config.parameters import (
+    PAYMENTS_COLUMNS, SECURITIES_COLUMNS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME,
+    EMAIL_DEFAULT_FROM, EMAIL_DEFAULT_CC, EMAIL_DEFAULT_TO
+)
 from src.config.paths import (
     PAYMENTS_DB_ABS_PATH, PAYMENTS_DB_REL_PATH,
-    SECURITIES_DB_REL_PATH, PAYMENTS_BENECIFIARY_DB_ABS_PATH
+    SECURITIES_DB_REL_PATH, PAYMENTS_BENECIFIARY_DB_ABS_PATH, PAYMENTS_FILES_ABS_PATH,
+    PAYMENTS_MESSAGES_DIR_ABS_PATH
 )
-from src.utils.data_io import load_excel_to_dataframe, convert_payement_to_excel
+from src.utils.data_io import load_excel_to_dataframe, convert_payement_to_excel, export_excel_to_pdf
+from src.utils.logger import log
+from src.utils.outlook import create_email_item, save_email_item
+from src.utils.email import create_email_eml
 
 
 def load_payments_db (
@@ -102,7 +111,6 @@ def find_beneficiary_by_ctpy_ccy_n_type (
         counterparty : Optional[str] = None,
         type_ben : Optional[str] = None,
         currency : Optional[str] = None,
-        #bank_name : Optional[str] = None,
 
         columns : Optional[Dict] = None,
 
@@ -116,6 +124,7 @@ def find_beneficiary_by_ctpy_ccy_n_type (
     specific_cols = list(columns.keys())[:3]
 
     if counterparty is None or type_ben is None or currency is None :
+        print("Here ?")
         return None
 
     df_match = (
@@ -133,9 +142,8 @@ def find_beneficiary_by_ctpy_ccy_n_type (
 
     if df_match.is_empty() :
         return None
-    
-    last_values = list(columns.keys())[3:]
-    
+
+    print(df_match)
     row = df_match.row(0)
 
     benef_bank  = row[3]
@@ -146,21 +154,121 @@ def find_beneficiary_by_ctpy_ccy_n_type (
     return swift_code, benef_bank, swift_ben, iban
 
 
-def export_payments_to_email (
+def process_payments_to_excel (
         
         payments : Optional[List] = None,
+        dir_abs_path : Optional[str] = None
 
     ) :
 
     """
     
     """
-
+    if payments is None or len(payments) == 0 :
+    
+        log("No payement information to convert", "error")
+        return False
+    
+    dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
+    filepaths = []
+    
     for payment in payments :
+        
+        try :
 
-        fileout = convert_payement_to_excel(payment)
+            fileout = convert_payement_to_excel(payment, dir_abs_path=dir_abs_path)
+            filepaths.append(fileout)
 
-        print(fileout)
-        return True
+            time.sleep(1) # this line allows to get different name files
 
-    return False
+        except :
+            
+            print("Error during conversion")
+
+    if len(filepaths) == 0 :
+
+        log("[-] No Payment to convert to PDF", "error")
+        return None
+    
+    return filepaths
+
+
+def process_excel_to_pdf (
+        
+        filepaths : Optional[List] = None,
+        dir_abs_path : Optional[str] = None,
+    
+    ) :
+    """
+    Docstring for process_excel_to_pdf
+    
+    :param filepaths: Description
+    :type filepaths: Optional[List]
+    :param dir_abs_path: Description
+    :type dir_abs_path: Optional[str]
+    """
+    if filepaths is None or len(filepaths) == 0 :
+        return None
+    
+    dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
+    pdf_filespaths = []
+
+    for filepath in filepaths :
+
+        try :
+            
+            filename = os.path.splitext(os.path.basename(filepath))[0]
+            dict = export_excel_to_pdf(filepath, filename + ".pdf", dir_abs_path)
+
+            pdf_filespaths.append(dict.get("path"))
+
+        except :
+            log("[-] Error during excel to PDF conversion", "error")
+
+    return pdf_filespaths
+
+
+def create_payement_email (
+        
+        from_email : Optional[str] = None,
+        to_email: Optional[str] = None,
+        cc_email : Optional[str] = None,
+
+        object_email : Optional[str] = None,
+        body_email : Optional[str] = None,
+
+        files_attached : Optional[List] = None,
+        save_msg_abs : Optional[str] = None,
+
+    ) :
+    """
+    Docstring for create_payement_email
+    
+    :param from_email: Description
+    :type from_email: Optional[str]
+    :param to_email: Description
+    :type to_email: Optional[str]
+    :param cc_email: Description
+    :type cc_email: Optional[str]
+    :param object_email: Description
+    :type object_email: Optional[str]
+    :param body_email: Description
+    :type body_email: Optional[str]
+    :param files_attached: Description
+    :type files_attached: Optional[List]
+    """
+    from_email = EMAIL_DEFAULT_FROM if from_email is None else from_email
+    to_email = EMAIL_DEFAULT_TO if to_email is None else to_email
+    cc_email = EMAIL_DEFAULT_CC if cc_email is None else cc_email
+
+    object_email = "HEllo"
+    body_email = "Test"
+    
+    save_msg_abs = PAYMENTS_MESSAGES_DIR_ABS_PATH if save_msg_abs is None else save_msg_abs
+    timestamped = dt.datetime.now().strftime(format="%Y%m%d_%H%M%S_%f")
+    file_name = f"message_{timestamped}.eml"
+
+    path = create_email_eml(to_email, cc_email, from_email, object_email, body_email, files_attached, save_msg_abs, file_name)
+
+    return path
+

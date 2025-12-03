@@ -430,9 +430,10 @@ def export_excel_to_pdf (file_abs_path : Optional[str] = None, output_filename :
         # No file existed. Error returned
         return response
     
-    output_dir_path = PAYMENTS_DIR_ABS_PATH if output_dir_path is None else output_dir_path
-    os.makedirs(output_dir_path, exist_ok=True)
 
+    output_dir_path = PAYMENTS_FILES_ABS_PATH if output_dir_path is None else output_dir_path
+    os.makedirs(output_dir_path, exist_ok=True)
+    
     with xw.App() as app :
 
         # user will not even see the excel opening up
@@ -440,7 +441,7 @@ def export_excel_to_pdf (file_abs_path : Optional[str] = None, output_filename :
         
         book = app.books.open(file_abs_path)
         sheet = book.sheets[0]
-
+       
         # Save excel workbook as pdf
         full_path = os.path.join(output_dir_path, output_filename)
         sheet.to_pdf(path=full_path, show=False)
@@ -457,6 +458,7 @@ def convert_payement_to_excel (
 
         template_abs_path : Optional[str] = None,
         dir_abs_path : Optional[str] = None,
+        columns_index : Optional[List] = None
 
     ) :
 
@@ -476,12 +478,14 @@ def convert_payement_to_excel (
 
     row_idx = 3
 
-    for col_idx, value in enumerate(payment, start=1) :
+    for value, col_letter in zip(payment, PAYMENTS_EXCEL_COLUMNS) :
 
-        cell = sheet.cell(row=row_idx, column=col_idx, value=value)
+        cell_ref = f"{col_letter}{row_idx}"
+        cell = sheet[cell_ref]
+        
+        cell.value = value
 
-        # Optionnel : formatting auto pour les dates
-        if isinstance(value, (dt.date, dt.datetime)) :
+        if isinstance(value, (dt.date, dt.datetime)):
             cell.number_format = "DD/MM/YYYY"
 
     filename = f"payment_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" 
@@ -490,3 +494,5 @@ def convert_payement_to_excel (
     workbook.save(filled_path)
     
     return filled_path
+
+

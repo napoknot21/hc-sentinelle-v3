@@ -8,6 +8,7 @@ import json
 import polars as pl
 import datetime as dt
 
+from email.message import EmailMessage
 from typing import Dict, Optional, List, Any
 
 from src.config.parameters import (
@@ -211,3 +212,79 @@ def generate_timestamped_name () -> str :
     return name
 
 
+def create_email_eml (
+        
+        to_email: str,
+        cc_email: Optional[str],
+        from_email: str,
+        
+        subject: str,
+        body_html: str,
+        
+        attachments: Optional[List[str]],
+        
+        output_dir: str,
+        filename: str = "payment_email.eml",
+    
+    ) -> str :
+    """
+    Docstring for create_email_eml
+    
+    :param to_email: Description
+    :type to_email: str
+    :param cc_email: Description
+    :type cc_email: Optional[str]
+    :param from_email: Description
+    :type from_email: str
+    :param subject: Description
+    :type subject: str
+    :param body_html: Description
+    :type body_html: str
+    :param attachments: Description
+    :type attachments: Optional[List[str]]
+    :param output_dir: Description
+    :type output_dir: str
+    :param filename: Description
+    :type filename: str
+    :return: Description
+    :rtype: str
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, filename)
+
+    msg = EmailMessage()
+    msg["From"] = from_email
+    msg["To"] = to_email
+
+    if cc_email:
+        msg["Cc"] = cc_email
+
+    msg["Subject"] = subject
+    msg["X-Unsent"] = "1"
+    msg.set_content("This email requires an HTML-capable client.")
+    msg.add_alternative(body_html, subtype="html")
+
+    attachments = attachments or []
+
+    for filepath in attachments:
+
+        if not os.path.isfile(filepath):
+            continue
+
+        with open(filepath, "rb") as f:
+            data = f.read()
+
+        filename_att = os.path.basename(filepath)
+
+        msg.add_attachment(
+            data,
+            maintype="application",
+            subtype="octet-stream",
+            filename=filename_att,
+        )
+
+    # Sauvegarde en .eml
+    with open(output_path, "wb") as f:
+        f.write(bytes(msg))
+
+    return output_path

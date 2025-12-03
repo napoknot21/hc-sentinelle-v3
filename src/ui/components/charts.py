@@ -114,9 +114,12 @@ def nav_estimate_performance_graph (
 
         return None
 
-    end_date = date_to_str() if end_date is None else end_date
-    start_date = date_to_str() if start_date is None else start_date
+    end_date = str_to_date() if end_date is None else end_date
+    start_date = str_to_date() if start_date is None else start_date
     
+    _dataframe = _dataframe.filter(
+        (pl.col(x_colonne) >= start_date) & (pl.col(x_colonne) <= end_date)
+    )
     fig = go.Figure()
 
     x_colonne_data = _dataframe[x_colonne]
@@ -319,8 +322,6 @@ def history_criteria_graph (
     )
 
     return fig
-
-
 
 
 # ---------- SIMM ----------
