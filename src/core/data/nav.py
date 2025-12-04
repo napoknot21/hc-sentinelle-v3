@@ -587,8 +587,51 @@ def portfolio_allocation_analysis (
     if (date < threshold) :
         asset_classes_book_names["Equity"] = asset_classes_book_names.get("Equity")[:1]
 
+    filter_book = avoid_books_funds.get(fund)
+
+    dataframe = dataframe.filter(pl.col("Portfolio Name") != filter_book)
+
+    records = []
+    for asset_class, books in asset_classes_book_names.items() :
+
+        for book in books :
+            records.append({"Portfolio Name": book, "Asset Class": asset_class})
+
+    mapping_df = pl.DataFrame(records)
+    dataframe = dataframe.join(mapping_df, on="Portfolio Name", how="left")
+
+    # TODO : Look for other books that are not listed
+    ptf_agg = (
+
+        dataframe
+        .group_by("Asset Class")
+        .agg(
+            [
+                pl.col("MV").sum().alias("MV"),
+            ]
+        )
+
+    )
+
+    #ptf_agg = ptf_agg.drop_nulls("Asset Class")
+
+    ptf_agg = ptf_agg.with_columns(
+
+        pl.col("Asset Class")
+        .replace(init_alloc)
+        .alias("alloc")
+    
+    )
+
+    """ptf_agg = ptf_agg.with_columns(
+        [
+            ((pl.col("MV") / pl.col("alloc") + 1) * 100).alias("Nav of Asset Class"),
+            pl.col("MV").alias("Generated PNL of Asset Class"),
+        ]
+    )"""
     
 
-    return dataframe
+    return ptf_agg
+
 
     
