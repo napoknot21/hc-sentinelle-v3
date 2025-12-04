@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import math
 import hashlib
 import calendar
@@ -14,9 +15,10 @@ from src.utils.data_io import load_excel_to_dataframe
 from src.utils.formatters import date_to_str, str_to_date
 
 from src.config.parameters import (
-    FUND_HV, NAV_COLUMNS, NAV_HIST_NAME_DEFAULT, NAV_CUTOFF_DATE,
+    FUND_HV, NAV_HISTORY_COLUMNS, NAV_HIST_NAME_DEFAULT, NAV_CUTOFF_DATE,
     NAV_ESTIMATE_HIST_NAME_DEFAULT, NAV_ESTIMATE_COLUMNS, NAV_ESTIMATE_RENAME_COLUMNS,
-    NAV_FUNDS_COLUMNS
+    NAV_FUNDS_COLUMNS, NAV_PORTFOLIO_REGEX, NAV_PORTFOLIO_COLUMNS,
+    PERF_BOOKS_FUNS, PERF_ASSET_CLASSES_FUNDS, PERF_ALLOCATION_DATE, PERF_INITIAL_ALLOCATION
 )
 from src.config.paths import NAV_PORTFOLIO_FUND_HV_DIR_PATH, NAV_PORTFOLIO_FUNDS_DIR_PATHS, NAV_ESTIMATE_FUNDS_DIR_PATHS
 
@@ -34,9 +36,9 @@ def read_history_nav_from_excel (
     Read historiacal NAV data for a fiven path to the fund's SIMM Excel file
     
     """
-    excel_file_abs_path = get_nav_abs_path_by_fund(fund, nav_fund_paths)
+    excel_file_abs_path = get_nav_history_path_by_fund(fund, nav_fund_paths)
 
-    schema_overrides = NAV_COLUMNS if schema_overrides is None else schema_overrides
+    schema_overrides = NAV_HISTORY_COLUMNS if schema_overrides is None else schema_overrides
     specific_cols = list(schema_overrides.keys()) if specific_cols is None else specific_cols
     cutoff_date = NAV_CUTOFF_DATE if cutoff_date is None else cutoff_date
 
@@ -153,7 +155,7 @@ def treat_string_nav_cols_df (
     """
     
     """
-    string_cols = [col for col, dtype in NAV_COLUMNS.items() if dtype == pl.Utf8] if string_cols is None else string_cols
+    string_cols = [col for col, dtype in NAV_HISTORY_COLUMNS.items() if dtype == pl.Utf8] if string_cols is None else string_cols
 
     _df = (
         _df.with_columns(
@@ -215,7 +217,7 @@ def is_nav_history_updated_from_file (
     return is_updated
 
 
-def get_nav_abs_path_by_fund (
+def get_nav_history_path_by_fund (
         
         fund : Optional[str] = None,
         nav_fund_paths : Optional[Dict] = None,
@@ -234,6 +236,164 @@ def get_nav_abs_path_by_fund (
     nav_abs_path = os.path.join(fund_abs_path, basename_file)
 
     return nav_abs_path
+
+
+def get_nav_portfolio_by_date (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str | dt.datetime | dt.date] = None,
+
+        nav_fund_paths : Optional[Dict] = None,
+        regex : Optional[re.Pattern] = None,
+        schema_overrides : Optional[Dict] = None,
+
+    ) :
+    """
+    Docstring for get_nav_bye_date
+    
+    :param date: Description
+    :type date: Optional[str | dt.datetime | dt.date]
+    :param fund: Description
+    :type fund: Optional[str | dt.datetime | dt.date]
+    :param nav_fund_paths: Description
+    :type nav_fund_paths: Optional[Dict]
+    """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    regex = NAV_PORTFOLIO_REGEX if regex is None else regex
+
+    schema_overrides = NAV_PORTFOLIO_COLUMNS if schema_overrides is None else schema_overrides
+    specific_cols = list(schema_overrides.keys())
+
+    nav_fund_paths = NAV_PORTFOLIO_FUNDS_DIR_PATHS if nav_fund_paths is None else nav_fund_paths
+    dir_abs_path = nav_fund_paths.get(fund)
+
+    filename, date_find = find_most_recent_nav_by_date(date, fund, nav_fund_paths, regex)
+
+    if filename is None :
+        return None, None
+    
+    full_path = os.path.join(dir_abs_path, filename)
+
+    dataframe, md5 = load_excel_to_dataframe(full_path, schema_overrides=schema_overrides, specific_cols=specific_cols)
+
+    return dataframe, md5
+
+
+def compute_mv_change_by_dates (
+        
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None,
+
+        fund : Optional[str] = None,
+        column : Optional[str] = "MV/NAV%",
+        merge_on : str = "Portfolio Name",
+    
+    ) :
+    start_date = str_to_date(start_date)
+    end_date = str_to_date(end_date)
+
+    start, md5_start = get_nav_portfolio_by_date(start_date, fund)
+    end, md5_end = get_nav_portfolio_by_date(end_date, fund)
+
+    if start is None or end is None :
+
+        print("[-] Error during reading files")
+        return pl.DataFrame()
+
+    merged = end.join(start, on=merge_on, how="inner", suffix="_start")
+
+    merged = merged.filter(
+
+        (pl.col(f"{column}_start").is_not_null()) & (pl.col(column).is_not_null()) &
+        (pl.col(f"{column}_start") != 0) & (pl.col(column) != 0)
+
+    )
+
+    result = merged.select(
+        [
+            merge_on,
+            (pl.col(column) - pl.col(f"{column}_start")).alias('MV NAV Change %')
+        ]
+    
+    )
+
+    return result, md5_start, md5_end
+
+
+def find_most_recent_nav_by_date (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        nav_fund_paths : Optional[Dict] = None,
+        regex : Optional[re.Pattern] = None,
+
+    ) :
+    """
+    Docstring for find_most_recent_nav_by_date
+    
+    :param date: Description
+    :type date: Optional[str | dt.datetime | dt.date]
+    :param fund: Description
+    :type fund: Optional[str]
+    """
+    date = date_to_str(date)
+    fund = FUND_HV if fund is None else fund
+
+    nav_fund_paths = NAV_PORTFOLIO_FUNDS_DIR_PATHS if nav_fund_paths is None else nav_fund_paths
+    dir_abs_path = nav_fund_paths.get(fund)
+
+    # Best pour la date cible
+    best_target_key: Optional[tuple] = None   # (hh, mm, mtime)
+    best_target_name: Optional[str] = None
+
+    best_global_key: Optional[tuple] = None   # (date_str, hh, mm, mtime)
+    best_global_name: Optional[str] = None
+
+    with os.scandir(dir_abs_path) as it : # 
+        
+        for entry in it :
+
+            if not entry.is_file() :
+                continue
+
+            m = regex.match(entry.name)
+
+            if not m :
+                continue
+
+            date_str, hh, mm = m.groups()
+
+            hh_i = int(hh)
+            mm_i = int(mm)
+            mtime = entry.stat().st_mtime
+
+            if date_str == date :
+
+                key_t = (hh_i, mm_i, mtime)
+                
+                if best_target_key is None or key_t > best_target_key :
+
+                    best_target_key = key_t
+                    best_target_name = entry.name
+
+            key_g = (date_str, hh_i, mm_i, mtime)
+
+            if best_global_key is None or key_g > best_global_key :
+
+                best_global_key = key_g
+                best_global_name = entry.name
+
+    if best_target_name is not None :
+        return best_target_name, date
+
+    # Most recent file otherwise
+    if best_global_name is not None :
+        return best_global_name, best_global_key[0]
+
+    return None, None
 
 
 def estimated_gross_performance (
@@ -390,6 +550,45 @@ def build_performance_dataframe (
     """
     fund = FUND_HV if fund is None else fund
 
+
+def portfolio_allocation_analysis (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        avoid_books_funds : Optional[Dict] = None,
+        asset_class_funds : Optional[Dict[str, Dict[str, List]]] = None,
+
+        initial_allocation : Optional[Dict] = None,
+        threshold : Optional[str | dt.datetime | dt.date] = None,
+
+    ) :
+    """
     
+    """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    avoid_books_funds = PERF_BOOKS_FUNS if avoid_books_funds is None else avoid_books_funds
+    asset_class_funds = PERF_ASSET_CLASSES_FUNDS if asset_class_funds is None else asset_class_funds
+
+    initial_allocation = PERF_INITIAL_ALLOCATION if initial_allocation is None else initial_allocation
+    threshold = str_to_date(PERF_ALLOCATION_DATE) if threshold is None else str_to_date(threshold)
+
+    dataframe, md5 = get_nav_portfolio_by_date(date, fund) 
+
+    asset_classes_book_names = asset_class_funds.get(fund) # Dict [str , List]
+
+    init_alloc = {}
+
+    for key, _ in asset_classes_book_names.items() :
+        init_alloc[key] = initial_allocation.get(key)
+
+    if (date < threshold) :
+        asset_classes_book_names["Equity"] = asset_classes_book_names.get("Equity")[:1]
+
+    
+
+    return dataframe
 
     

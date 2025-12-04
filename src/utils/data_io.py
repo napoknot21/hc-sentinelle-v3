@@ -488,7 +488,7 @@ def convert_payement_to_excel (
         if isinstance(value, (dt.date, dt.datetime)):
             cell.number_format = "DD/MM/YYYY"
 
-    filename = f"Payment_instructions{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" 
+    filename = f"Payment_instructions_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" 
     filled_path = os.path.join(dir_abs_path, filename)
         
     workbook.save(filled_path)

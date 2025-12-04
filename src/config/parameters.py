@@ -221,7 +221,7 @@ EXPIRIES_COLUMNS_SPECIFIC = {
 NAV_CUTOFF_DATE=os.getenv("NAV_CUTOFF_DATE")
 NAV_HIST_NAME_DEFAULT=os.getenv("NAV_HIST_NAME_DEFAULT")
 
-NAV_COLUMNS = {
+NAV_HISTORY_COLUMNS = {
 
     "Portfolio Name": pl.Utf8,
     "MV": pl.Float64,
@@ -231,12 +231,97 @@ NAV_COLUMNS = {
 
 }
 
+NAV_PORTFOLIO_COLUMNS = dict(list(NAV_HISTORY_COLUMNS.items())[:3])
+
+
+NAV_PORTFOLIO_REGEX_PATTERN=os.getenv("NAV_PORTFOLIO_REGEX_PATTERN")
+NAV_PORTFOLIO_REGEX = re.compile(NAV_PORTFOLIO_REGEX_PATTERN, re.IGNORECASE)
+
+
+# ------------ Subred --------------
+
+SUBRED_BOOK_HV=os.getenv("SUBRED_BOOK_HV")
+SUBRED_BOOK_WR=os.getenv("SUBRED_BOOK_WR")
+
+SUBRED_FILENAME_PATTERN=os.getenv("SUBRED_FILENAME_PATTERN")
+SUBRED_FILENAME_REGEX = re.compile(SUBRED_FILENAME_PATTERN, re.IGNORECASE)
+
+SUBRED_STRUCT_COLUMNS = {
+
+    "deliveryDate" : pl.Utf8,
+    "notional" : pl.Float64,
+    "currency" : pl.Utf8
+
+}
+
+
+SUBRED_COLS_NEEDED = {
+
+    "tradeLegCode" : pl.Utf8,
+    "bookName" : pl.Utf8,
+    "tradeType" : pl.Utf8,
+    "instrument" : pl.Struct(SUBRED_STRUCT_COLUMNS)
+
+}
+
+
+SUBRED_BOOKS_FUNDS = {
+
+    os.getenv("FUND_HV") : SUBRED_BOOK_HV, 
+    os.getenv("FUND_WR") : SUBRED_BOOK_WR,
+
+}
+
 
 # ---------------- Performances ----------------
 
 
 PERF_DEFAULT_DATE=os.getenv("PERF_DEFAULT_DATE")
+PERF_ALLOCATION_DATE=os.getenv("PERF_ALLOCATION_DATE")
+PERF_BOOK_WR=os.getenv("PERF_BOOK_WR")
 
+PERF_BOOKS_FUNS = {
+
+    os.getenv("FUND_HV") : SUBRED_BOOK_HV,
+    os.getenv("FUND_WR") : PERF_BOOK_WR
+
+}
+
+PERF_ASSET_CLASSES_HV_FX = list(os.getenv("PERF_ASSET_CLASSES_HV_FX").split(";"))
+PERF_ASSET_CLASSES_HV_EQ = list(os.getenv("PERF_ASSET_CLASSES_HV_EQ").split(";"))
+PERF_ASSET_CLASSES_HV_V = list(os.getenv("PERF_ASSET_CLASSES_HV_V").split(";"))
+
+PERF_ASSET_CLASSES_WR_FX = list(os.getenv("PERF_ASSET_CLASSES_WR_FX").split(";"))
+PERF_ASSET_CLASSES_WR_EQ = list(os.getenv("PERF_ASSET_CLASSES_WR_EQ").split(";"))
+
+
+PERF_ASSET_CLASSES_FUNDS = {
+
+    os.getenv("FUND_HV") : {
+
+        "FX" :  PERF_ASSET_CLASSES_HV_FX,
+        "Equity" : PERF_ASSET_CLASSES_HV_EQ,
+        "Vault" : PERF_ASSET_CLASSES_HV_V
+
+    },
+
+    os.getenv("FUND_WR") : {
+
+        "FX" :  PERF_ASSET_CLASSES_WR_FX,
+        "Equity" : PERF_ASSET_CLASSES_WR_EQ,
+
+    }
+
+}
+
+
+PERF_INITIAL_ALLOCATION = {
+
+    "FX" : 0.3*0.25*40000000,
+    "Equity" : 0.7*0.25*40000000,
+    "Vault" : 0.75*40000000,
+
+}
 
 # ---------------- NAV Estimate ----------------
 
@@ -251,6 +336,8 @@ NAV_ESTIMATE_COLUMNS = {
     "date": pl.Date,
 
 }
+
+
 
 NAV_ESTIMATE_RENAME_COLUMNS = {
 
@@ -586,41 +673,6 @@ LEVERAGES_TRADE_COLUMNS = {
     "Counterparty" : pl.Utf8,
     "Gross Leverage" : pl.Float64,
     "Exposure % NAV" : pl.Float64
-
-}
-
-
-# ------------ Subred --------------
-
-SUBRED_BOOK_HV=os.getenv("SUBRED_BOOK_HV")
-SUBRED_BOOK_WR=os.getenv("SUBRED_BOOK_WR")
-
-SUBRED_FILENAME_PATTERN=os.getenv("SUBRED_FILENAME_PATTERN")
-SUBRED_FILENAME_REGEX = re.compile(SUBRED_FILENAME_PATTERN, re.IGNORECASE)
-
-SUBRED_STRUCT_COLUMNS = {
-
-    "deliveryDate" : pl.Utf8,
-    "notional" : pl.Float64,
-    "currency" : pl.Utf8
-
-}
-
-
-SUBRED_COLS_NEEDED = {
-
-    "tradeLegCode" : pl.Utf8,
-    "bookName" : pl.Utf8,
-    "tradeType" : pl.Utf8,
-    "instrument" : pl.Struct(SUBRED_STRUCT_COLUMNS)
-
-}
-
-
-SUBRED_BOOKS_FUNDS = {
-
-    os.getenv("FUND_HV") : SUBRED_BOOK_HV, 
-    os.getenv("FUND_WR") : SUBRED_BOOK_WR,
 
 }
 

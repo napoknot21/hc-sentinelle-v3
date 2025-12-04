@@ -53,9 +53,8 @@ def percentage_greeks_change_section (date, fundation) :
     end_date = date_to_str(end_date)
 
     df_start, md5_start = read_greeks_by_date(start_date, fundation)
-    print(df_start)
     df_end, md5_end = read_greeks_by_date(end_date, fundation)
-    print(df_end)
+
     if (df_start is None or df_end is None) :
         
         st.error("No data for the selected dates... Retrying with new ones")

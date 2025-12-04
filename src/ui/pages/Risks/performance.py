@@ -9,12 +9,16 @@ from typing import Dict, List, Optional, Dict
 
 from src.ui.components.selector import date_selector
 from src.ui.components.text import center_h2, left_h5, left_h3
-from src.ui.components.charts import nav_estimate_performance_graph
+from src.ui.components.charts import nav_estimate_performance_graph,mv_change_peformance_chart
 
-from src.config.parameters import NAV_ESTIMATE_RENAME_COLUMNS, PERF_DEFAULT_DATE
+from src.config.parameters import NAV_ESTIMATE_RENAME_COLUMNS, PERF_DEFAULT_DATE, PERF_ASSET_CLASSES_FUNDS
 from src.utils.formatters import date_to_str, str_to_date, shift_months, monday_of_week, format_numeric_columns_to_string
 
-from src.core.data.nav import read_nav_estimate_by_fund, rename_nav_estimate_columns, read_history_nav_from_excel, estimated_gross_performance, compute_monthly_returns
+from src.core.data.nav import (
+    read_nav_estimate_by_fund, rename_nav_estimate_columns, read_history_nav_from_excel,
+    estimated_gross_performance, compute_monthly_returns, compute_mv_change_by_dates,
+    portfolio_allocation_analysis
+)
 from src.core.data.subred import *
 from src.core.data.volatility import read_realized_vol_by_dates, compute_realized_vol_by_dates, compute_annualized_realized_vol
 from src.core.api.subred import get_subred_by_date
@@ -445,11 +449,8 @@ def contribution_charts_section (
     """
     date = str_to_date(date)
 
-    start_date = str_to_date(start_date)
-    end_date = str_to_date(end_date)
-
-
-
+    mv_change_section(fundation, start_date, end_date)
+    portfolio_allocation_section(date, fundation)
 
     return None
 
@@ -473,5 +474,30 @@ def mv_change_section (
     :param end_date: Description
     :type end_date: Optional[str | dt.datetime | dt.date]
     """
+    start_date = date_to_str(start_date)
+    end_date = date_to_str(end_date)
+
+    dataframe, md5_1, md5_2 = compute_mv_change_by_dates(start_date, end_date, fundation)
+    fig = mv_change_peformance_chart(dataframe, md5_1, md5_2)
+    
+    left_h5(f"MV % Change per Book — {fundation} from {start_date} to {end_date}")
+    st.plotly_chart(fig)
+
+    return None
+
+
+def portfolio_allocation_section (
+        
+        date : Optional[str] = None,
+        fundation : Optional[str] = None,
+
+    ) :
+    """
+    
+    """
+    #print(PERF_ASSET_CLASSES_FUNDS)
+
+    datframe = portfolio_allocation_analysis(date, fundation)
+    st.dataframe(datframe)
 
     return None

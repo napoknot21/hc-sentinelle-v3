@@ -175,6 +175,71 @@ def nav_estimate_performance_graph (
 
     return fig
 
+
+@st.cache_data()
+def mv_change_peformance_chart (
+
+        _dataframe : Optional[pl.DataFrame] = None,
+        
+        md5_1 : Optional[str] = None,
+        md5_2 : Optional[str] = None,
+
+        x_column : str = "Portfolio Name",
+        y_column : str = "MV NAV Change %"
+    
+    ) :
+    """
+    
+    """
+    if _dataframe is None :
+
+        st.cache_data.clear()
+        return None
+    
+    df_sorted = _dataframe.sort(y_column, descending=True)
+
+    x_labels = df_sorted["Portfolio Name"].to_list()
+    y_values = df_sorted["MV NAV Change %"].to_list()
+
+    total_change = sum(y_values)
+
+    x_labels.append("Total")
+    y_values.append(total_change)
+
+    measure = ["relative"] * (len(x_labels) - 1) + ["total"]
+
+    fig = go.Figure(
+
+        go.Waterfall(
+        
+            name="MV Change %",
+            orientation="v",
+            measure=measure,
+            x=x_labels,
+            y=y_values,
+            text=[f"{v:.2f}%" for v in y_values],
+            #textposition="outside",
+            connector={"line": {"color": "gray"}},
+            decreasing={"marker": {"color": "red"}},
+            increasing={"marker": {"color": "green"}},
+            totals={"marker": {"color": "blue"}},
+        )
+    )
+   
+
+    fig.update_layout(
+
+        xaxis_title=x_column,
+        yaxis_title="MV % Change",
+        yaxis_tickformat=".2f",
+        #height=500,
+        template="plotly_white",
+
+    )
+
+    return fig
+
+
 # ---------- Cash ----------
 
 @st.cache_data()
