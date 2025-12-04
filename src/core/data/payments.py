@@ -9,7 +9,7 @@ from typing import Optional, Dict, List
 
 from src.config.parameters import (
     PAYMENTS_COLUMNS, SECURITIES_COLUMNS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME,
-    EMAIL_DEFAULT_FROM, EMAIL_DEFAULT_CC, EMAIL_DEFAULT_TO
+    PAYMENTS_EMAIL_FROM, PAYMENTS_EMAIL_CCs, PAYMENTS_EMAIL_SUBJECT, PAYMENTS_EMAIL_TO, PAYMENTS_EMAIL_BODY
 )
 from src.config.paths import (
     PAYMENTS_DB_ABS_PATH, PAYMENTS_DB_REL_PATH,
@@ -19,7 +19,6 @@ from src.config.paths import (
 from src.utils.data_io import load_excel_to_dataframe, convert_payement_to_excel, export_excel_to_pdf
 from src.utils.logger import log
 from src.utils.outlook import create_email_item, save_email_item
-from src.utils.email import create_email_eml
 
 
 def load_payments_db (
@@ -234,7 +233,7 @@ def create_payement_email (
         to_email: Optional[str] = None,
         cc_email : Optional[str] = None,
 
-        object_email : Optional[str] = None,
+        subject_email : Optional[str] = None,
         body_email : Optional[str] = None,
 
         files_attached : Optional[List] = None,
@@ -250,25 +249,28 @@ def create_payement_email (
     :type to_email: Optional[str]
     :param cc_email: Description
     :type cc_email: Optional[str]
-    :param object_email: Description
-    :type object_email: Optional[str]
+    :param subject_email: Description
+    :type subject_email: Optional[str]
     :param body_email: Description
     :type body_email: Optional[str]
     :param files_attached: Description
     :type files_attached: Optional[List]
     """
-    from_email = EMAIL_DEFAULT_FROM if from_email is None else from_email
-    to_email = EMAIL_DEFAULT_TO if to_email is None else to_email
-    cc_email = EMAIL_DEFAULT_CC if cc_email is None else cc_email
+    from_email = PAYMENTS_EMAIL_FROM if from_email is None else from_email
+    to_email = PAYMENTS_EMAIL_TO if to_email is None else to_email
+    cc_email = PAYMENTS_EMAIL_CCs if cc_email is None else cc_email
 
-    object_email = "HEllo"
-    body_email = "Test"
+    subject_email = PAYMENTS_EMAIL_SUBJECT if subject_email else subject_email
+    body_email = PAYMENTS_EMAIL_BODY if body_email is None else body_email
     
     save_msg_abs = PAYMENTS_MESSAGES_DIR_ABS_PATH if save_msg_abs is None else save_msg_abs
+
+    email = create_email_item(to_email, cc_email, from_email, subject_email, body_email, files_attached)
+    
     timestamped = dt.datetime.now().strftime(format="%Y%m%d_%H%M%S_%f")
-    file_name = f"message_{timestamped}.eml"
+    filename = f"message_{timestamped}.eml"
 
-    path = create_email_eml(to_email, cc_email, from_email, object_email, body_email, files_attached, save_msg_abs, file_name)
+    status = save_email_item(email, filename, save_msg_abs)
 
-    return path
+    return status
 

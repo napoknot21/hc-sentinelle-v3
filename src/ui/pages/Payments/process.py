@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import streamlit as st
 
 from typing import List, Optional, Dict, Tuple
@@ -262,11 +263,30 @@ def process_payements_section (
         pdf_files = process_excel_to_pdf(excel_paths)
 
         print(f"\n[*] Converted {pdf_files}")
-        msg_path = create_payement_email(files_attached=pdf_files)
 
-        print(f"\n[+] Mesage created and stored in {msg_path}")
-        st.info("Email successfully created. Ready to download")
+        status = create_payement_email(files_attached=pdf_files)
 
+        if status.get("success") :
+            
+            path = status.get("path")
 
+            print(f"\n[+] Mesage created and stored in {path}")
+            st.info("Email successfully created. Ready to download")
+
+            with open(path, "rb") as f :
+                file_bytes = f.read()
+
+            st.download_button(
+                "Download Payment instruction",
+                data=file_bytes,
+                file_name=os.path.basename(status.get("path")),
+                mime="application/octet-stream",  # ou "application/vnd.ms-outlook" si .msg
+            )
+
+        else :
+            
+            msg = status.get("message")
+            st.error(f"{msg}")
+            
     return None
 

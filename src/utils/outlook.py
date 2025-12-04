@@ -6,20 +6,23 @@ import win32com.client as win32
 import pythoncom as pycom
 
 from typing import Dict, List, Optional
+from email.message import EmailMessage
 
 from src.utils.formatters import check_email_format
-from src.config.parameters import EMAIL_DEFAULT_TO, EMAIL_DEFAULT_CC, EMAIL_DEFAULT_FROM
+from src.config.parameters import EMAIL_DEFAULT_TO, EMAIL_DEFAULT_CC, EMAIL_DEFAULT_FROM, PAYMENTS_EMAIL_SUBJECT, PAYMENTS_EMAIL_BODY
 from src.config.paths import MESSAGE_SAVE_DIRECTORY
 
 
 def create_email_item (
         
-        to_email : List[str] = None,
-        cc_email : List[str] = None,
-        from_email : str = EMAIL_DEFAULT_FROM,
-        subject : str = "",
-        body : str = "",
-        content_file_paths : List[str] = None
+        to_email : Optional[str | List[str]] = None,
+        cc_email : Optional[str | List[str]] = None,
+        from_email : Optional[str] = None,
+
+        subject : Optional[str] = None,
+        body : Optional[str] = None,
+
+        content_file_paths : Optional[str | List[str]] = None
         
     ) -> win32.Dispatch :
     """
@@ -36,42 +39,77 @@ def create_email_item (
     Returns:
         mail_item (win32.Dispatch) : The generated Outlook email item.
     """
+    from_email = EMAIL_DEFAULT_FROM if from_email is None else from_email
+
+    if from_email == "" :
+        return None
+
+    to_email = [EMAIL_DEFAULT_FROM] if to_email is None else (
+        [to_email] if isinstance(to_email, str) else to_email
+    )
+
+    if len(to_email) == 0 :
+        return None
+
+    cc_email = [EMAIL_DEFAULT_CC] if cc_email is None else (
+        [cc_email] if isinstance(cc_email, str) else cc_email
+    )
+
+    content_file_paths = [content_file_paths] if isinstance(content_file_paths, str) else content_file_paths 
+    
+    subject = PAYMENTS_EMAIL_SUBJECT if subject is None else subject
+    body = PAYMENTS_EMAIL_BODY if body is None else body
+
+    email_item = EmailMessage()
+    email_item["From"] = from_email
+    
+    # Set up recipents and CCs (Assumens that email are in ccorect form)
+    email_item["To"] = ", ".join(to_email)
+
+    if cc_email and len(cc_email) > 0 :
+        email_item["Cc"] = ", ".join(cc_email)
+    
+    email_item["Subject"] = subject
+    
+    # Version HTML : on remplace les \n par <br>
+    html_body = body.replace("\n", "<br>")
+
+    email_item.set_content("This email requires an HTML-capable client.")
+    email_item.add_alternative(html_body, subtype="html")
+    
+    email_item["X-Unsent"] = "1"
+    
+    if content_file_paths is not None :
+
+        for attachment in content_file_paths :
+            
+            if not os.path.isfile(attachment) :
+                continue
+
+            with open(attachment, "rb") as f :  
+                data = f.read()
+
+            basename = os.path.basename(attachment)
+
+            email_item.add_attachment(
+
+                data,
+                maintype="application",
+                subtype="octet-stream",
+                filename=basename
+
+            )
+
+    return email_item
 
 
-    # Create the Outlook application object
-    pycom.CoInitialize()
-    outlook_app = win32.Dispatch('Outlook.Application')
-
-    # Create a new mail item
-    mail_item = outlook_app.CreateItem(0)
-
-    # Set up recipeients and CCs (Assumes that emails are in correct format)
-    mail_item.To = EMAIL_DEFAULT_TO if (len(to_email) == 0 or to_email is None) else "; ".join(to_email)
-    mail_item.CC = EMAIL_DEFAULT_CC if (len(cc_email) == 0 or cc_email is None) else "; ".join(cc_email)
-
-    # Set up sender email
-    mail_item.SentOnBehalfOfName = from_email# if from_email == "" else from_email
-
-    # Set up of subject email
-    mail_item.Subject = subject
-
-    # Body set up for the email
-    mail_item.HTMLBody = generate_html_template_body(body)
-
-    # Attach files to the email
-    for file_path in content_file_paths :
+def save_email_item (
         
-        if os.path.isfile(file_path) :
-            mail_item.Attachments.Add(Source=file_path)
-
-        else :
-            print("\n[-] File not found. Not attached...\n")
-
-
-    return mail_item
-
-
-def save_email_item (email_item : win32.Dispatch, abs_path_directory : str = MESSAGE_SAVE_DIRECTORY) -> Optional[Dict] :
+        email_item : Optional[EmailMessage] = None,
+        filename : Optional[str] = None,
+        abs_path_dir : Optional[str] = None
+        
+    ) -> Optional[Dict] :
     """
     Saves an email item and returns the result status.
 
@@ -84,11 +122,15 @@ def save_email_item (email_item : win32.Dispatch, abs_path_directory : str = MES
             - 'message' (str): A message describing the result.
             - 'path' (str) : The path of the saved file.
     """
-    timestamped = generate_timestamped_name()
-    file_name = f"message_{timestamped}.msg"
+    os.makedirs(abs_path_dir, exist_ok=True)
 
-    save_dir = abs_path_directory if os.path.isdir(abs_path_directory) else MESSAGE_SAVE_DIRECTORY
-    save_path = os.path.join(save_dir, file_name)
+    if filename is None :
+
+        timestamped = generate_timestamped_name()
+        filename = f"message_{timestamped}.eml"
+
+    abs_path_dir = MESSAGE_SAVE_DIRECTORY if abs_path_dir is None else abs_path_dir
+    save_path = os.path.join(abs_path_dir, filename)
     
     status = {
 
@@ -100,7 +142,8 @@ def save_email_item (email_item : win32.Dispatch, abs_path_directory : str = MES
 
     try :
 
-        email_item.SaveAs(save_path, 3)
+        with open(save_path, "wb") as f :
+            f.write(bytes(email_item))
 
         status["success"] = True
         status["message"] = "Email saved successfully"
@@ -114,61 +157,6 @@ def save_email_item (email_item : win32.Dispatch, abs_path_directory : str = MES
     return status
 
 
-def send_email (email_item : win32.Dispatch) -> bool :
-    """
-    Sends the given Outlook mail item immediately via Outlook.
-
-    Args:
-        mail_item (win32.Dispatch): The Outlook MailItem object to send.
-
-    Returns:
-        bool: True if the email was sent successfully, False otherwise.
-
-    Raises:
-        None: Exceptions are caught internally; failures result in False return value.
-
-    Notes:
-        - This function requires Outlook to be installed and properly configured on the system.
-        - Ensure the mail_item has all required fields set (To, Subject, Body) before calling.
-        - Sending emails programmatically may trigger Outlook security prompts depending on security settings.
-    """
-    try :
-
-        email_item.Send()
-        return True
-    
-    except Exception as e :
-
-        print(f"[-] Failed to send email: {e}")
-        return False
-
-
-def generate_html_template_body (body: str) -> str:
-    """
-    Creates a standard HTML email body by embedding the provided content 
-    and appending a fixed company signature.
-
-    Args:
-        body (str): The main content of the email in plain text or HTML.
-
-    Returns:
-        str: A complete HTML string with the body content wrapped in <p> tags 
-             followed by the company signature.
-    """
-    html_body = f"""<p>{body}</p>
-    <p>Best regards,</p>
-    <p><strong>Trading Desk</strong><br>
-    Altarius Asset Management Ltd<br>
-    Cornerstone Complex, Suite A, Level 1,<br>
-    16th September Square, Mosta MST 1180 Malta<br>
-    t: +356 277 421 15<br>
-    <a href="http://www.altariusam.com/">www.altariusam.com</a><br>
-    <a href="mailto:tradingdesk@altariusam.com">tradingdesk@altariusam.com</a></p>
-    """
-
-    return html_body
-
-
 def generate_timestamped_name () -> str :
     """
     Generates a unique timestamped string based on the current date and time.
@@ -180,20 +168,3 @@ def generate_timestamped_name () -> str :
     name = dt.datetime.now().strftime(format="%Y%m%d_%H%M%S_%f")
 
     return name
-
-    """
-    Validates the format of an email address using a regular expression.
-
-    Args:
-        email (str): The email address to validate.
-
-    Returns:
-        bool: True if the email matches the expected format, False otherwise.
-
-    Note:
-        This validation checks for a general pattern like 'user@domain.tld' 
-        but does not guarantee that the email address actually exists.
-    """
-    email_regex = r"^[\w\.-]+@[\w\.-]+\.\w{2,}$"
-
-    return re.match(email_regex, email) is not None

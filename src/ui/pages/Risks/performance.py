@@ -42,24 +42,20 @@ def performance (
     st.write('')
 
     estimated_gross_perf_section(date, fundation)
+    st.write('')
+    
     volatility_aum_n_nav_section(date, fundation)
     st.write('')
-    nav_estimate_section(fundation)
+    
+    start_date, end_date = date_selectors_section()
+
+    charts_performance_section( fundation, start_date, end_date)
+    contribution_charts_section(date, fundation, start_date, end_date)
 
     return None
 
 
-def nav_estimate_section (fundation : Optional[str] = None) :
-    """
-    
-    """
-
-    start_date, end_date = date_selectors_section()
-
-    charts_performance_section( fundation, start_date, end_date)
-
-
-# ----------- Table Estimated Perf Section -----------
+# ----------- Gross Estimated Perf Section -----------
 
 def estimated_gross_perf_section (
         
@@ -77,6 +73,95 @@ def estimated_gross_perf_section (
 
     #fig = 
     st.dataframe(result)
+
+    return None
+
+
+# ----------- AUM & NAV -----------
+
+def volatility_aum_n_nav_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+    ) -> None :
+
+    """
+    
+    """
+    #left_h5("Most recent AUM and Estimated NAV")
+    col1, col2= st.columns(2)
+
+    with col1 :
+        total_aum_section(date, fundation)
+
+    with col2 :
+        daily_nav_section(date, fundation)
+
+    return None
+
+
+def total_aum_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+    ) :
+    """
+    
+    """
+    date = date_to_str(date)
+    aum_dict = read_aum_from_cache(date)
+    
+    if aum_dict is None :
+
+        aum_dict = get_subred_by_date(date)
+
+    aum = aum_dict.get(fundation, None)
+
+    if aum is None :
+
+        st.metric(f"No data AUM available", "")
+        return 
+
+    currency = aum.get("currency")
+    amount = aum.get("amount")
+
+    save_aum_to_cache(aum_dict, date)
+    st.metric(f"Total AUM at {date}", f"{amount} {currency}")
+    
+    return None
+
+
+def daily_nav_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+        agg_col : Optional[str] = "MV"
+
+    ) :
+    """
+    
+    """
+    date = str_to_date(date)
+    dataframe, md5 = read_history_nav_from_excel(fundation)
+
+    df_filtered = dataframe.filter(pl.col("Date") == date)
+
+    if df_filtered.is_empty() :
+
+        latest_date = dataframe.select(pl.col("Date")).max().to_pandas().iloc[0, 0]
+        df_filtered = dataframe.filter(pl.col("Date") == latest_date)
+
+    aggregated_data = df_filtered.group_by("Date").agg(pl.col(agg_col).sum().alias(agg_col))
+    
+    aggregated_data = format_numeric_columns_to_string(aggregated_data)
+
+    real_date = aggregated_data.get_column("Date")[0]
+    nav_estimated = (aggregated_data.get_column(agg_col)[0])
+
+    st.metric(f"Estimated NAV at {real_date}", nav_estimated + " EUR")
 
     return None
 
@@ -189,98 +274,6 @@ def performance_date_quick_selectors (
     return st.session_state.start_date_perf, st.session_state.end_date_perf
 
 
-# ----------- AUM & NAV -----------
-
-def volatility_aum_n_nav_section (
-        
-        date : Optional[str | dt.datetime | dt.date] = None,
-        fundation : Optional[str] = None,
-
-        start_date : Optional[str | dt.datetime | dt.date] = None,
-        end_date : Optional[str | dt.datetime | dt.date] = None
-
-    ) -> None :
-
-    """
-    
-    """
-    left_h5("Most recent AUM and Estimated NAV")
-    col1, col2= st.columns(2)
-
-    with col1 :
-        total_aum_section(date, fundation)
-
-    with col2 :
-        daily_nav_section(date, fundation)
-
-    return None
-
-
-def total_aum_section (
-        
-        date : Optional[str | dt.datetime | dt.date] = None,
-        fundation : Optional[str] = None,
-
-    ) :
-    """
-    
-    """
-    date = date_to_str(date)
-    aum_dict = read_aum_from_cache(date)
-    
-    if aum_dict is None :
-
-        aum_dict = get_subred_by_date(date)
-
-    aum = aum_dict.get(fundation, None)
-
-    if aum is None :
-
-        st.metric(f"No data AUM available", "")
-        return 
-
-    currency = aum.get("currency")
-    amount = aum.get("amount")
-
-    save_aum_to_cache(aum_dict, date)
-    st.metric(f"Total AUM at {date}", f"{amount} {currency}")
-    
-    return None
-
-
-def daily_nav_section (
-        
-        date : Optional[str | dt.datetime | dt.date] = None,
-        fundation : Optional[str] = None,
-
-        agg_col : Optional[str] = "MV"
-
-    ) :
-    """
-    
-    """
-    date = str_to_date(date)
-    dataframe, md5 = read_history_nav_from_excel(fundation)
-
-    df_filtered = dataframe.filter(pl.col("Date") == date)
-
-    if df_filtered.is_empty() :
-
-        latest_date = dataframe.select(pl.col("Date")).max().to_pandas().iloc[0, 0]
-        df_filtered = dataframe.filter(pl.col("Date") == latest_date)
-
-    aggregated_data = df_filtered.group_by("Date").agg(pl.col(agg_col).sum().alias(agg_col))
-    
-    aggregated_data = format_numeric_columns_to_string(aggregated_data)
-
-    real_date = aggregated_data.get_column("Date")[0]
-    nav_estimated = (aggregated_data.get_column(agg_col)[0])
-
-    st.metric(f"Estimated NAV at {real_date}", nav_estimated + " EUR")
-
-    return None
-
-
 # ----------- Charts Perf Section -----------
 
 def charts_performance_section (
@@ -381,7 +374,7 @@ def realized_volatilty_chart_section (
     """
     
     """
-    left_h5(f"{fundation} annualized Volatility (%) between {start_date} and {end_date}")
+    left_h5(f"{fundation} realized Volatility (%) between {start_date} and {end_date}")
 
     rename_cols = NAV_ESTIMATE_RENAME_COLUMNS if rename_cols is None else rename_cols
     columns = list(rename_cols.values())
@@ -427,4 +420,58 @@ def realized_volatilty_chart_section (
     return None
 
 
-# -----------
+# ----------- Contribution section -----------
+
+def contribution_charts_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+        start_date : Optional[str] = None,
+        end_date : Optional[str] = None,
+
+    ) :
+    """
+    Docstring for contribution_charts_section
+    
+    :param date: Description
+    :type date: Optional[str | dt.datetime | dt.date]
+    :param fundation: Description
+    :type fundation: Optional[str]
+    :param start_date: Description
+    :type start_date: Optional[str]
+    :param end_date: Description
+    :type end_date: Optional[str]
+    """
+    date = str_to_date(date)
+
+    start_date = str_to_date(start_date)
+    end_date = str_to_date(end_date)
+
+
+
+
+    return None
+
+
+def mv_change_section (
+        
+        fundation : Optional[str] = None,
+
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None,
+
+
+    ) :
+    """
+    Docstring for mv_change_section
+    
+    :param fundation: Description
+    :type fundation: Optional[str]
+    :param start_date: Description
+    :type start_date: Optional[str | dt.datetime | dt.date]
+    :param end_date: Description
+    :type end_date: Optional[str | dt.datetime | dt.date]
+    """
+
+    return None
