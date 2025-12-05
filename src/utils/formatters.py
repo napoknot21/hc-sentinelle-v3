@@ -565,7 +565,7 @@ def format_numeric_columns_to_string(
     
         numeric_types = {
 
-            pl.Int8, pl.Int16, pl.Int32, pl.Int64,
+            pl.Int8, pl.Int16, pl.Int32, pl.Int64, pl.Int128,
             pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64,
             pl.Float32, pl.Float64,
         }
@@ -627,3 +627,36 @@ def normalize_fx_dict (raw_fx : Optional[Dict[str, float]] = None, ends_with : s
     print("\n[*] Normalizing FX values")
 
     return normalized
+
+
+def colorize_dataframe_positive_negatif_vals (
+        
+        dataframe : Optional[pl.DataFrame],
+        columns : Optional[List[str]] = None,
+    
+    ) :
+    """
+    Docstring for colorize_dataframe_positive_negatif_vals
+    
+    :param dataframe: Description
+    :type dataframe: Optional[pl.DataFrame]
+    """
+    dataframe = dataframe.to_pandas()
+
+    def colorize (val) :
+        """
+        Docstring for colorize
+        
+        :param val: Description
+        """
+        if pd.isna(val):
+            return ""
+        
+        return "color: green;" if float(val) >= 0 else "color: red;"
+
+    styled = (dataframe.style.applymap(colorize, subset=columns))
+
+    return styled
+
+
+

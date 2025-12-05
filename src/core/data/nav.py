@@ -13,11 +13,11 @@ from typing import List, Optional, Dict, Tuple
 from src.utils.logger import log
 from src.utils.data_io import load_excel_to_dataframe
 from src.utils.formatters import date_to_str, str_to_date
-
+#from src.core.data.volatility import compute_realized_vol_by_dates
 from src.config.parameters import (
     FUND_HV, NAV_HISTORY_COLUMNS, NAV_HIST_NAME_DEFAULT, NAV_CUTOFF_DATE,
     NAV_ESTIMATE_HIST_NAME_DEFAULT, NAV_ESTIMATE_COLUMNS, NAV_ESTIMATE_RENAME_COLUMNS,
-    NAV_FUNDS_COLUMNS, NAV_PORTFOLIO_REGEX, NAV_PORTFOLIO_COLUMNS,
+    NAV_FUNDS_COLUMNS, NAV_PORTFOLIO_REGEX, NAV_PORTFOLIO_COLUMNS, PERF_HARDCODED_VALUES,
     PERF_BOOKS_FUNS, PERF_ASSET_CLASSES_FUNDS, PERF_ALLOCATION_DATE, PERF_INITIAL_ALLOCATION
 )
 from src.config.paths import NAV_PORTFOLIO_FUND_HV_DIR_PATH, NAV_PORTFOLIO_FUNDS_DIR_PATHS, NAV_ESTIMATE_FUNDS_DIR_PATHS
@@ -143,6 +143,136 @@ def rename_nav_estimate_columns (
         )
 
     return dataframe, md5
+
+
+def get_estimated_nav_df_by_date (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+        
+        agg_col : Optional[str] = None,
+
+    ) :
+    """
+    Docstring for get_estimated_nav_by_date
+
+    """
+    fund = FUND_HV if fund is None else fund
+    date = str_to_date(date)
+    
+    dataframe, md5 = read_history_nav_from_excel(fund) if dataframe is None else Tuple[dataframe, md5]
+
+    df_filtered = dataframe.filter(pl.col("Date") == date)
+
+    if df_filtered.is_empty() :
+
+        latest_date = dataframe.select(pl.col("Date")).max().to_pandas().iloc[0, 0]
+        df_filtered = dataframe.filter(pl.col("Date") == latest_date)
+
+    aggregated_data = df_filtered.group_by("Date").agg(pl.col(agg_col).sum().alias(agg_col).cast(pl.Int128))
+
+    return aggregated_data, md5
+    
+
+def gav_performance_normalized_base_100 (
+
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None,
+
+        fund : Optional[str] = None,
+
+        rename_cols : Optional[Dict] = None,
+        
+
+    ) :
+    """
+    Docstring for gav_performance_normalized_base_100
+    """
+
+    start_date = str_to_date(start_date)
+    end_date = str_to_date(end_date)
+
+    fund = FUND_HV if fund is None else fund
+
+    rename_cols = NAV_ESTIMATE_RENAME_COLUMNS if rename_cols is None else rename_cols
+    columns = list(rename_cols.values())
+
+    dataframe, md5 = read_nav_estimate_by_fund(fund)
+    rename_df , md5 = rename_nav_estimate_columns(dataframe, md5)
+
+    df_filtered = rename_df.filter(
+        
+        (pl.col("date") >= pl.lit(start_date)) &
+        (pl.col("date") <= pl.lit(end_date))
+    
+    )
+
+    df_ffill = (
+
+        df_filtered
+        .sort("date")
+        .with_columns(
+            [pl.col(c).forward_fill() for c in columns]
+        )
+    )
+
+    df_clean = df_ffill.drop_nulls(subset=columns)
+
+    if df_clean.height == 0 :
+        return df_clean, md5
+    
+    # Normalization
+    df_norm = df_clean.with_columns(
+        [
+            (pl.col(c) / pl.col(c).first() * 100.0).alias(c)
+            for c in columns
+        ]
+    )
+
+    return df_norm, md5
+
+
+def calculate_total_n_rv_estimated_perf (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        fund : Optional[str] = None,
+        columns : Optional[List[str]] = None,
+
+    ) :
+    """
+    Docstring for calculate_total_n_rv_estimated_perf
+    
+    :param dataframe: Description
+    :type dataframe: Optional[pl.DataFrame]
+    :param md5: Description
+    :type md5: Optional[str]
+    """
+    fund = FUND_HV if fund is None else fund
+    columns = [c for c in dataframe.columns if c != "Year"] if columns is None else columns
+
+    perf_df = dataframe.with_columns(
+
+        pl.sum_horizontal(
+            [
+                pl.col(c).cast(pl.Float64).fill_null(0).fill_nan(0)
+                for c in columns
+            ]
+        )
+        .alias("Total")
+
+    )
+
+
+
+    print(perf_df)
+
+    return perf_df, md5
+
 
 
 def treat_string_nav_cols_df (
@@ -442,7 +572,8 @@ def compute_monthly_returns (
         fund :  Optional[str] = None,
         columns_fund : Optional[Dict] = None,
 
-        year_month : List = ["year", "month"]
+        year_month : List = ["year", "month"],
+        hardcoded : Optional[Dict] = None,
     ) :
     """
     Docstring for compute_monthly_returns
@@ -532,6 +663,26 @@ def compute_monthly_returns (
         rows.append(row)
 
     perf_df = pl.DataFrame(rows).sort("Year")
+
+    # Hardcoding a exceptional value
+    hardcoded = PERF_HARDCODED_VALUES if hardcoded is None else hardcoded
+    hardcoded_fund = hardcoded.get(fund)
+
+    if hardcoded_fund is None :
+        return perf_df, md5
+
+    value = (-1.0) * float(hardcoded.get(fund).get("Value"))
+
+    perf_df = perf_df.with_columns(
+
+        pl
+        .when(pl.col("Year") == int(hardcoded.get(fund).get("Year")))
+        .then(pl.lit(value))
+        .otherwise(pl.col(hardcoded.get(fund).get("Month")))
+        .alias(hardcoded.get(fund).get("Month"))
+
+    )
+    
     print(perf_df)
     return perf_df, md5
 

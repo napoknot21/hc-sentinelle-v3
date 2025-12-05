@@ -6,7 +6,7 @@ import polars as pl
 import datetime as dt
 import numpy as np
 
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 
 from src.core.data.nav import read_nav_estimate_by_fund
 
@@ -51,6 +51,7 @@ def read_realized_vol_by_dates (
 def compute_realized_vol_by_dates (
         
         dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
 
         fund : Optional[str] = None,
 
@@ -69,7 +70,7 @@ def compute_realized_vol_by_dates (
     fund = FUND_HV if fund is None else fund
     funds_cols = VOL_REALIZED_FUNDS_COLS if funds_cols is None else funds_cols
 
-    dataframe = read_realized_vol_by_dates(fund, start_date, end_date) if dataframe is None else dataframe
+    dataframe, md5 = read_realized_vol_by_dates(fund, start_date, end_date) if dataframe is None else (dataframe, md5)
     column = funds_cols.get(fund)
 
     dataframe = dataframe.with_columns(
@@ -137,7 +138,7 @@ def compute_annualized_realized_vol (
 
     # tandard deviation of daily returns ----
     daily_vol = df.select(pl.col("daily_return").std()).item()
-    print(daily_vol)
+
     if daily_vol is None :
         return 0.0
     

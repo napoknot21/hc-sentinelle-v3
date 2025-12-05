@@ -38,8 +38,6 @@ def get_subred_by_date (
     return aum_dict
 
 
-
-
 def api_call_subred (
         
         date : Optional[str | dt.datetime | dt.date] = None,
@@ -83,7 +81,6 @@ def api_call_subred (
     return dataframe
 
 
-
 def _clean_response_api (
         
         dataframe : Optional[pl.DataFrame] = None,
@@ -121,7 +118,7 @@ def _clean_response_api (
         .agg(
 
             [
-                pl.col("signed_notional").sum().alias("total_signed_notional"),
+                pl.col("signed_notional").sum().alias("total_signed_notional").cast(pl.Int128),
                 pl.col("instrument").struct.field("currency").first().alias("currency"),
 
             ]

@@ -276,6 +276,19 @@ SUBRED_BOOKS_FUNDS = {
 # ---------------- Performances ----------------
 
 
+PERF_HARDCODED_VALUES = {
+
+    os.getenv("FUND_HV") : {
+
+        "Year" : os.getenv("PERF_YEAR_HARDCODED_VALUE"),
+        "Month" : os.getenv("PERF_MONTH_HARDCODED_VALUE"),
+        "Value" : os.getenv("PERF_VALUE_HARDCODED_VALUE"),
+
+    }
+
+}
+
+
 PERF_DEFAULT_DATE=os.getenv("PERF_DEFAULT_DATE")
 PERF_ALLOCATION_DATE=os.getenv("PERF_ALLOCATION_DATE")
 PERF_BOOK_WR=os.getenv("PERF_BOOK_WR")
@@ -293,7 +306,6 @@ PERF_ASSET_CLASSES_HV_V = list(os.getenv("PERF_ASSET_CLASSES_HV_V").split(";"))
 
 PERF_ASSET_CLASSES_WR_FX = list(os.getenv("PERF_ASSET_CLASSES_WR_FX").split(";"))
 PERF_ASSET_CLASSES_WR_EQ = list(os.getenv("PERF_ASSET_CLASSES_WR_EQ").split(";"))
-
 
 PERF_ASSET_CLASSES_FUNDS = {
 
@@ -313,7 +325,6 @@ PERF_ASSET_CLASSES_FUNDS = {
     }
 
 }
-
 
 PERF_INITIAL_ALLOCATION = {
 

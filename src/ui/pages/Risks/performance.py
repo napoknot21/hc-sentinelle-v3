@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import calendar
 import polars as pl
 import datetime as dt
 import streamlit as st
@@ -12,12 +13,15 @@ from src.ui.components.text import center_h2, left_h5, left_h3
 from src.ui.components.charts import nav_estimate_performance_graph,mv_change_peformance_chart
 
 from src.config.parameters import NAV_ESTIMATE_RENAME_COLUMNS, PERF_DEFAULT_DATE, PERF_ASSET_CLASSES_FUNDS
-from src.utils.formatters import date_to_str, str_to_date, shift_months, monday_of_week, format_numeric_columns_to_string
+from src.utils.formatters import (
+    date_to_str, str_to_date, shift_months, monday_of_week, format_numeric_columns_to_string, colorize_dataframe_positive_negatif_vals
 
+)
 from src.core.data.nav import (
     read_nav_estimate_by_fund, rename_nav_estimate_columns, read_history_nav_from_excel,
     estimated_gross_performance, compute_monthly_returns, compute_mv_change_by_dates,
-    portfolio_allocation_analysis
+    portfolio_allocation_analysis, get_estimated_nav_df_by_date, gav_performance_normalized_base_100,
+    calculate_total_n_rv_estimated_perf
 )
 from src.core.data.subred import *
 from src.core.data.volatility import read_realized_vol_by_dates, compute_realized_vol_by_dates, compute_annualized_realized_vol
@@ -64,20 +68,50 @@ def performance (
 def estimated_gross_perf_section (
         
         date : Optional[str | dt.datetime | dt.date] = None,
-        fundation : Optional[str] = None
+        fundation : Optional[str] = None,
     
     ) -> None :
     """
     
     """
-    left_h3("Estimated Gross Performance")
+    left_h3("Estimated Gross Performance (in %)")
 
-    dataframe, md5 = estimated_gross_performance(fund=fundation)
-    result, md5 = compute_monthly_returns(dataframe, md5, fundation)
+    result, md5 = estimated_gross_performance(fund=fundation)
+    dataframe, md5 = compute_monthly_returns(result, md5, fundation)
 
-    #fig = 
-    st.dataframe(result)
+    month_cols = [c for c in dataframe.columns if c not in ["Year"]]
+    dataframe, md5 = calculate_total_n_rv_estimated_perf(dataframe, md5, fundation, month_cols)
 
+    years = dataframe.get_column("Year").to_list()
+    rv_map: dict[int, float] = {}
+    
+    for year in years :
+
+        start_date = str(f"{year}-01-01")
+        end_date = str(f"{year}-12-31")
+
+        vol_df = compute_realized_vol_by_dates(fund=fundation, start_date=start_date, end_date=end_date)
+        rv_value = compute_annualized_realized_vol(vol_df, fundation)
+        print(rv_value)
+        # Si ta fonction peut renvoyer None, tu gères ça ici
+        if rv_value is None:
+            rv_map[year] = None
+        else:
+            rv_map[year] = (rv_value)
+
+    dataframe = dataframe.with_columns(
+        pl.col("Year")
+        .replace(rv_map)       # map Year -> RV
+        .alias("RV")
+        .cast(pl.Float64)      # juste pour être sûr que c’est bien numérique
+    )
+    print(dataframe)
+    month_cols = month_cols + ["Total", "RV"]
+    dataframe = format_numeric_columns_to_string(dataframe, month_cols)
+    dataframe  = colorize_dataframe_positive_negatif_vals(dataframe, month_cols)
+    
+    st.dataframe(dataframe)
+    
     return None
 
 
@@ -149,21 +183,12 @@ def daily_nav_section (
     
     """
     date = str_to_date(date)
-    dataframe, md5 = read_history_nav_from_excel(fundation)
-
-    df_filtered = dataframe.filter(pl.col("Date") == date)
-
-    if df_filtered.is_empty() :
-
-        latest_date = dataframe.select(pl.col("Date")).max().to_pandas().iloc[0, 0]
-        df_filtered = dataframe.filter(pl.col("Date") == latest_date)
-
-    aggregated_data = df_filtered.group_by("Date").agg(pl.col(agg_col).sum().alias(agg_col))
+    dataframe, _ = get_estimated_nav_df_by_date(date, fundation, agg_col=agg_col)
     
-    aggregated_data = format_numeric_columns_to_string(aggregated_data)
+    aggregated_data = format_numeric_columns_to_string(dataframe)
 
     real_date = aggregated_data.get_column("Date")[0]
-    nav_estimated = (aggregated_data.get_column(agg_col)[0])
+    nav_estimated = (aggregated_data.get_column(agg_col)[0])[:-3] #TODO : update the format numerica columns 
 
     st.metric(f"Estimated NAV at {real_date}", nav_estimated + " EUR")
 
@@ -283,6 +308,7 @@ def performance_date_quick_selectors (
 def charts_performance_section (
     
         fundation : Optional[str] = None,
+
         start_date : Optional[str | dt.datetime | dt.date] = None,
         end_date : Optional[str | dt.datetime | dt.date] = None
     
@@ -315,26 +341,14 @@ def performance_charts_section (
     """
     left_h5(f"{fundation} Performance between {start_date} and {end_date}")
 
+    start_date = str_to_date(start_date)
+    end_date = str_to_date(end_date)
+
     rename_cols = NAV_ESTIMATE_RENAME_COLUMNS if rename_cols is None else rename_cols
-    columns = list(rename_cols.values())
-
-    dataframe, md5 = read_nav_estimate_by_fund(fundation)
-    rename_df , md5 = rename_nav_estimate_columns(dataframe, md5)
-
-    end_date = dt.datetime.now().date() if end_date is None else end_date
-    start_date = dt.date(end_date.year, 1, 1) if start_date is None else start_date
-
-    df_filterd = rename_df.filter(
-        
-        (pl.col("date") >= pl.lit(start_date)) &
-        (pl.col("date") <= pl.lit(end_date))
-    
-    )
-
-    df_na = df_filterd.drop_nulls(subset=columns)
+    dataframe, md5 = gav_performance_normalized_base_100(start_date, end_date, fundation)
 
     fig = nav_estimate_performance_graph(
-        df_na, md5, fundation, start_date, end_date, columns, "date"
+        dataframe, md5, fundation, start_date, end_date, list(rename_cols.values()), "date"
     )
 
     st.plotly_chart(fig)
@@ -354,8 +368,8 @@ def anualised_volatility_section (
     
     """
 
-    df, _ = read_realized_vol_by_dates(fundation, start_date, end_date)
-    dataframe = compute_realized_vol_by_dates(df, fundation, start_date, end_date)
+    df, md5 = read_realized_vol_by_dates(fundation, start_date, end_date)
+    dataframe = compute_realized_vol_by_dates(df, md5, fundation, start_date, end_date)
     vol = compute_annualized_realized_vol(dataframe, fundation)
 
     st.metric(f"{fundation} Realized Volatility between {start_date} and {end_date}", f"{vol}%")
@@ -501,3 +515,5 @@ def portfolio_allocation_section (
     st.dataframe(datframe)
 
     return None
+
+
