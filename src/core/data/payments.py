@@ -147,7 +147,7 @@ def find_beneficiary_by_ctpy_ccy_n_type (
 
     benef_bank  = row[3]
     swift_code  = row[4]
-    swift_ben   = row[5]
+    swift_ben   = row[5] if row[5] is not None else "Nan"
     iban        = row[6]
 
     return swift_code, benef_bank, swift_ben, iban

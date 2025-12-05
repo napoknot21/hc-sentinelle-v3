@@ -620,16 +620,18 @@ def portfolio_allocation_analysis (
         pl.col("Asset Class")
         .replace(init_alloc)
         .alias("alloc")
+        .cast(pl.Float64)
     
     )
 
-    """ptf_agg = ptf_agg.with_columns(
+    ptf_agg = ptf_agg.with_columns(
         [
             ((pl.col("MV") / pl.col("alloc") + 1) * 100).alias("Nav of Asset Class"),
             pl.col("MV").alias("Generated PNL of Asset Class"),
         ]
-    )"""
+    )
     
+    print(ptf_agg)
 
     return ptf_agg
 
