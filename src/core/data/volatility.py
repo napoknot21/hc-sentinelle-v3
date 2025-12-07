@@ -14,7 +14,6 @@ from src.config.parameters import VOL_REALIZED_FUNDS_COLS, FUND_HV
 from src.utils.formatters import str_to_date
 
 
-
 def read_realized_vol_by_dates (
         
         fund : Optional[str] = None,
@@ -147,4 +146,66 @@ def compute_annualized_realized_vol (
     annualized_vol = daily_vol * np.sqrt(trading_days) * 100
 
     return round(float(annualized_vol), 2)
+
+
+def calculate_total_n_rv_estimated_perf (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        fund : Optional[str] = None,
+        columns : Optional[List[str]] = None,
+
+    ) :
+    """
+    Docstring for calculate_total_n_rv_estimated_perf
+    
+    :param dataframe: Description
+    :type dataframe: Optional[pl.DataFrame]
+    :param md5: Description
+    :type md5: Optional[str]
+    """
+    fund = FUND_HV if fund is None else fund
+    columns = [c for c in dataframe.columns if c != "Year"] if columns is None else columns
+
+    dataframe = dataframe.with_columns(
+
+        pl.sum_horizontal(
+            [
+                pl.col(c).cast(pl.Float64).fill_null(0).fill_nan(0)
+                for c in columns
+            ]
+        )
+        .alias("Total")
+
+    )
+
+    years = dataframe.get_column("Year").to_list()
+    rv_map: dict[int, float] = {}
+    
+    for year in years :
+
+        start_date = str(f"{year}-01-01")
+        end_date = str(f"{year}-12-31")
+
+        vol_df = compute_realized_vol_by_dates(fund=fund, start_date=start_date, end_date=end_date)
+        rv_value = compute_annualized_realized_vol(vol_df, fund)
+
+        if rv_value is None :
+            rv_map[year] = None
+
+        else :
+            rv_map[year] = rv_value
+
+    dataframe = dataframe.with_columns(
+
+        pl.col("Year")
+        .cast(pl.Float64)
+        .replace(rv_map)       # map Year -> RV
+        .alias("RV")
+    
+    )
+    
+    return dataframe, md5
+
 

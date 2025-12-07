@@ -20,11 +20,13 @@ from src.utils.formatters import (
 from src.core.data.nav import (
     read_nav_estimate_by_fund, rename_nav_estimate_columns, read_history_nav_from_excel,
     estimated_gross_performance, compute_monthly_returns, compute_mv_change_by_dates,
-    portfolio_allocation_analysis, get_estimated_nav_df_by_date, gav_performance_normalized_base_100,
-    calculate_total_n_rv_estimated_perf
+    portfolio_allocation_analysis, get_estimated_nav_df_by_date, gav_performance_normalized_base_100
 )
 from src.core.data.subred import *
-from src.core.data.volatility import read_realized_vol_by_dates, compute_realized_vol_by_dates, compute_annualized_realized_vol
+from src.core.data.volatility import (
+    read_realized_vol_by_dates, compute_realized_vol_by_dates, compute_annualized_realized_vol,
+    calculate_total_n_rv_estimated_perf
+)
 from src.core.api.subred import get_subred_by_date
 
 # Main function
@@ -81,31 +83,7 @@ def estimated_gross_perf_section (
 
     month_cols = [c for c in dataframe.columns if c not in ["Year"]]
     dataframe, md5 = calculate_total_n_rv_estimated_perf(dataframe, md5, fundation, month_cols)
-
-    years = dataframe.get_column("Year").to_list()
-    rv_map: dict[int, float] = {}
-    
-    for year in years :
-
-        start_date = str(f"{year}-01-01")
-        end_date = str(f"{year}-12-31")
-
-        vol_df = compute_realized_vol_by_dates(fund=fundation, start_date=start_date, end_date=end_date)
-        rv_value = compute_annualized_realized_vol(vol_df, fundation)
-        print(rv_value)
-        # Si ta fonction peut renvoyer None, tu gères ça ici
-        if rv_value is None:
-            rv_map[year] = None
-        else:
-            rv_map[year] = (rv_value)
-
-    dataframe = dataframe.with_columns(
-        pl.col("Year")
-        .replace(rv_map)       # map Year -> RV
-        .alias("RV")
-        .cast(pl.Float64)      # juste pour être sûr que c’est bien numérique
-    )
-    print(dataframe)
+ 
     month_cols = month_cols + ["Total", "RV"]
     dataframe = format_numeric_columns_to_string(dataframe, month_cols)
     dataframe  = colorize_dataframe_positive_negatif_vals(dataframe, month_cols)
@@ -511,8 +489,9 @@ def portfolio_allocation_section (
     """
     #print(PERF_ASSET_CLASSES_FUNDS)
 
-    datframe = portfolio_allocation_analysis(date, fundation)
-    st.dataframe(datframe)
+    dataframe = portfolio_allocation_analysis(date, fundation)
+    dataframe = format_numeric_columns_to_string(dataframe)
+    st.dataframe(dataframe)
 
     return None
 

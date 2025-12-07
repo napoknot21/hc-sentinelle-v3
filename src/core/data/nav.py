@@ -235,43 +235,7 @@ def gav_performance_normalized_base_100 (
     return df_norm, md5
 
 
-def calculate_total_n_rv_estimated_perf (
-        
-        dataframe : Optional[pl.DataFrame] = None,
-        md5 : Optional[str] = None,
 
-        fund : Optional[str] = None,
-        columns : Optional[List[str]] = None,
-
-    ) :
-    """
-    Docstring for calculate_total_n_rv_estimated_perf
-    
-    :param dataframe: Description
-    :type dataframe: Optional[pl.DataFrame]
-    :param md5: Description
-    :type md5: Optional[str]
-    """
-    fund = FUND_HV if fund is None else fund
-    columns = [c for c in dataframe.columns if c != "Year"] if columns is None else columns
-
-    perf_df = dataframe.with_columns(
-
-        pl.sum_horizontal(
-            [
-                pl.col(c).cast(pl.Float64).fill_null(0).fill_nan(0)
-                for c in columns
-            ]
-        )
-        .alias("Total")
-
-    )
-
-
-
-    print(perf_df)
-
-    return perf_df, md5
 
 
 
@@ -539,20 +503,15 @@ def estimated_gross_performance (
     
     """
     fund = FUND_HV if fund is None else fund
-    dataframe, md5 = read_nav_estimate_by_fund(fund) if dataframe is None else dataframe
+    dataframe, md5 = read_nav_estimate_by_fund(fund) if dataframe is None else (dataframe, md5)
     
     columns_fund = NAV_FUNDS_COLUMNS if columns_fund is None else columns_fund
     column = columns_fund.get(fund)
-
-    #specific_cols = [column, "date"]
-    #dataframe = dataframe.select(specific_cols)
 
     df = dataframe.with_columns(pl.col(column).forward_fill())
     df = df.drop_nulls(subset=[column])
 
     df = (df.sort("date").group_by("date").agg(pl.all().last()).sort("date"))
-
-    print(df)
 
     df = df.with_columns(
         [
@@ -584,7 +543,7 @@ def compute_monthly_returns (
     :type md5: Optional[str]
     """
     fund = FUND_HV if fund is None else fund
-    dataframe, _ = estimated_gross_performance(fund=fund, columns_fund=columns_fund) if dataframe is None else dataframe, md5
+    dataframe, md5 = estimated_gross_performance(fund=fund, columns_fund=columns_fund) if dataframe is None else (dataframe, md5)
 
     columns_fund = NAV_FUNDS_COLUMNS if columns_fund is None else columns_fund
     column = columns_fund.get(fund)
@@ -683,7 +642,6 @@ def compute_monthly_returns (
 
     )
     
-    print(perf_df)
     return perf_df, md5
 
 
