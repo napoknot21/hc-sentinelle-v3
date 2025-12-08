@@ -340,6 +340,7 @@ def get_nav_portfolio_by_date (
         nav_fund_paths : Optional[Dict] = None,
         regex : Optional[re.Pattern] = None,
         schema_overrides : Optional[Dict] = None,
+        mode : str = "eq"
 
     ) :
     """
@@ -363,8 +364,8 @@ def get_nav_portfolio_by_date (
     nav_fund_paths = NAV_PORTFOLIO_FUNDS_DIR_PATHS if nav_fund_paths is None else nav_fund_paths
     dir_abs_path = nav_fund_paths.get(fund)
 
-    filename, date_find = find_most_recent_nav_by_date(date, fund, nav_fund_paths, regex)
-
+    filename, date_find = find_most_recent_nav_by_date(date, fund, nav_fund_paths, regex, mode=mode)
+    #print(date_find)
     if filename is None :
         return None, None
     
@@ -372,7 +373,7 @@ def get_nav_portfolio_by_date (
 
     dataframe, md5 = load_excel_to_dataframe(full_path, schema_overrides=schema_overrides, specific_cols=specific_cols)
 
-    return dataframe, md5
+    return dataframe, md5, date_find # In this case ne return the date also bc Maybe the selected date is not the same as the found one
 
 
 def compute_mv_change_by_dates (
@@ -388,8 +389,8 @@ def compute_mv_change_by_dates (
     start_date = str_to_date(start_date)
     end_date = str_to_date(end_date)
 
-    start, md5_start = get_nav_portfolio_by_date(start_date, fund)
-    end, md5_end = get_nav_portfolio_by_date(end_date, fund)
+    start, md5_start, start_real_date = get_nav_portfolio_by_date(start_date, fund, mode="ge")
+    end, md5_end, end_real_date= get_nav_portfolio_by_date(end_date, fund, mode="le")
 
     if start is None or end is None :
 
@@ -413,9 +414,9 @@ def compute_mv_change_by_dates (
     
     )
 
-    return result, md5_start, md5_end
+    return result, md5_start, md5_end, start_real_date, end_real_date
 
-
+"""
 def find_most_recent_nav_by_date (
         
         date : Optional[str | dt.datetime | dt.date] = None,
@@ -425,17 +426,10 @@ def find_most_recent_nav_by_date (
         regex : Optional[re.Pattern] = None,
 
     ) :
-    """
-    Docstring for find_most_recent_nav_by_date
-    
-    :param date: Description
-    :type date: Optional[str | dt.datetime | dt.date]
-    :param fund: Description
-    :type fund: Optional[str]
-    """
+
     date = date_to_str(date)
     fund = FUND_HV if fund is None else fund
-
+    print(date)
     nav_fund_paths = NAV_PORTFOLIO_FUNDS_DIR_PATHS if nav_fund_paths is None else nav_fund_paths
     dir_abs_path = nav_fund_paths.get(fund)
 
@@ -488,6 +482,110 @@ def find_most_recent_nav_by_date (
         return best_global_name, best_global_key[0]
 
     return None, None
+"""
+
+def find_most_recent_nav_by_date(
+        
+        date: Optional[str | dt.datetime | dt.date] = None,
+        fund: Optional[str] = None,
+
+        nav_fund_paths: Optional[Dict[str, str]] = None,
+        regex: Optional[re.Pattern] = None,
+
+        mode: str = "eq",  # "eq", "le", "ge"
+    ) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Find NAV file according to a target date and a search mode.
+
+    :param date: Target date (string 'YYYY-MM-DD' or date/datetime).
+    :param fund: Fund name.
+    :param nav_fund_paths: Mapping fund -> directory path.
+    :param regex: Compiled regex with groups: (date_str, hh, mm).
+    :param mode: 
+        - "eq": exact date only
+        - "le": latest date <= target date
+        - "ge": earliest date >= target date
+
+    :return: (filename, chosen_date_str) or (None, None)
+    """
+
+    date_str_target = date_to_str(date)           # "YYYY-MM-DD"
+    fund = FUND_HV if fund is None else fund
+    nav_fund_paths = NAV_PORTFOLIO_FUNDS_DIR_PATHS if nav_fund_paths is None else nav_fund_paths
+    dir_abs_path = nav_fund_paths.get(fund)
+
+    if dir_abs_path is None:
+        return None, None
+
+    if regex is None:
+        # À adapter à ton pattern réel
+        # Exemple: r"^NAV_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})\.xlsx$"
+        raise ValueError("regex must be provided")
+
+    # Pour chaque date, on garde le *meilleur* fichier (heure + mtime)
+    # best_per_date[date_str] = (hh, mm, mtime, filename)
+    best_per_date: Dict[str, Tuple[int, int, float, str]] = {}
+
+    with os.scandir(dir_abs_path) as it :
+
+        for entry in it :
+        
+            if not entry.is_file() :
+                continue
+
+            m = regex.match(entry.name)
+            
+            if not m :
+                continue
+
+            date_str, hh, mm = m.groups()
+            
+            hh_i = int(hh)
+            mm_i = int(mm)
+            
+            mtime = entry.stat().st_mtime
+
+            key = (hh_i, mm_i, mtime)
+
+            current = best_per_date.get(date_str)
+            if current is None or key > current[:3]:
+                # On stocke hh, mm, mtime + filename
+                best_per_date[date_str] = (hh_i, mm_i, mtime, entry.name)
+
+    if not best_per_date:
+        return None, None
+
+    # Si on a exactement la date cible, on la privilégie pour tous les modes
+    if date_str_target in best_per_date:
+        _, _, _, fname = best_per_date[date_str_target]
+        return fname, date_str_target
+
+    # Pas de fichier pour la date exacte -> on applique le "mode"
+    all_dates = sorted(best_per_date.keys())  # tri lexical = tri chronologique
+
+    if mode == "eq":
+        # strict : rien trouvé à la date exacte
+        return None, None
+
+    elif mode == "le":
+        # Dernière date <= date cible
+        candidates = [d for d in all_dates if d <= date_str_target]
+        if not candidates:
+            return None, None
+        chosen_date = candidates[-1]
+
+    elif mode == "ge":
+        # Première date >= date cible
+        candidates = [d for d in all_dates if d >= date_str_target]
+        if not candidates:
+            return None, None
+        chosen_date = candidates[0]
+
+    else:
+        raise ValueError(f"Unknown mode '{mode}'. Use 'eq', 'le' or 'ge'.")
+
+    _, _, _, fname = best_per_date[chosen_date]
+    return fname, chosen_date
 
 
 def estimated_gross_performance (
@@ -684,7 +782,7 @@ def portfolio_allocation_analysis (
     initial_allocation = PERF_INITIAL_ALLOCATION if initial_allocation is None else initial_allocation
     threshold = str_to_date(PERF_ALLOCATION_DATE) if threshold is None else str_to_date(threshold)
 
-    dataframe, md5 = get_nav_portfolio_by_date(date, fund) 
+    dataframe, md5, real_date = get_nav_portfolio_by_date(date, fund, mode="le") 
 
     asset_classes_book_names = asset_class_funds.get(fund) # Dict [str , List]
 

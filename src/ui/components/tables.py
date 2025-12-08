@@ -32,9 +32,10 @@ def show_expiries_history (_dataframe : pl.DataFrame, md5 : str,  height : int =
         st.cache_data.clear()
         return None
 
-    table = st.dataframe(_dataframe, height=height)
+    # TODO : Use AgGrid for ploting the table
+    table = st.dataframe(_dataframe)
 
-    return table
+    return None
 
 
 @st.cache_data()

@@ -654,7 +654,19 @@ def colorize_dataframe_positive_negatif_vals (
         
         return "color: green;" if float(val) >= 0 else "color: red;"
 
-    styled = (dataframe.style.applymap(colorize, subset=columns))
+    styled = (
+        dataframe
+        .style
+        .applymap(colorize, subset=columns)
+        .set_table_styles(
+            [
+                {"selector": "th", "props": [("text-align", "center")]},
+                {"selector": "td", "props": [("text-align", "center")]},
+            ]
+        )
+        .set_properties(**{"text-align": "center"})
+    )
+    
 
     return styled
 

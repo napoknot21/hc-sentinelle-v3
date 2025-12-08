@@ -24,11 +24,11 @@ PAGES = [
 
 def app () :
 
-    st.set_page_config(page_title="Sentinelle", layout="wide")
+    st.set_page_config(page_title="Heroics Sentinelle", layout="wide")
 
-    logo = Path(__file__).parent / "assets" / "logos" / "heroics-logo-bleu.png"
-    header(title=None, subtitle=None, logo_path=logo) #,  subtitle=None, logo_width=300, center=True)
-
+    logo = Path(__file__).parent / "assets" / "logos" / "heroics_sentinelle_logo.png"
+    st.image(logo, width=300)
+    
     selected = sidebar(PAGES, "Heroics Capital", logo_header_path=str(logo), styles=risk_menu)
     
     for name, _icon, render in PAGES :

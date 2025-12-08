@@ -62,7 +62,7 @@ def performance (
     
     start_date, end_date = date_selectors_section()
 
-    charts_performance_section( fundation, start_date, end_date)
+    charts_performance_section(fundation, start_date, end_date)
     contribution_charts_section(date, fundation, start_date, end_date)
     #aum_details_section(date, AUM)
 
@@ -90,9 +90,10 @@ def estimated_gross_perf_section (
  
     month_cols = month_cols + ["Total", "RV"]
     dataframe = format_numeric_columns_to_string(dataframe, month_cols)
-    dataframe  = colorize_dataframe_positive_negatif_vals(dataframe, month_cols)
-    
-    st.dataframe(dataframe)
+    styler  = colorize_dataframe_positive_negatif_vals(dataframe, month_cols)
+
+
+    st.write(styler)
     
     return None
 
@@ -205,6 +206,7 @@ def performance_date_manual_selectors () :
 
         start_default = st.session_state.start_date_perf
         start_val = date_selector("Start Date", default_value=start_default, key="start_date_perf")
+        #print(start_val)
     
     with col2 :
 
@@ -481,10 +483,10 @@ def mv_change_section (
     start_date = date_to_str(start_date)
     end_date = date_to_str(end_date)
 
-    dataframe, md5_1, md5_2 = compute_mv_change_by_dates(start_date, end_date, fundation)
+    dataframe, md5_1, md5_2, real_start, real_end = compute_mv_change_by_dates(start_date, end_date, fundation)
     fig = mv_change_peformance_chart(dataframe, md5_1, md5_2)
     
-    left_h5(f"MV % Change per Book — {fundation} from {start_date} to {end_date}")
+    left_h5(f"MV % Change per Book — {fundation} from {real_start} to {real_end}")
     st.plotly_chart(fig)
 
     return None
@@ -499,7 +501,6 @@ def portfolio_allocation_section (
     """
     
     """
-    #print(PERF_ASSET_CLASSES_FUNDS)
 
     dataframe = portfolio_allocation_analysis(date, fundation)
     dataframe = format_numeric_columns_to_string(dataframe)
