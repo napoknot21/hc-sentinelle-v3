@@ -6,28 +6,31 @@ import datetime as dt
 import streamlit as st
 
 from typing import Dict, List, Optional, Dict
-# from dateutil.relativedelta import relativedelta
+
+from src.config.parameters import NAV_ESTIMATE_RENAME_COLUMNS, PERF_DEFAULT_DATE, PERF_ASSET_CLASSES_FUNDS, SUBRED_BOOK_HV
 
 from src.ui.components.selector import date_selector
 from src.ui.components.text import center_h2, left_h5, left_h3
 from src.ui.components.charts import nav_estimate_performance_graph,mv_change_peformance_chart
 
-from src.config.parameters import NAV_ESTIMATE_RENAME_COLUMNS, PERF_DEFAULT_DATE, PERF_ASSET_CLASSES_FUNDS
+from src.utils.dates import monday_of_week, previous_business_day, get_qtd_from_date, get_mtd_start
 from src.utils.formatters import (
-    date_to_str, str_to_date, shift_months, monday_of_week, format_numeric_columns_to_string, colorize_dataframe_positive_negatif_vals
-
+    date_to_str, str_to_date, format_numeric_columns_to_string, colorize_dataframe_positive_negatif_vals
 )
+
+from src.core.data.subred import *
 from src.core.data.nav import (
     read_nav_estimate_by_fund, rename_nav_estimate_columns, read_history_nav_from_excel,
     estimated_gross_performance, compute_monthly_returns, compute_mv_change_by_dates,
     portfolio_allocation_analysis, get_estimated_nav_df_by_date, gav_performance_normalized_base_100
 )
-from src.core.data.subred import *
 from src.core.data.volatility import (
     read_realized_vol_by_dates, compute_realized_vol_by_dates, compute_annualized_realized_vol,
     calculate_total_n_rv_estimated_perf
 )
-from src.core.api.subred import get_subred_by_date
+
+from src.core.api.subred import get_subred_by_date, get_df_subred_by_date
+
 
 # Main function
 
@@ -61,6 +64,7 @@ def performance (
 
     charts_performance_section( fundation, start_date, end_date)
     contribution_charts_section(date, fundation, start_date, end_date)
+    #aum_details_section(date, AUM)
 
     return None
 
@@ -243,35 +247,43 @@ def performance_date_quick_selectors (
 
     with col2 :
 
-        if st.button("1YTD", key="perf_ytd_button_year") :
+        if st.button("YTD", key="perf_ytd_button_year") :
 
-            st.session_state.start_date_perf = dt.date(end_ref.year, 1, 1)
+            start_raw = dt.date(end_ref.year-1, 12, 31)
+            start = previous_business_day(start_raw)
+
+            st.session_state.start_date_perf = start
             st.session_state.end_date_perf = end_ref
             
             st.rerun()
 
     with col3 :
 
-        if st.button("6MTD", key="perf_ytd_button_6_months"):
-            
-            # rolling 6 months inclusive
-            st.session_state.start_date_perf = shift_months(end_ref, -6) + dt.timedelta(days=1)
+        if st.button("QTD", key="perf_ytd_button_quarter"):
+
+            start_raw = get_qtd_from_date(end_ref)
+            start = previous_business_day(start_raw)
+
+            st.session_state.start_date_perf = start
             st.session_state.end_date_perf = end_ref
             
             st.rerun()
 
     with col4 :
 
-        if st.button("1MTD", key="perf_ytd_button_1_month"):
-        
-            st.session_state.start_date_perf = dt.date(end_ref.year, end_ref.month, 1)
+        if st.button("MTD", key="perf_ytd_button_1_month"):
+            
+            start_raw = get_mtd_start(end_ref)
+            start = previous_business_day(start_raw)
+
+            st.session_state.start_date_perf = start
             st.session_state.end_date_perf = end_ref
         
             st.rerun()
 
     with col5:
         
-        if st.button("1WTD", key="perf_ytd_button_1_week"):
+        if st.button("WTD", key="perf_ytd_button_1_week"):
         
             st.session_state.start_date_perf = monday_of_week(end_ref)
             st.session_state.end_date_perf = end_ref
@@ -496,3 +508,19 @@ def portfolio_allocation_section (
     return None
 
 
+# ----------- AUM Détails -----------
+
+
+#def aum_details_section (
+#        
+#        date : Optional[str | dt.datetime | dt.date] = None,
+#
+#    ) :
+#    """
+#    Docstring for aum_details_section
+#    """
+#    dataframe, md5 = get_df_subred_by_date(date)
+#
+#    st.dataframe(dataframe)
+#
+#    return None,

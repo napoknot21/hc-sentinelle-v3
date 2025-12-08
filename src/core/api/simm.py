@@ -26,7 +26,7 @@ def fetch_raw_simm_data (
 
         fund_map : Optional[Dict] = None
     
-    ) -> Optional[Tuple[pl.DataFrame, str]] :
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
     """
     Fetch raw bilateral SIMM (ICE) and return (df, md5) or None.
 
@@ -57,7 +57,7 @@ def fetch_raw_simm_data (
     # Ice API connexion
     try :
 
-        calculator = get_ice_calculator()
+        ic = get_ice_calculator()
         log(f"[+] ICE API client ready | fund : {fund_name} | date : {date}", "info")
 
     except Exception as e :
@@ -68,7 +68,7 @@ def fetch_raw_simm_data (
     # Network bound
     try :
 
-        bilateral_im = calculator.get_bilateral_im_ctpy(date, fund_name)
+        bilateral_im = ic.get_bilateral_im_calculation_all_ctpy(date, fund_name)
         
         if bilateral_im is None :
         

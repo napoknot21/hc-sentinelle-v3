@@ -47,7 +47,8 @@ def load_upcomming_expiries (
 
     regex = EXPIRIES_FILENAME_REGEX if regex is None else regex
 
-    file_abs_path = get_upcomming_expiries_file_by_date (date, fundation, regex=regex) 
+    file_abs_path = get_upcomming_expiries_file_by_date (date, fundation, regex=regex)
+    print(file_abs_path)
     
     if file_abs_path is None :        
         log("[-] File does not exist for the specific date", "error")

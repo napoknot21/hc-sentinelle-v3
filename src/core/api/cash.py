@@ -36,27 +36,6 @@ def get_cash (
 
 
 
-def fetch_subread_data (
-        
-        fund : Optional[str] = None,
-        date : Optional[str | dt.datetime | dt.date] = None,
-        rename_cols = None,
-        select_cols = None,
-        books : Optional[List[str]] = None,
-    
-    ) :
-    """
-    
-    """
-    fund = None
-    date = date_to_str(date)
-    books = ["WR_VAULT"] if books is (None or (None)) else None 
-    trade_manager = get_trade_manager()
-    calculator = get_ice_calculator()
-
-    return None
-
-
 def call_api_for_pairs (
     
         target_date : Optional[str | dt.datetime] = None,

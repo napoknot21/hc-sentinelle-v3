@@ -171,6 +171,8 @@ EXPIRIES_COLUMNS = {
     "Buy/Sell" : pl.Utf8,
     "Notional" : pl.Float64,
 
+    "Asset Class" : pl.Utf8,
+
     "Call/Put" : pl.Utf8,
 
     "Strike" : pl.Float64,
@@ -204,6 +206,8 @@ EXPIRIES_COLUMNS_SPECIFIC = {
 
     "Trade Type" : pl.Utf8,
     "Underlying Asset" : pl.Utf8,
+
+    "Asset Class" : pl.Utf8,
 
     "Buy/Sell" : pl.Utf8,
     "Call/Put" : pl.Utf8,
@@ -804,9 +808,10 @@ SCREENERS_COLUMNS_TARF = {
 
 SCREENERS_COLUMNS_TAIL = {
 
+    "Trade Code" : pl.Utf8,
+    "Trade Description" : pl.Utf8,
     "Instrument Type" : pl.Utf8,
     "Underlying Asset" : pl.Utf8,
-    "Trade Code" : pl.Utf8,
     "Expiry Date" : pl.Date,
     "Portfolio Name" : pl.Utf8,
     "MV" : pl.Float64

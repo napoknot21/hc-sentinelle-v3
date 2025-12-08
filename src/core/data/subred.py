@@ -41,7 +41,6 @@ def read_aum_from_cache (
     return data
 
 
-
 def find_cache_file_by_date (
 
         date : Optional[str | dt.datetime | dt.date] = None,

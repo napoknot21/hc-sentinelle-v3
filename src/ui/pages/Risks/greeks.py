@@ -6,8 +6,10 @@ import datetime as dt
 
 from typing import Optional, List, Dict
 
-from src.utils.formatters import str_to_date, date_to_str, shift_months, monday_of_week
 from src.config.parameters import GREEKS_DEFAULT_DATE, GREEKS_ASSET_CLASSES, GREEKS_COLUMNS, GREEKS_ASSET_CLASSES
+
+from src.utils.formatters import str_to_date, date_to_str
+from src.utils.dates import get_mtd_start, get_qtd_from_date, previous_business_day, monday_of_week
 
 from src.ui.components.selector import date_selector
 from src.ui.components.text import center_h2, left_h5, left_h3
@@ -47,6 +49,7 @@ def percentage_greeks_change_section (date, fundation) :
     
     """
     left_h3(f"Pourcentage % change between {st.session_state.start_date_greeks} and {st.session_state.end_date_greeks}")
+
     start_date, end_date = dates_percentage_selectors_section()
 
     start_date = date_to_str(start_date)
@@ -67,7 +70,7 @@ def percentage_greeks_change_section (date, fundation) :
     return None
 
 
-# Date Selectors sub section
+# ---------- Date Selectors sub section ----------
 
 def dates_percentage_selectors_section () :
     """
@@ -137,35 +140,43 @@ def greeks_date_quick_selectors (
 
     with col2 :
 
-        if st.button("1YTD", key="greeks_ytd_button_year") :
+        if st.button("YTD", key="greeks_ytd_button_year") :
+            
+            start_raw = dt.date(end_ref.year-1, 12, 31)
+            start = previous_business_day(start_raw)
 
-            st.session_state.start_date_greeks = dt.date(end_ref.year, 1, 1)
+            st.session_state.start_date_greeks = start
             st.session_state.end_date_greeks = end_ref
             
             st.rerun()
 
     with col3 :
 
-        if st.button("6MTD", key="greeks_ytd_button_6_months"):
+        if st.button("QTD", key="greeks_ytd_button_quarter"):
             
-            # rolling 6 months inclusive
-            st.session_state.start_date_greeks = shift_months(end_ref, -6) + dt.timedelta(days=1)
+            start_raw = get_qtd_from_date(end_ref)
+            start = previous_business_day(start_raw)
+
+            st.session_state.start_date_greeks = start
             st.session_state.end_date_greeks = end_ref
             
             st.rerun()
 
     with col4 :
 
-        if st.button("1MTD", key="greeks_ytd_button_1_month"):
+        if st.button("MTD", key="greeks_ytd_button_month") :
+
+            start_raw = get_mtd_start(end_ref)
+            start = previous_business_day(start_raw)
         
-            st.session_state.start_date_greeks = dt.date(end_ref.year, end_ref.month, 1)
+            st.session_state.start_date_greeks = start
             st.session_state.end_date_greeks = end_ref
         
             st.rerun()
 
     with col5:
         
-        if st.button("1WTD", key="greeks_ytd_button_1_week"):
+        if st.button("WTD", key="greeks_ytd_button_week"):
         
             st.session_state.start_date_greeks = monday_of_week(end_ref)
             st.session_state.end_date_greeks = end_ref
@@ -173,12 +184,13 @@ def greeks_date_quick_selectors (
             st.rerun()
 
     return st.session_state.start_date_greeks, st.session_state.end_date_greeks
-    
-# Underlying selector
+
+
+# ---------- Underlying selector ----------
 
 def underlying_change_greek_selector (df_start : pl.DataFrame, df_end : pl.DataFrame, column : str = "Underlying") :
     """
-    
+  
     """
     start_vals = set(df_start.get_column(column).unique().to_list())
     end_vals = set(df_end.get_column(column).unique().to_list())
@@ -190,14 +202,17 @@ def underlying_change_greek_selector (df_start : pl.DataFrame, df_end : pl.DataF
 
     return underlying
 
-# Graph underlying section
+
+# ---------- Graph underlying section ----------
 
 def pourcentage_change_underlyin_seciton (
         
         df_start : Optional[pl.DataFrame] = None,
         md5_start : Optional[str] = None,
+
         df_end : Optional[pl.DataFrame] = None,
-        md5_end : Optional[str] = None, 
+        md5_end : Optional[str] = None,
+
         x_axis : Optional[List[str]] = None,
         underlying : Optional[str] = None,
     

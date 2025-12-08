@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import hashlib
 import polars as pl
 import pandas as pd
 import datetime as dt
@@ -20,6 +21,9 @@ def get_subred_by_date (
         
         date : Optional[str | dt.datetime | dt.date] = None,
 
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
         books_by_fund : Optional[Dict] = None,
         schema_overrides : Optional[Dict] = None,
 
@@ -28,7 +32,7 @@ def get_subred_by_date (
     
     """
 
-    dataframe = api_call_subred(date, books_by_fund, schema_overrides)
+    dataframe, md5 = get_df_subred_by_date(date, books_by_fund, schema_overrides) if dataframe is None else (dataframe, md5)
     
     df_grouped = _clean_response_api(dataframe, books_by_fund)
     df_grouped = format_numeric_columns_to_string(df_grouped)
@@ -36,6 +40,33 @@ def get_subred_by_date (
     aum_dict = _build_fund_dictionary(df_grouped, books_by_fund)
 
     return aum_dict
+
+
+def get_df_subred_by_date (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+
+        books_by_fund : Optional[Dict] = None,
+        schema_overrides : Optional[Dict] = None,
+    
+    ) :
+    """
+    Docstring for get_df_subred_by_date
+    
+    :param date: Description
+    :type date: Optional[str | dt.datetime | dt.date]
+    :param books_by_fund: Description
+    :type books_by_fund: Optional[Dict]
+    :param schema_overrides: Description
+    :type schema_overrides: Optional[Dict]
+    """
+    dataframe = api_call_subred(date, books_by_fund, schema_overrides)
+
+    csv_bytes = dataframe.write_csv().encode("utf-8")
+    md5_hash = hashlib.md5(csv_bytes).hexdigest()
+    print(dataframe)
+    return dataframe, md5_hash
+
 
 
 def api_call_subred (
