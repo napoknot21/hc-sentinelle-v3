@@ -365,7 +365,7 @@ def get_nav_portfolio_by_date (
     dir_abs_path = nav_fund_paths.get(fund)
 
     filename, date_find = find_most_recent_nav_by_date(date, fund, nav_fund_paths, regex, mode=mode)
-    #print(date_find)
+
     if filename is None :
         return None, None
     
@@ -416,73 +416,6 @@ def compute_mv_change_by_dates (
 
     return result, md5_start, md5_end, start_real_date, end_real_date
 
-"""
-def find_most_recent_nav_by_date (
-        
-        date : Optional[str | dt.datetime | dt.date] = None,
-        fund : Optional[str] = None,
-
-        nav_fund_paths : Optional[Dict] = None,
-        regex : Optional[re.Pattern] = None,
-
-    ) :
-
-    date = date_to_str(date)
-    fund = FUND_HV if fund is None else fund
-    print(date)
-    nav_fund_paths = NAV_PORTFOLIO_FUNDS_DIR_PATHS if nav_fund_paths is None else nav_fund_paths
-    dir_abs_path = nav_fund_paths.get(fund)
-
-    # Best pour la date cible
-    best_target_key: Optional[tuple] = None   # (hh, mm, mtime)
-    best_target_name: Optional[str] = None
-
-    best_global_key: Optional[tuple] = None   # (date_str, hh, mm, mtime)
-    best_global_name: Optional[str] = None
-
-    with os.scandir(dir_abs_path) as it : # 
-        
-        for entry in it :
-
-            if not entry.is_file() :
-                continue
-
-            m = regex.match(entry.name)
-
-            if not m :
-                continue
-
-            date_str, hh, mm = m.groups()
-
-            hh_i = int(hh)
-            mm_i = int(mm)
-            mtime = entry.stat().st_mtime
-
-            if date_str == date :
-
-                key_t = (hh_i, mm_i, mtime)
-                
-                if best_target_key is None or key_t > best_target_key :
-
-                    best_target_key = key_t
-                    best_target_name = entry.name
-
-            key_g = (date_str, hh_i, mm_i, mtime)
-
-            if best_global_key is None or key_g > best_global_key :
-
-                best_global_key = key_g
-                best_global_name = entry.name
-
-    if best_target_name is not None :
-        return best_target_name, date
-
-    # Most recent file otherwise
-    if best_global_name is not None :
-        return best_global_name, best_global_key[0]
-
-    return None, None
-"""
 
 def find_most_recent_nav_by_date(
         

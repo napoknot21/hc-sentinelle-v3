@@ -29,7 +29,7 @@ from src.core.data.volatility import (
     calculate_total_n_rv_estimated_perf
 )
 
-from src.core.api.subred import get_subred_by_date, get_df_subred_by_date
+from src.core.api.subred import get_subred_by_date, fetch_subred_by_date
 
 
 # Main function
@@ -64,7 +64,7 @@ def performance (
 
     charts_performance_section(fundation, start_date, end_date)
     contribution_charts_section(date, fundation, start_date, end_date)
-    #aum_details_section(date, AUM)
+    aum_details_section(date)
 
     return None
 
@@ -132,11 +132,20 @@ def total_aum_section (
     
     """
     date = date_to_str(date)
+
     aum_dict = read_aum_from_cache(date)
     
     if aum_dict is None :
 
-        aum_dict = get_subred_by_date(date)
+        dataframe, md5 = read_detailed_aum_from_cache()
+
+        if dataframe is None:
+            dataframe , md5 = fetch_subred_by_date(date)
+
+        aum_dict = get_subred_by_date(date, dataframe, md5)
+        
+        save_aum_to_cache(aum_dict, date)
+        save_raw_aum_to_cache(dataframe, date)
 
     aum = aum_dict.get(fundation, None)
 
@@ -148,7 +157,6 @@ def total_aum_section (
     currency = aum.get("currency")
     amount = aum.get("amount")
 
-    save_aum_to_cache(aum_dict, date)
     st.metric(f"Total AUM at {date}", f"{amount} {currency}")
     
     return None
@@ -512,16 +520,30 @@ def portfolio_allocation_section (
 # ----------- AUM Détails -----------
 
 
-#def aum_details_section (
-#        
-#        date : Optional[str | dt.datetime | dt.date] = None,
-#
-#    ) :
-#    """
-#    Docstring for aum_details_section
-#    """
-#    dataframe, md5 = get_df_subred_by_date(date)
-#
-#    st.dataframe(dataframe)
-#
-#    return None,
+def aum_details_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+        book_by_fund : Optional[Dict]= None
+
+    ) :
+    """
+    Docstring for aum_details_section
+    """
+    date = date_to_str(date)
+    
+    left_h5(f"Total AUM Detail at {date}")
+
+    dataframe, md5 = read_detailed_aum_from_cache(date)
+
+    if dataframe is None :
+        
+        dataframe , md5 = fetch_subred_by_date(date)
+        save_raw_aum_to_cache(dataframe, date)
+
+    dataframe, md5 = clean_aum_by_fund(dataframe, md5, fundation)
+    dataframe = format_numeric_columns_to_string(dataframe)
+    
+    st.dataframe(dataframe)
+
+    return None,

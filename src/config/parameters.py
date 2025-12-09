@@ -248,7 +248,10 @@ SUBRED_BOOK_HV=os.getenv("SUBRED_BOOK_HV")
 SUBRED_BOOK_WR=os.getenv("SUBRED_BOOK_WR")
 
 SUBRED_FILENAME_PATTERN=os.getenv("SUBRED_FILENAME_PATTERN")
+SUBRED_RAW_FILENAME_PATTERN=os.getenv("SUBRED_RAW_FILENAME_PATTERN")
+
 SUBRED_FILENAME_REGEX = re.compile(SUBRED_FILENAME_PATTERN, re.IGNORECASE)
+SUBRED_RAW_FILENAME_REGEX = re.compile(SUBRED_RAW_FILENAME_PATTERN, re.IGNORECASE)
 
 SUBRED_STRUCT_COLUMNS = {
 
@@ -262,9 +265,23 @@ SUBRED_STRUCT_COLUMNS = {
 SUBRED_COLS_NEEDED = {
 
     "tradeLegCode" : pl.Utf8,
+    "tradeDescription" : pl.Utf8,
+    "tradeName" : pl.Utf8,
     "bookName" : pl.Utf8,
     "tradeType" : pl.Utf8,
     "instrument" : pl.Struct(SUBRED_STRUCT_COLUMNS)
+
+}
+
+
+SUBRED_COLUMNS_READ = {
+
+    "tradeLegCode" : pl.Utf8,
+    "tradeDescription" : pl.Utf8,
+    "tradeName" : pl.Utf8,
+    "bookName" : pl.Utf8,
+    "tradeType" : pl.Utf8,
+    #"instrument" : pl.Struct(SUBRED_STRUCT_COLUMNS)
 
 }
 

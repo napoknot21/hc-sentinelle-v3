@@ -61,7 +61,8 @@ def read_greeks_by_date (
         greeks_paths : Optional[Dict] = None,
         
         schema_overrides : Optional[Dict] = None,
-        regex : Optional[re.Pattern] = None
+        regex : Optional[re.Pattern] = None,
+        mode : str = "eq"
 
     ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
     """
@@ -78,7 +79,11 @@ def read_greeks_by_date (
     greeks_paths = GREEKS_FUNDS_DIR_PATHS if greeks_paths is None else greeks_paths
     dir_abs = greeks_paths.get(fund)
 
-    filename, _ = find_most_recent_file_by_date(date, dir_abs, regex) if filename is None else filename
+    filename, real_date = find_most_recent_file_by_date(date, dir_abs, regex, mode=mode) if filename is None else filename
+    
+    if filename is None :
+        return None, None
+
     full_path = os.path.join(dir_abs, filename)
 
     try :
@@ -89,30 +94,29 @@ def read_greeks_by_date (
         log(f"[-] Error during greeks {date_to_str(date)} file reading", "error")
         return None, None
     
-    return dataframe, md5
+    return dataframe, md5, real_date
 
 
 def find_most_recent_file_by_date (
     
         date : Optional[str | dt.datetime | dt.date] = None,
+
         dir_abs_path : Optional[str] = None,
-        regex : Optional[re.Pattern] = None
+        regex : Optional[re.Pattern] = None,
+
+        mode: str = "eq",  # "eq", "le", "ge"
     
     ) -> Tuple[Optional[str], Tuple[str]] :
     """
     Return
     """
+    date_str_target = date_to_str(date)
+
     if not os.path.isdir(dir_abs_path) :
         return None, None
     
     # Best pour la date cible
-    best_target_key: Optional[tuple] = None   # (hh, mm, mtime)
-    best_target_name: Optional[str] = None
-
-    best_global_key: Optional[tuple] = None   # (date_str, hh, mm, mtime)
-    best_global_name: Optional[str] = None
-
-    date = date_to_str(date)
+    best_per_date: Dict[str, Tuple[int, int, float, str]] = {}
 
     with os.scandir(dir_abs_path) as it : # 
         
@@ -120,7 +124,7 @@ def find_most_recent_file_by_date (
 
             if not entry.is_file() :
                 continue
-
+            
             m = regex.match(entry.name)
 
             if not m :
@@ -130,29 +134,49 @@ def find_most_recent_file_by_date (
 
             hh_i = int(hh)
             mm_i = int(mm)
+
             mtime = entry.stat().st_mtime
 
-            if date_str == date :
+            key = (hh_i, mm_i, mtime)
 
-                key_t = (hh_i, mm_i, mtime)
-                
-                if best_target_key is None or key_t > best_target_key :
+            current = best_per_date.get(date_str)
 
-                    best_target_key = key_t
-                    best_target_name = entry.name
+            if current is None or key > current[:3] :
+                best_per_date[date_str] = (hh_i, mm_i, mtime, entry.name)
+    
+    if not best_per_date:
+        return None, None
+    
+    # Si on a exactement la date cible, on la privilégie pour tous les modes
+    if date_str_target in best_per_date:
+        _, _, _, fname = best_per_date[date_str_target]
+        return fname, date_str_target
 
-            key_g = (date_str, hh_i, mm_i, mtime)
+    # Pas de fichier pour la date exacte -> on applique le "mode"
+    all_dates = sorted(best_per_date.keys())  # tri lexical = tri chronologique
 
-            if best_global_key is None or key_g > best_global_key :
+    if mode == "eq":
+        # strict : rien trouvé à la date exacte
+        return None, None
 
-                best_global_key = key_g
-                best_global_name = entry.name
+    elif mode == "le":
+        # Dernière date <= date cible
+        candidates = [d for d in all_dates if d <= date_str_target]
+        if not candidates:
+            return None, None
+        chosen_date = candidates[-1]
 
-    if best_target_name is not None :
-        return best_target_name, date
+    elif mode == "ge":
+        # Première date >= date cible
+        candidates = [d for d in all_dates if d >= date_str_target]
+        if not candidates:
+            return None, None
+        chosen_date = candidates[0]
 
-    # Most recent file otherwise
-    if best_global_name is not None :
-        return best_global_name, best_global_key[0]
+    else:
+        raise ValueError(f"Unknown mode '{mode}'. Use 'eq', 'le' or 'ge'.")
 
-    return None, None
+    _, _, _, fname = best_per_date[chosen_date]
+    return fname, chosen_date
+
+

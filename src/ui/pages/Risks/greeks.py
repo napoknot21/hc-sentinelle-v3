@@ -48,20 +48,21 @@ def percentage_greeks_change_section (date, fundation) :
     """
     
     """
-    left_h3(f"Pourcentage % change between {st.session_state.start_date_greeks} and {st.session_state.end_date_greeks}")
 
     start_date, end_date = dates_percentage_selectors_section()
 
     start_date = date_to_str(start_date)
     end_date = date_to_str(end_date)
 
-    df_start, md5_start = read_greeks_by_date(start_date, fundation)
-    df_end, md5_end = read_greeks_by_date(end_date, fundation)
+    df_start, md5_start, start_real_date = read_greeks_by_date(start_date, fundation, mode="ge")
+    df_end, md5_end, end_real_date = read_greeks_by_date(end_date, fundation, mode="le")
 
     if (df_start is None or df_end is None) :
         
         st.error("No data for the selected dates... Retrying with new ones")
         return None
+    
+    left_h3(f"Pourcentage % change between {start_real_date} and {end_real_date}")
     
     underlying = underlying_change_greek_selector(df_start, df_end)
 

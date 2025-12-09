@@ -929,19 +929,20 @@ def show_history_greeks_graph (
             font_color="black",
             font_size=16,
         ),
-
-        legend=dict(
-            font=dict(size=10),
-            yanchor="top",
-            y=1.02,
-            xanchor="left",
-            x=0,
-            bgcolor="rgba(255,255,255,0.8)",
-            bordercolor="black",
-            borderwidth=1,
-            itemsizing="trace",
-            orientation="v",
-        ),
+        #"""
+        #legend=dict(
+        #    font=dict(size=10),
+        #    yanchor="top",
+        #    y=1.02,
+        #    xanchor="left",
+        #    x=0,
+        #    bgcolor="rgba(255,255,255,0.8)",
+        #    bordercolor="black",
+        #    borderwidth=1,
+        #    itemsizing="trace",
+        #    orientation="v",
+        #),
+        #"""
 
         updatemenus=[
 

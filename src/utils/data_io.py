@@ -278,7 +278,7 @@ def export_dataframe_to_excel (df : pl.DataFrame, sheet_name : str = "Sheet1", o
         df.write_excel(
         
             workbook=output_abs_path,
-            sheet_name=sheet_name
+            worksheet=sheet_name
 
         )
 
