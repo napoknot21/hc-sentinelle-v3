@@ -746,6 +746,146 @@ GREEK_REGEX_PATTERN=os.getenv("GREEK_REGEX_PATTERN")
 GREEKS_REGEX = re.compile(GREEK_REGEX_PATTERN, re.IGNORECASE)
 
 
+GREEKS_CROSS_DELTA_REGEX_PATTERN=os.getenv("GREEKS_CROSS_DELTA_REGEX_PATTERN")
+GREEKS_CROSS_DELTA_REGEX = re.compile(GREEKS_CROSS_DELTA_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_CROSS_GAMMA_REGEX_PATTERN=os.getenv("GREEKS_CROSS_GAMMA_REGEX_PATTERN")
+GREEKS_CROSS_GAMMA_REGEX = re.compile(GREEKS_CROSS_GAMMA_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_DELTA_PNL_STRESS_REGEX_PATTERN=os.getenv("GREEKS_DELTA_PNL_STRESS_REGEX_PATTERN")
+GREEKS_DELTA_PNL_STRESS_REGEX = re.compile(GREEKS_DELTA_PNL_STRESS_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_DELTA_PNL_STRESS_COLUMNS = {
+
+    "Underlying" : pl.Utf8,
+    "-3 x Sigma - P&L" : pl.Float64,
+    "-2 x Sigma - P&L" : pl.Float64,
+    "-1 x Sigma - P&L" : pl.Float64,
+    "0 x Sigma - P&L" : pl.Float64,
+    "1 x Sigma - P&L" : pl.Float64,
+    "2 x Sigma - P&L" : pl.Float64,
+    "3 x Sigma - P&L" : pl.Float64,
+
+}
+
+GREEKS_DELTA_STRESS_NAV_REGEX_PATTERN=os.getenv("GREEKS_DELTA_STRESS_NAV_REGEX_PATTERN")
+GREEKS_DELTA_STRESS_NAV_REGEX = re.compile(GREEKS_DELTA_STRESS_NAV_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_DELTA_STRESS_NAV_COLUMNS = {
+
+    "Underlying" : pl.Utf8,
+    "-3 x Sigma % NAV" : pl.Float64,
+    "-2 x Sigma % NAV" : pl.Float64,
+    "-1 x Sigma % NAV" : pl.Float64,
+    "0 x Sigma % NAV" : pl.Float64,
+    "1 x Sigma % NAV" : pl.Float64,
+    "2 x Sigma % NAV" : pl.Float64,
+    "3 x Sigma % NAV" : pl.Float64,
+
+}
+
+GREEKS_DELTA_STRESS_ABS_REGEX_PATTERN=os.getenv("GREEKS_DELTA_STRESS_ABS_REGEX_PATTERN")
+GREEKS_DELTA_STRESS_ABS_REGEX = re.compile(GREEKS_DELTA_STRESS_ABS_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_DELTA_STRESS_ABS_COLUMNS = {
+
+    "Underlying" : pl.Utf8,
+    "-3 x Sigma" : pl.Float64,
+    "-2 x Sigma" : pl.Float64,
+    "-1 x Sigma" : pl.Float64,
+    "0 x Sigma" : pl.Float64,
+    "1 x Sigma" : pl.Float64,
+    "2 x Sigma" : pl.Float64,
+    "3 x Sigma" : pl.Float64,
+
+}
+
+GREEKS_LONG_SHORT_DELTA_REGEX_PATTERN=os.getenv("GREEKS_LONG_SHORT_DELTA_REGEX_PATTERN")
+GREEKS_LONG_SHORT_DELTA_REGEX = re.compile(GREEKS_LONG_SHORT_DELTA_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_LONG_SHORT_DELTA_COLUMNS = {
+
+    "Underlying Asset" : pl.Utf8,
+    "Long Delta(%)" : pl.Float64,
+    "Average Strike Long" : pl.Float64,
+    "Average Maturities Long" : pl.Float64,
+    "Short Delta(%)" : pl.Float64,
+    "Average Strike Short" : pl.Float64,
+    "Average Maturities Short" : pl.Float64,
+    "Net Delta (%)" : pl.Float64
+
+}
+
+GREEKS_GAMMA_PNL_REGEX_PATTERN=os.getenv("GREEKS_GAMMA_PNL_REGEX_PATTERN")
+GREEKS_GAMMA_PNL_REGEX = re.compile(GREEKS_GAMMA_PNL_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_GAMMA_PNL_COLUMNS = {
+
+    "Underlying" : pl.Utf8,
+    "Gamma" : pl.Float64,
+    "Theta" : pl.Float64,
+    "P%L / 1 sigma" : pl.Float64,
+    "P%L / 3 sigma" : pl.Float64,
+    "STD" : pl.Float64
+
+}
+
+GREEKS_RISK_CREDIT_REGEX_PATTERN=os.getenv("GREEKS_RISK_CREDIT_REGEX_PATTERN")
+GREEKS_RISK_CREDIT_REGEX = re.compile(GREEKS_RISK_CREDIT_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_RISK_CREDIT_COLUMNS = {
+
+    "Underlying" : pl.Utf8,
+    "CS01" : pl.Float64,
+    "CS01 % NAV" : pl.Float64
+
+}
+
+GREEKS_VEGA_BUCKET_REGEX_PATTERN=os.getenv("GREEKS_VEGA_BUCKET_REGEX_PATTERN")
+GREEKS_VEGA_BUCKET_REGEX = re.compile(GREEKS_VEGA_BUCKET_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_VEGA_BUCKET_COLUMNS = {
+
+    "Underlying Asset" : pl.Utf8,
+    "1w" : pl.Float64,
+    "1w-1m" : pl.Float64,
+    "1m-3m" : pl.Float64,
+    "3m-6m" : pl.Float64,
+    "6m-1y" : pl.Float64,
+    ">1y" : pl.Float64,
+    "Total" : pl.Float64
+    
+}
+
+
+GREEKS_VEGA_STRESS_PNL_REGEX_PATTERN=os.getenv("GREEKS_VEGA_STRESS_PNL_REGEX_PATTERN")
+GREEKS_VEGA_STRESS_PNL_REGEX = re.compile(GREEKS_VEGA_STRESS_PNL_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_VEGA_STRESS_PNL_COLUMNS = {
+
+    "Asset Class" : pl.Utf8,
+    "Underlying" : pl.Utf8,
+    "Vega" : pl.Float64,
+    "Vega P&L - moderate" : pl.Float64, 
+    "Vega P&L - stress" : pl.Float64,
+    "Vega P&L - extreme" : pl.Float64,
+
+}
+
+
+GREEKS_CONCENTRATION_REGEX_PATTERN=os.getenv("GREEKS_CONCENTRATION_REGEX_PATTERN")
+GREEKS_CONCENTRATION_REGEX = re.compile(GREEKS_CONCENTRATION_REGEX_PATTERN, re.IGNORECASE)
+
+GREEKS_CONCENTRATION_COLUMNS = {
+
+    "Counterparty" : pl.Utf8,
+    "MV" : pl.Float64,
+    "MV/NAV%" : pl.Float64,
+    "Compliance" : pl.Utf8
+    
+}
+
+
 # ------------ Screeners --------------
 
 

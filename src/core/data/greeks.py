@@ -64,7 +64,7 @@ def read_greeks_by_date (
         regex : Optional[re.Pattern] = None,
         mode : str = "eq"
 
-    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str], Optional[str]] :
     """
     
     """
@@ -82,7 +82,7 @@ def read_greeks_by_date (
     filename, real_date = find_most_recent_file_by_date(date, dir_abs, regex, mode=mode) if filename is None else filename
     
     if filename is None :
-        return None, None
+        return None, None, None
 
     full_path = os.path.join(dir_abs, filename)
 
@@ -92,7 +92,7 @@ def read_greeks_by_date (
     except Exception as e :
         
         log(f"[-] Error during greeks {date_to_str(date)} file reading", "error")
-        return None, None
+        return None, None, None
     
     return dataframe, md5, real_date
 
@@ -178,5 +178,56 @@ def find_most_recent_file_by_date (
 
     _, _, _, fname = best_per_date[chosen_date]
     return fname, chosen_date
+
+
+# ----------------- Scripts and analysis -----------------
+
+
+def delta_stress_scenarios () :
+    """
+    Docstring for delta_stress_scenarios
+    """
+
+    return None
+
+
+
+def gamma_pnl () :
+    """
+    Docstring for gamma_pnl
+    """
+
+    return None
+
+
+def greeks_risk_analysis () :
+    """
+    Docstring for greeks_risk_analysis
+    """
+
+    return None
+
+
+
+def volatility_analysis () :
+    """
+    Docstring for volatility_analysis
+    """
+
+    return None
+
+
+def vega_stress_pnl () :
+    """
+    Docstring for vega_stress_pnl
+    """
+    return None
+
+
+def vega_bucket_analysis () :
+    """
+    Docstring for vega_bucket_analysis
+    """
+    return None
 
 
