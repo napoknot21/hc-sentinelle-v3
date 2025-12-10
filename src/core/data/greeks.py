@@ -11,9 +11,18 @@ from typing import Optional, List, Dict, Tuple
 from src.utils.logger import log
 from src.utils.formatters import date_to_str, str_to_date
 from src.utils.data_io import load_excel_to_dataframe
-from src.config.parameters import FUND_HV, GREEKS_ALL_FILENAME, GREEKS_COLUMNS, GREEKS_REGEX, GREEKS_OVERVIEW_COLUMNS
-from src.config.paths import GREEKS_FUNDS_DIR_PATHS
+from src.config.parameters import (
+    FUND_HV,
+    GREEKS_ALL_FILENAME, GREEKS_COLUMNS, GREEKS_REGEX, GREEKS_OVERVIEW_COLUMNS,
+    GREEKS_GAMMA_PNL_COLUMNS, GREEKS_GAMMA_PNL_REGEX,
+    GREEKS_VEGA_BUCKET_COLUMNS, GREEKS_VEGA_STRESS_PNL_COLUMNS, GREEKS_VEGA_STRESS_PNL_REGEX,
+    GREEKS_VEGA_BUCKET_REGEX
+)
+from src.config.paths import (
+    GREEKS_FUNDS_DIR_PATHS, GREEKS_GAMMA_PNL_FUNDS_DIR_PATHS,
+    GREEKS_VEGA_BUCKET_FUNDS_DIR_PATHS, GREEKS_VEGA_STRESS_PNL_FUNDS_DIR_PATHS,
 
+)
 
 def read_history_greeks (
 
@@ -143,7 +152,7 @@ def find_most_recent_file_by_date (
 
             if current is None or key > current[:3] :
                 best_per_date[date_str] = (hh_i, mm_i, mtime, entry.name)
-    
+
     if not best_per_date:
         return None, None
     
@@ -160,14 +169,15 @@ def find_most_recent_file_by_date (
         return None, None
 
     elif mode == "le":
-        # Dernière date <= date cible
+        # last date <= date target
         candidates = [d for d in all_dates if d <= date_str_target]
+
         if not candidates:
             return None, None
         chosen_date = candidates[-1]
 
     elif mode == "ge":
-        # Première date >= date cible
+        # First date >= date Target
         candidates = [d for d in all_dates if d >= date_str_target]
         if not candidates:
             return None, None
@@ -177,6 +187,7 @@ def find_most_recent_file_by_date (
         raise ValueError(f"Unknown mode '{mode}'. Use 'eq', 'le' or 'ge'.")
 
     _, _, _, fname = best_per_date[chosen_date]
+
     return fname, chosen_date
 
 
@@ -192,12 +203,33 @@ def delta_stress_scenarios () :
 
 
 
-def gamma_pnl () :
+def gamma_pnl (
+
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        filename : Optional[str] = None,
+
+        regex : Optional[re.Pattern] = None,
+        path_by_fund : Optional[str] = None,    
+        schema_overrides : Optional[Dict] = None,
+
+        mode : str = "le"
+    ) :
     """
     Docstring for gamma_pnl
     """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
 
-    return None
+    path_by_fund = GREEKS_GAMMA_PNL_FUNDS_DIR_PATHS if path_by_fund is None else path_by_fund
+
+    regex = GREEKS_GAMMA_PNL_REGEX if regex is None else regex
+    schema_overrides = GREEKS_GAMMA_PNL_COLUMNS if schema_overrides is None else schema_overrides
+
+    dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+
+    return dataframe, md5, real_date
 
 
 def greeks_risk_analysis () :
@@ -208,26 +240,77 @@ def greeks_risk_analysis () :
     return None
 
 
-
-def volatility_analysis () :
+def volatility_analysis (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+    ) :
     """
     Docstring for volatility_analysis
     """
+    date = date_to_str(date)
+    fund = FUND_HV if fund is None else fund
+    
+    df_1, md5_1, real_date_1 = vega_stress_pnl(date, fund)
+    df_2, md5_2, real_date_2 = vega_bucket(date, fund)
 
-    return None
+    return df_1, md5_1, real_date_1, df_2, md5_2, real_date_2
 
+    
+def vega_stress_pnl (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
 
-def vega_stress_pnl () :
+        filename : Optional[str] = None,
+        regex : Optional[re.Pattern] = None,
+
+        path_by_fund : Optional[Dict] = None,
+        schema_overrides : Optional[Dict] = None,
+
+        mode : str = "le"
+    ) :
     """
     Docstring for vega_stress_pnl
     """
-    return None
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    path_by_fund = GREEKS_VEGA_STRESS_PNL_FUNDS_DIR_PATHS if path_by_fund is None else path_by_fund
+    regex = GREEKS_VEGA_STRESS_PNL_REGEX if regex is None else regex
+
+    schema_overrides = GREEKS_VEGA_STRESS_PNL_COLUMNS if schema_overrides is None else schema_overrides
+
+    dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+
+    return dataframe, md5, real_date
 
 
-def vega_bucket_analysis () :
-    """
-    Docstring for vega_bucket_analysis
-    """
-    return None
+def vega_bucket (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        filename : Optional[str] = None,
+        regex : Optional[re.Pattern] = None,
+
+        path_by_fund : Optional[Dict] = None,
+        schema_overrides : Optional[Dict] = None,
+
+        mode : str = "le"
+    
+    ) :
+
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    path_by_fund = GREEKS_VEGA_BUCKET_FUNDS_DIR_PATHS if path_by_fund is None else path_by_fund
+    regex = GREEKS_VEGA_BUCKET_REGEX if regex is None else regex
+
+    schema_overrides = GREEKS_VEGA_BUCKET_COLUMNS if schema_overrides is None else schema_overrides
+
+    dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+
+    return dataframe, md5, real_date
 
 

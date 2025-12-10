@@ -15,7 +15,7 @@ from src.ui.components.selector import date_selector
 from src.ui.components.text import center_h2, left_h5, left_h3
 from src.ui.components.charts import show_history_greeks_graph, show_change_greeks_graph
 
-from src.core.data.greeks import read_history_greeks, read_greeks_by_date
+from src.core.data.greeks import read_history_greeks, read_greeks_by_date, gamma_pnl, volatility_analysis
 
 
 def greeks (
@@ -39,6 +39,8 @@ def greeks (
     percentage_greeks_change_section(date, fundation)
 
     history_greeks_section(date, fundation)
+
+    graphs_greeks_section(date, fundation)
     return None
 
 
@@ -303,6 +305,110 @@ def history_greek_graph_section (
 
 # ------------ Greeks visualizer ------------  
 
-def graphs_greeks_section () :
+def graphs_greeks_section (
+    
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+    
+    ) :
     """
     """
+
+    analysis_selector = {
+
+        "Select a Option" : None,
+        "Gamma P&L" : gamma_pnl_section,
+        #"Delta Stress Scenarios" : delta_stress_scenarios_section,
+        "Volatility Analysis" : volatility_analysis_section
+    }
+
+    options = list(analysis_selector.keys())
+    selection = st.selectbox("Greek Analysis", options=options)
+
+    function = analysis_selector.get(selection)
+
+    if function is None :
+        return None
+    
+    function(date, fundation)
+
+    return None
+
+   
+
+
+def gamma_pnl_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+    
+    ) :
+    """
+    Docstring for graph_gamma_pnl_section
+    
+    :param date: Description
+    :type date: Optional[str | dt.datetime | dt.date]
+    :param fundation: Description
+    :type fundation: Optional[str]
+    """
+
+    dataframe, md5, real_date = gamma_pnl(date, fundation)
+
+    if dataframe is None : 
+        st.error("No File found")
+        return
+    
+    real_date = date_to_str(real_date)
+
+    left_h5(f"Gamma P&L at {real_date}")
+
+    st.dataframe(dataframe)
+
+    return None
+
+
+def delta_stress_scenarios_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+    
+    ) :
+    """
+    Docstring for delta_stress_scenarios_section
+    
+    :param date: Description
+    :type date: Optional[str | dt.datetime | dt.date]
+    :param fundation: Description
+    :type fundation: Optional[str]
+    """
+
+    return None
+
+
+def volatility_analysis_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+    
+    ) :
+    """
+    Docstring for volatility_analysis_section
+    
+    :param date: Description
+    :type date: Optional[str | dt.datetime | dt.date]
+    :param fundation: Description
+    :type fundation: Optional[str]
+    """
+    df_stress, md5_stress, real_date_stress, df_bucket, md5_bucket, read_date_bucket = volatility_analysis(date, fundation)
+
+    # Vega stress 
+    left_h5(f"Vega Stress at {real_date_stress}")
+    st.dataframe(df_stress)
+
+    st.write('')
+    left_h5(f"Vega Bucket at {read_date_bucket}")
+    st.dataframe(df_bucket)
+
+    return None
+
+

@@ -824,8 +824,8 @@ GREEKS_GAMMA_PNL_COLUMNS = {
     "Underlying" : pl.Utf8,
     "Gamma" : pl.Float64,
     "Theta" : pl.Float64,
-    "P%L / 1 sigma" : pl.Float64,
-    "P%L / 3 sigma" : pl.Float64,
+    "P&L / 1 sigma" : pl.Float64,
+    "P&L / 3 sigma" : pl.Float64,
     "STD" : pl.Float64
 
 }
