@@ -228,6 +228,7 @@ def gamma_pnl (
     schema_overrides = GREEKS_GAMMA_PNL_COLUMNS if schema_overrides is None else schema_overrides
 
     dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+    dataframe = dataframe.filter(pl.col("Underlying") != "Total")
 
     return dataframe, md5, real_date
 
@@ -282,6 +283,7 @@ def vega_stress_pnl (
     schema_overrides = GREEKS_VEGA_STRESS_PNL_COLUMNS if schema_overrides is None else schema_overrides
 
     dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+    dataframe = dataframe.filter(pl.col("Underlying") != "Total")
 
     return dataframe, md5, real_date
 
@@ -310,7 +312,28 @@ def vega_bucket (
     schema_overrides = GREEKS_VEGA_BUCKET_COLUMNS if schema_overrides is None else schema_overrides
 
     dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+    dataframe = dataframe.filter(pl.col("Underlying Asset") != "Total")
 
     return dataframe, md5, real_date
 
 
+# Filter and compute functions
+
+
+def filter_gamma_pnl_by_assets (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        rules : Optional[str] = None,
+        assets : Optional[List] = None,
+    
+    ) :
+    """
+    Docstring for filter_gamma_pnl_by_assets
+    
+    :param dataframe: Description
+    :type dataframe: Optional[pl.DataFrame]
+    """
+
+    return None

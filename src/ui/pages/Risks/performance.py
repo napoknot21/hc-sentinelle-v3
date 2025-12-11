@@ -12,6 +12,7 @@ from src.config.parameters import NAV_ESTIMATE_RENAME_COLUMNS, PERF_DEFAULT_DATE
 from src.ui.components.selector import date_selector
 from src.ui.components.text import center_h2, left_h5, left_h3
 from src.ui.components.charts import nav_estimate_performance_graph,mv_change_peformance_chart
+from src.ui.components.tables import show_aum_details_table
 
 from src.utils.dates import monday_of_week, previous_business_day, get_qtd_from_date, get_mtd_start
 from src.utils.formatters import (
@@ -544,6 +545,6 @@ def aum_details_section (
     dataframe, md5 = clean_aum_by_fund(dataframe, md5, fundation)
     dataframe = format_numeric_columns_to_string(dataframe)
     
-    st.dataframe(dataframe)
+    show_aum_details_table(dataframe)
 
     return None,

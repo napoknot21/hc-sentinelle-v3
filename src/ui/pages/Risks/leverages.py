@@ -10,6 +10,7 @@ from src.core.data.leverages import read_history_leverages, read_underlying_leve
 
 from src.ui.components.charts import leverage_line_chart, leverage_per_underlying_histogram, leverage_per_trade_histogram
 from src.ui.components.text import center_h2, left_h5
+from src.ui.components.tables import leverages_per_trades_tables
 
 from src.utils.formatters import format_numeric_columns_to_string
 
@@ -191,7 +192,7 @@ def leverage_trade_full_hist_section (
     left_h5(f"Leverages per Trades until {dt_date}")
 
     df_st = format_numeric_columns_to_string(dataframe)
-    st.dataframe(df_st)
+    leverages_per_trades_tables(df_st, None)
     
     return None
 
