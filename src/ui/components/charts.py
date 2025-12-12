@@ -929,20 +929,6 @@ def show_history_greeks_graph (
             font_color="black",
             font_size=16,
         ),
-        #"""
-        #legend=dict(
-        #    font=dict(size=10),
-        #    yanchor="top",
-        #    y=1.02,
-        #    xanchor="left",
-        #    x=0,
-        #    bgcolor="rgba(255,255,255,0.8)",
-        #    bordercolor="black",
-        #    borderwidth=1,
-        #    itemsizing="trace",
-        #    orientation="v",
-        #),
-        #"""
 
         updatemenus=[
 
@@ -969,6 +955,54 @@ def show_history_greeks_graph (
 
         height=800,
     )
+
+    return fig
+
+
+@st.cache_data()
+def greeks_heatmap_graph (
+
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        title : Optional[str] = None,
+
+        height : int = 800,
+        text_size : int = 13
+    ) :
+    """
+    
+    """
+    if _dataframe is None :
+
+        st.cache_data.clear()
+        return None
+    
+    _dataframe = _dataframe.to_pandas().set_index("Underlying")
+    fig = px.imshow(_dataframe, text_auto=True, color_continuous_scale="viridis", aspect="auto")
+
+    fig.update_layout(
+
+        autosize=False,
+        height=height,
+        margin=dict(l=0, r=0, t=0, b=0, pad=0),
+        xaxis_title="",
+        yaxis_title="",
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=18
+        ),
+        title=title
+    )
+
+    fig.update_traces(
+
+        textfont_size=text_size,
+        selector=dict(type='heatmap'),
+    )
+
+    fig.layout.coloraxis.showscale = False
 
     return fig
 

@@ -35,6 +35,8 @@ def margin_calls_section () :
     else :
         display_payments_table(df, md5)
 
+    return None
+
 
 
 def securities_section () :
@@ -50,3 +52,5 @@ def securities_section () :
 
     else :
         display_payments_table(df, md5)
+
+    return None

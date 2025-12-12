@@ -885,6 +885,14 @@ GREEKS_CONCENTRATION_COLUMNS = {
     
 }
 
+GREEKS_ASSET_CLASS_RULES = {
+
+    "FX": ["Curncy"],
+    "EQUITY": ["Equity", "Index"],
+
+}
+
+
 
 # ------------ Screeners --------------
 

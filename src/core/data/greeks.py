@@ -16,11 +16,16 @@ from src.config.parameters import (
     GREEKS_ALL_FILENAME, GREEKS_COLUMNS, GREEKS_REGEX, GREEKS_OVERVIEW_COLUMNS,
     GREEKS_GAMMA_PNL_COLUMNS, GREEKS_GAMMA_PNL_REGEX,
     GREEKS_VEGA_BUCKET_COLUMNS, GREEKS_VEGA_STRESS_PNL_COLUMNS, GREEKS_VEGA_STRESS_PNL_REGEX,
-    GREEKS_VEGA_BUCKET_REGEX
+    GREEKS_VEGA_BUCKET_REGEX, GREEKS_ASSET_CLASS_RULES,
+    GREEKS_DELTA_PNL_STRESS_COLUMNS, GREEKS_DELTA_PNL_STRESS_REGEX, GREEKS_DELTA_STRESS_NAV_REGEX,
+    GREEKS_LONG_SHORT_DELTA_COLUMNS, GREEKS_LONG_SHORT_DELTA_REGEX, GREEKS_DELTA_STRESS_NAV_COLUMNS,
+    GREEKS_DELTA_STRESS_ABS_COLUMNS, GREEKS_DELTA_STRESS_ABS_REGEX
 )
 from src.config.paths import (
     GREEKS_FUNDS_DIR_PATHS, GREEKS_GAMMA_PNL_FUNDS_DIR_PATHS,
     GREEKS_VEGA_BUCKET_FUNDS_DIR_PATHS, GREEKS_VEGA_STRESS_PNL_FUNDS_DIR_PATHS,
+    GREEKS_DELTA_STRESS_ABS_FUNDS_DIR_PATHS, GREEKS_DELTA_STRESS_NAV_FUNDS_DIR_PATHS,
+    GREEKS_LONG_SHORT_DELTA_FUNDS_DIR_PATHS, GREEKS_DELTA_PNL_STRESS_FUNDS_DIR_PATHS
 
 )
 
@@ -241,6 +246,157 @@ def greeks_risk_analysis () :
     return None
 
 
+def delta_pnl_stress (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        filename : Optional[str] = None,
+
+        regex : Optional[re.Pattern] = None,
+        path_by_fund : Optional[str] = None,
+
+        schema_overrides : Optional[Dict] = None,
+        mode : str = "le"
+    
+    ) :
+    """
+    
+    """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    path_by_fund = GREEKS_DELTA_PNL_STRESS_FUNDS_DIR_PATHS if path_by_fund is None else path_by_fund
+
+    regex = GREEKS_DELTA_PNL_STRESS_REGEX if regex is None else regex
+    schema_overrides = GREEKS_DELTA_PNL_STRESS_COLUMNS if schema_overrides is None else schema_overrides
+
+    dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+
+    dataframe = dataframe.fill_nan(None)
+
+    nulls = dataframe.null_count().row(0)
+    keep_cols = [c for c, n in zip(dataframe.columns, nulls) if n < dataframe.height]
+    dataframe = dataframe.select(keep_cols)
+
+    dataframe = dataframe.filter(pl.any_horizontal(pl.all().is_not_null()))
+
+    return dataframe, md5, real_date
+
+
+def delta_stress_nav (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        filename : Optional[str] = None,
+
+        regex : Optional[re.Pattern] = None,
+        path_by_fund : Optional[str] = None,
+
+        schema_overrides : Optional[Dict] = None,
+        mode : str = "le"
+    
+    ) :
+    """
+    
+    """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    path_by_fund = GREEKS_DELTA_STRESS_NAV_FUNDS_DIR_PATHS if path_by_fund is None else path_by_fund
+
+    regex = GREEKS_DELTA_STRESS_NAV_REGEX if regex is None else regex
+    schema_overrides = GREEKS_DELTA_STRESS_NAV_COLUMNS if schema_overrides is None else schema_overrides
+
+    dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+
+    if dataframe is None  :
+        return None, None, None
+    
+    dataframe = dataframe.fill_nan(None)
+
+    nulls = dataframe.null_count().row(0)
+    keep_cols = [c for c, n in zip(dataframe.columns, nulls) if n < dataframe.height]
+    dataframe = dataframe.select(keep_cols)
+
+    dataframe = dataframe.filter(pl.any_horizontal(pl.all().is_not_null()))
+
+    return dataframe, md5, real_date
+
+
+def delta_stress_abs (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        filename : Optional[str] = None,
+
+        regex : Optional[re.Pattern] = None,
+        path_by_fund : Optional[str] = None,
+
+        schema_overrides : Optional[Dict] = None,
+        mode : str = "le"
+    
+    ) :
+    """
+    
+    """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    path_by_fund = GREEKS_DELTA_STRESS_ABS_FUNDS_DIR_PATHS if path_by_fund is None else path_by_fund
+
+    regex = GREEKS_DELTA_STRESS_ABS_REGEX if regex is None else regex
+    schema_overrides = GREEKS_DELTA_STRESS_ABS_COLUMNS if schema_overrides is None else schema_overrides
+
+    dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+
+    if dataframe is None  :
+        return None, None, None
+    
+    dataframe = dataframe.fill_nan(None)
+
+    nulls = dataframe.null_count().row(0)
+    keep_cols = [c for c, n in zip(dataframe.columns, nulls) if n < dataframe.height]
+    dataframe = dataframe.select(keep_cols)
+
+    dataframe = dataframe.filter(pl.any_horizontal(pl.all().is_not_null()))
+
+    return dataframe, md5, real_date
+
+
+
+def long_short_delta (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        filename : Optional[str] = None,
+
+        regex : Optional[re.Pattern] = None,
+        path_by_fund : Optional[str] = None,    
+        schema_overrides : Optional[Dict] = None,
+
+        mode : str = "le"
+
+    ) :
+    """
+    
+    """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    path_by_fund = GREEKS_LONG_SHORT_DELTA_FUNDS_DIR_PATHS if path_by_fund is None else path_by_fund
+
+    regex = GREEKS_LONG_SHORT_DELTA_REGEX if regex is None else regex
+    schema_overrides = GREEKS_LONG_SHORT_DELTA_COLUMNS if schema_overrides is None else schema_overrides
+
+    dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+
+    return dataframe, md5, real_date
+
+
 def volatility_analysis (
         
         date : Optional[str | dt.datetime | dt.date] = None,
@@ -325,8 +481,11 @@ def filter_gamma_pnl_by_assets (
         dataframe : Optional[pl.DataFrame] = None,
         md5 : Optional[str] = None,
 
-        rules : Optional[str] = None,
+        column : Optional[str] = None,
+
+        rules : Optional[Dict] = None,
         assets : Optional[List] = None,
+
     
     ) :
     """
@@ -334,6 +493,45 @@ def filter_gamma_pnl_by_assets (
     
     :param dataframe: Description
     :type dataframe: Optional[pl.DataFrame]
-    """
+    """    
+    if len(assets) == 0 :
+        return dataframe, md5
+    
+    rules = GREEKS_ASSET_CLASS_RULES if rules is None else rules
 
-    return None
+    tokens: list[str] = []
+    for a in assets:
+        tokens.extend(rules.get(a, []))
+
+    s = pl.col(column).cast(pl.Utf8, strict=False).fill_null("")
+    cond = pl.any_horizontal([s.str.contains(t) for t in tokens])
+
+    df = dataframe.filter(cond)
+
+    return df, md5
+
+
+
+def compute_gamma_pnl_sum (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        columns : Optional[List[str]] = None,
+
+    ) :
+    """
+    
+    """
+    sums_df = pl.DataFrame(
+        {
+            "column": columns,
+            "Sum" : [
+                dataframe.select(pl.col(c).sum()).item()
+                if c in dataframe.columns else None
+                for c in columns
+            ]
+        }
+    )
+
+    return sums_df

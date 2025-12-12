@@ -63,7 +63,6 @@ def show_expiries_history (_dataframe : pl.DataFrame, md5 : str,  height : int =
         theme="alpine",  # ou "streamlit", "balham", etc.
     )
 
-
     return None
 
 
@@ -81,7 +80,6 @@ def plot_gross_perf_table (_dataframe : pl.DataFrame) :
     return None
 
 
-@st.cache_data()
 def display_payments_table (_dataframe : pl.DataFrame, md5 : str, height : int = 800):
     """
     
@@ -91,9 +89,37 @@ def display_payments_table (_dataframe : pl.DataFrame, md5 : str, height : int =
         st.cache_data.clear()
         return None
     
-    table = st.dataframe(_dataframe, height=height)
+    _dataframe = format_numeric_columns_to_string(_dataframe)
+    df = _dataframe.to_pandas()
 
-    return table
+    gb = GridOptionsBuilder.from_dataframe(df) #table = st.dataframe(_dataframe)
+    gb.configure_default_column(
+        filter=True,
+        sortable=True,
+        resizable=True,
+        floatingFilter=True,
+    )
+
+    gb.configure_pagination(
+        paginationAutoPageSize=False,
+        paginationPageSize=50,
+    )
+
+    # sidebar (pour hide/afficher colonnes + filtres avancés)
+    gb.configure_side_bar()
+
+    grid_options = gb.build()
+
+    grid_response = AgGrid(
+        df,
+        gridOptions=grid_options,
+        height=height,
+        update_mode=GridUpdateMode.NO_UPDATE,
+        theme="alpine",  # ou "streamlit", "balham", etc.
+    )
+    #able = st.dataframe(_dataframe, height=height)
+
+    return None
 
 
 def leverages_per_trades_tables (_dataframe : Optional[pl.DataFrame] = None, md5 : Optional[str] = None, height : int = 800) :
@@ -146,7 +172,6 @@ def leverages_per_trades_tables (_dataframe : Optional[pl.DataFrame] = None, md5
     return None
 
 
-#@st.cache_data()
 def show_screener_tarf_table (
         
         _dataframe : Optional[pl.DataFrame] = None,
@@ -206,19 +231,17 @@ def show_aum_details_table (_dataframe : Optional[pl.DataFrame] = None, md5 : Op
 
     gb = GridOptionsBuilder.from_dataframe(df) #table = st.dataframe(_dataframe)
     gb.configure_default_column(
-        filter=True,
+        #filter=True,
         sortable=True,
         resizable=True,
         floatingFilter=True,
+        flex=1
     )
 
-    gb.configure_pagination(
-        paginationAutoPageSize=False,
-        paginationPageSize=50,
-    )
+    #gb.configure_pagination(paginationAutoPageSize=False, paginationPageSize=50)
 
     # sidebar (pour hide/afficher colonnes + filtres avancés)
-    gb.configure_side_bar()
+    #gb.configure_side_bar()
 
     grid_options = gb.build()
 
@@ -226,7 +249,7 @@ def show_aum_details_table (_dataframe : Optional[pl.DataFrame] = None, md5 : Op
 
         df,
         gridOptions=grid_options,
-        height=height,
+        #height=height,
         update_mode=GridUpdateMode.NO_UPDATE,
         theme="alpine",  # ou "streamlit", "balham", etc.
     
@@ -234,3 +257,51 @@ def show_aum_details_table (_dataframe : Optional[pl.DataFrame] = None, md5 : Op
 
     return None
 
+
+def vega_stress_table (_dataframe : Optional[pl.DataFrame] = None, md5 : Optional[str] = None) :
+    """
+    Docstring for vega_stress_table
+    
+    :param _dataframe: Description
+    :type _dataframe: Optional[pl.DataFrame]
+    :param md5: Description
+    :type md5: Optional[str]
+    :param height: Description
+    :type height: int
+    """
+    if _dataframe is None :
+
+        st.cache_data.clear()
+        return None
+    
+    _dataframe = format_numeric_columns_to_string(_dataframe)
+    df = _dataframe.to_pandas()
+
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_default_column(
+        filter=True,
+        sortable=True,
+        resizable=True,
+        floatingFilter=True,
+        flex=1
+    )
+    
+    gb.configure_side_bar()
+    #gb.configure_pagination(paginationAutoPageSize=True)   
+    #gb.configure_auto_height(True)
+
+    grid_options = gb.build()
+
+    grid_response = AgGrid(
+
+        df,
+        gridOptions=grid_options,
+        update_mode=GridUpdateMode.NO_UPDATE,
+        fit_columns_on_grid_load=True,
+        #height=1000,
+        theme="alpine",  # or "streamlit", "balham", etc.
+        #reload_data=True
+    
+    )
+
+    return None

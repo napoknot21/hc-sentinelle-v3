@@ -6,17 +6,20 @@ import datetime as dt
 
 from typing import Optional, List, Dict
 
-from src.config.parameters import GREEKS_DEFAULT_DATE, GREEKS_ASSET_CLASSES, GREEKS_COLUMNS, GREEKS_ASSET_CLASSES
+from src.config.parameters import GREEKS_DEFAULT_DATE, GREEKS_ASSET_CLASSES, GREEKS_COLUMNS, GREEKS_ASSET_CLASSES, GREEKS_ASSET_CLASS_RULES
 
-from src.utils.formatters import str_to_date, date_to_str
+from src.utils.formatters import str_to_date, date_to_str, format_numeric_columns_to_string
 from src.utils.dates import get_mtd_start, get_qtd_from_date, previous_business_day, monday_of_week
 
 from src.ui.components.selector import date_selector
-from src.ui.components.text import center_h2, left_h5, left_h3
-from src.ui.components.charts import show_history_greeks_graph, show_change_greeks_graph
+from src.ui.components.text import center_h2, left_h5, left_h3, center_h5
+from src.ui.components.charts import show_history_greeks_graph, show_change_greeks_graph, greeks_heatmap_graph
+from src.ui.components.tables import vega_stress_table
 
-from src.core.data.greeks import read_history_greeks, read_greeks_by_date, gamma_pnl, volatility_analysis
-
+from src.core.data.greeks import (
+    read_history_greeks, read_greeks_by_date, gamma_pnl, volatility_analysis, filter_gamma_pnl_by_assets, compute_gamma_pnl_sum,
+    long_short_delta, delta_pnl_stress, delta_stress_nav
+)
 
 def greeks (
 
@@ -317,14 +320,15 @@ def graphs_greeks_section (
     analysis_selector = {
 
         "Select a Option" : None,
+        "Delta Stress Scenarios" : delta_stress_scenarios_section,
         "Gamma P&L" : gamma_pnl_section,
-        #"Delta Stress Scenarios" : delta_stress_scenarios_section,
         "Volatility Analysis" : volatility_analysis_section
     }
 
     options = list(analysis_selector.keys())
     selection = st.selectbox("Greek Analysis", options=options)
-
+    
+    st.write('')
     function = analysis_selector.get(selection)
 
     if function is None :
@@ -334,14 +338,91 @@ def graphs_greeks_section (
 
     return None
 
-   
+
+def delta_pnl_stress_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None
+
+    ) :
+    """
+    
+    """
+
+    dataframe, md5, real_date = delta_pnl_stress(date, fundation)
+
+    if dataframe is None :
+        st.error("Error")
+        return
+    
+    center_h5(f"Delta P&L Stresss for {real_date}")
+    
+    fig = greeks_heatmap_graph(dataframe, md5, None)
+
+    st.plotly_chart(fig)
+
+    return None
+
+
+def delta_stress_abs_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None
+
+    ) :
+    """
+    
+    """
+
+    dataframe, md5, real_date = delta_stress_nav(date, fundation)
+
+    if dataframe is None :
+        st.error("Error")
+        return
+    
+    center_h5(f"Delta Stresss ABS for {real_date}")
+    
+    fig = greeks_heatmap_graph(dataframe, md5, None)
+
+    st.plotly_chart(fig)
+
+    return None
+
+
+def delta_stress_nav_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None
+
+    ) :
+    """
+    
+    """
+
+    dataframe, md5, real_date = delta_stress_nav(date, fundation)
+
+    if dataframe is None :
+        st.error("Error")
+        return
+    
+    center_h5(f"Delta Stresss NAV (%) for {real_date}")
+    
+    fig = greeks_heatmap_graph(dataframe, md5, None)
+
+    st.plotly_chart(fig)
+
+    return None
+
 
 
 def gamma_pnl_section (
         
         date : Optional[str | dt.datetime | dt.date] = None,
         fundation : Optional[str] = None,
-    
+
+        column : str = "Underlying",
+        rules : Optional[Dict] = None,
+
     ) :
     """
     Docstring for graph_gamma_pnl_section
@@ -359,10 +440,20 @@ def gamma_pnl_section (
         return
     
     real_date = date_to_str(real_date)
+    rules = GREEKS_ASSET_CLASS_RULES if rules is None else rules
 
-    left_h5(f"Gamma P&L at {real_date}")
 
-    st.dataframe(dataframe)
+    center_h5(f"Gamma P&L at {real_date}") 
+
+    assets = st.multiselect("Filter by Asset Class", options=list(rules.keys()), default=list(rules.keys()))
+    dataframe, md5 = filter_gamma_pnl_by_assets(dataframe, md5, column, rules, assets)
+    sums = compute_gamma_pnl_sum(dataframe, md5, ["Gamma", "Theta", "P&L / 1 sigma", "P&L / 3 sigma"])
+
+    dataframe = format_numeric_columns_to_string(dataframe)
+    sums = format_numeric_columns_to_string(sums)
+
+    st.dataframe(sums)
+    vega_stress_table(dataframe, md5)
 
     return None
 
@@ -381,7 +472,39 @@ def delta_stress_scenarios_section (
     :param fundation: Description
     :type fundation: Optional[str]
     """
+    col1, col2 = st.columns(2)
 
+    with col1 :
+        delta_pnl_stress_section(date, fundation)
+    
+    with col2 :
+        delta_stress_nav_section(date, fundation)
+    
+    delta_stress_abs_section(date, fundation)
+    long_short_delta_section(date, fundation)
+    return None
+
+
+def long_short_delta_section (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fundation : Optional[str] = None,
+
+    ):
+    """
+    
+    """
+    dataframe, md5, real_date = long_short_delta(date, fundation)
+
+    if dataframe  is None :
+        st.error("No file found")
+        return
+    
+    real_date = date_to_str(real_date)
+
+    left_h5(f"Long Short Delta for {real_date}")
+    vega_stress_table(dataframe, md5)
+    
     return None
 
 
@@ -403,11 +526,11 @@ def volatility_analysis_section (
 
     # Vega stress 
     left_h5(f"Vega Stress at {real_date_stress}")
-    st.dataframe(df_stress)
+    vega_stress_table(df_stress, md5_stress)
 
     st.write('')
     left_h5(f"Vega Bucket at {read_date_bucket}")
-    st.dataframe(df_bucket)
+    vega_stress_table(df_bucket, md5_bucket)
 
     return None
 
