@@ -53,26 +53,29 @@ def type_market_fields (
 def amount_currency_fields (
         
         currencies : Optional[List] = None,
-        
-        counterparty : Optional[str] = None,
-        cash_dict : Optional[Dict] = None,
 
         number_order : int = 1,
+
+        key_amount : Optional[str] = None,
+        key_currency : Optional[str] = None
 
     ) :
     """
     
     """
+    key_amount = f"amount_payment_{number_order}",
+    key_currency = f"currency_payement_{number_order}"
+
     col1, col2 = st.columns(2)
 
     with col1 :
-        amount = st.number_input("Amount", key=f"amount_payment_{number_order}")
+        amount = st.number_input("Amount", key=key_amount)
 
         if amount <= 0 :
             st.warning("Warning : Amount under or equals to 0...")
 
     with col2 :
-        currency = st.selectbox("Currency", options=currencies, key=f"currency_payement_{number_order}")
+        currency = st.selectbox("Currency", options=currencies, key=key_currency)
 
     return amount, currency
 

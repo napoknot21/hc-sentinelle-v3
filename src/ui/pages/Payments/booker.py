@@ -25,7 +25,6 @@ def booker () :
     book = book_section()
 
     if st.button("Post Margin Call") :
-
         post_margin_call(amount, currency, ctpy, direction, date, book)
 
     return None

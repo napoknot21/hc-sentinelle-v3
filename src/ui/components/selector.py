@@ -22,13 +22,6 @@ def date_selector (
     return st.date_input(label, value=default_value, key=key)
 
 
-def fundation_selector () :
-    """
-    
-    """
-    return None
-
-
 def number_of_payments_selector (
         
         label : str = "Select number of Payments",
@@ -46,4 +39,7 @@ def number_of_payments_selector (
     )
 
     return nb_payments
+
+
+
 

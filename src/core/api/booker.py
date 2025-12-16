@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import sys
 import datetime as dt
 
@@ -11,6 +10,7 @@ sys.path.append(LIBAPI_ABS_PATH)
 
 from src.utils.formatters import date_to_str
 from src.utils.logger import log
+
 from libapi.ice.trade_manager import TradeManager # type: ignore
 
 
