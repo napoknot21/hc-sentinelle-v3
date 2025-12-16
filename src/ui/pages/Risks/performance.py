@@ -54,13 +54,14 @@ def performance (
     
     center_h2("Performances")
     st.write('')
+    date = previous_business_day(date)
 
     estimated_gross_perf_section(date, fundation)
     st.write('')
     
     volatility_aum_n_nav_section(date, fundation)
     st.write('')
-    
+
     start_date, end_date = date_selectors_section()
 
     charts_performance_section(fundation, start_date, end_date)

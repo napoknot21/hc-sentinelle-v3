@@ -13,6 +13,7 @@ from src.config.paths import LIBAPI_ABS_PATH
 sys.path.append(LIBAPI_ABS_PATH)
 from libapi.config.parameters import CCYS_ORDER # type: ignore
 
+from src.utils.dates import previous_business_day
 from src.utils.formatters import str_to_date, format_numeric_columns_to_string
 
 from src.ui.components.text import center_bold_paragraph, center_h2, left, left_h5
@@ -33,15 +34,15 @@ def cash (
     
     
     """
+    date = previous_business_day(date)
+
     center_h2("Cash Per Counterparty")
     st.write('')
     
     cash_amount_section(date, fundation) 
-
     st.write('')
 
     collateral_detailed(date, fundation)
-
     st.write('')
 
     render_fx_metrics_section()
@@ -123,7 +124,10 @@ def cash_per_ctpy_table (
     """
     
     """
-    left_h5(f"Cash per counterparty, type and currency (Email data) until {date}")
+    date = str_to_date(date)
+    real_date = (dataframe.filter(pl.col("Date") <= date).select(pl.col("Date").max()).item())
+
+    left_h5(f"Cash per counterparty, type and currency (Email data) until {real_date}")
     new_df, md5_hash = aggregate_n_groupby(dataframe, md5, date, group_by, aggregate)
     df_st = format_numeric_columns_to_string(new_df)
     st.dataframe(df_st)
@@ -141,12 +145,14 @@ def collateral_detailed (
     """
     
     """
-    date = str_to_date(date)
-    left_h5(f"Collateral per Counterparty Detailed until {date}")
-
     dataframe, md5 = load_all_collateral(fundation=fundation)
 
-    dataframe_dates = dataframe.filter(pl.col("Date") == date)
+    date = str_to_date(date)
+    real_date = (dataframe.filter(pl.col("Date") <= date).select(pl.col("Date").max()).item())
+
+    left_h5(f"Collateral per Counterparty Detailed until {real_date}")
+
+    dataframe_dates = dataframe.filter(pl.col("Date") == real_date)
 
     if dataframe_dates.is_empty() :
 
