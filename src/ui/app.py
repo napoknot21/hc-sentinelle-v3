@@ -9,15 +9,16 @@ from src.ui.styles.base import risk_menu
 from src.ui.pages.Payments.render import render_payments
 from src.ui.pages.Risks.render import render_risks
 from src.ui.pages.Reconciliation.render import render_reconciliation
-
+from src.ui.pages.Settlements.render import render_
 
 PAGES = [
 
-    ("Risks",           "exclamation-triangle-fill",    render_risks),
-    ("Reconciliation",  "arrow-repeat",                 render_reconciliation),
-    #("Ice API",        "server",                       render_trading),
-    ("Payments",        "cash",                         render_payments),
-    #("Statistics",     "graph-up",                     render_stats),
+    ("Risks",               "exclamation-triangle-fill",    render_risks),
+    ("Reconciliation",      "arrow-repeat",                 render_reconciliation),
+    #("Ice API",            "server",                       render_trading),
+    ("Payments",            "cash",                         render_payments),
+    #("Statistics",         "graph-up",                     render_stats),
+    ("Heroics Settlements", "arrow-repeat" ,                render_)
 
 ]
 

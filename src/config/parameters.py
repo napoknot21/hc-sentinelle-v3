@@ -13,7 +13,7 @@ load_dotenv()
 from src.config.paths import LIBAPI_ABS_PATH
 
 sys.path.append(LIBAPI_ABS_PATH)
-from libapi.config.parameters import CCYS_ORDER # type: ignore
+from libapi.config.parameters import CCYS_ORDER  # type: ignore
 
 
 # ---------------- MS Azure ----------------
@@ -659,6 +659,12 @@ PAYMENTS_EMAIL_SUBJECT = os.getenv("PAYMENTS_EMAIL_SUBJECT")
 PAYMENTS_RAW_BODY = os.getenv("PAYMENTS_EMAIL_BODY", "")
 PAYMENTS_EMAIL_BODY = PAYMENTS_RAW_BODY.replace("\\n", "\n")
 
+PAYMENTS_DIRECTIONS = ["Pay", "Receive"]
+
+PAYMENTS_BOOK_HV = os.getenv("PAYMENTS_BOOK_HV")
+PAYMENTS_BOOK_WR = os.getenv("PAYMENTS_BOOK_WR")
+
+PAYMENTS_BOOKS = [PAYMENTS_BOOK_HV, SUBRED_BOOK_HV, PAYMENTS_BOOK_WR, SUBRED_BOOK_WR]
 
 # ------------------ Leverages ------------------
 
