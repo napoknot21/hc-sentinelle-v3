@@ -85,6 +85,9 @@ def name_reference_bank_fields (
         default_name : Optional[str] = None,
         default_reference : Optional[str] = None,
 
+        key_name : Optional[str] = None,
+        key_ref : Optional[str] = None,
+
         number_order : int = 1
 
 
@@ -92,8 +95,8 @@ def name_reference_bank_fields (
     """
     
     """
-    key_name = f"name_ref_bank_{number_order}"
-    key_ref = f"ref_name_bank_{number_order}"
+    key_name = f"name_ref_bank_{number_order}" if key_name is None else key_name
+    key_ref = f"ref_name_bank_{number_order}" if key_ref is None else key_ref
 
     # --- Keys to remember the last defaults used ---
     name_default_key = f"{key_name}_default"
