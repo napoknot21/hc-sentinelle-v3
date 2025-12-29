@@ -6,7 +6,7 @@ import streamlit as st
 from typing import List, Optional, Dict, Tuple
 
 from src.ui.components.text import center_h2, center_h5, left_h5
-from src.ui.components.selector import number_of_payments_selector, date_selector
+from src.ui.components.selector import number_of_items_selector, date_selector
 from src.ui.components.input import (
     general_payment_fields, type_market_fields, amount_currency_fields,
     name_reference_bank_fields, bank_benificiary_fields, iban_field,
@@ -30,7 +30,6 @@ def process (default_value : int = 1) :
     Main function that displays the Payments Process page
     """
     center_h2("Process Payments")
-    
     nb_payments = nb_of_payments_section(default_value)
 
     payments = payments_section(nb_payments)
@@ -52,7 +51,7 @@ def nb_of_payments_section (default_value : int = 1) :
     """
     
     """
-    nb_payments = number_of_payments_selector(min_value=default_value)
+    nb_payments = number_of_items_selector(min_value=default_value)
 
     return nb_payments
 

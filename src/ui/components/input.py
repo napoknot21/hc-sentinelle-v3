@@ -15,14 +15,34 @@ def general_payment_fields (
 
         number_order : int = 1,
 
+        key_fundation : Optional[str] = None,
+        key_counterparty : Optional[str] = None,
+        key_account : Optional[str] = None,
+
+        fund_title : Optional[str] = None,
+        ctpy_title : Optional[str] = None,
+        acct_title : Optional[str] = None,
+
     ) :
     """
     
     """
+    key_fundation = f"Payment_process_{number_order}_fundation" if key_fundation is None else key_fundation
+    key_counterparty = f"Payment_process_{number_order}_counterparty" if key_counterparty is None else key_counterparty
+    key_account = f"Payment_process_{number_order}_account" if key_account is None else key_account
 
-    fundation = st.selectbox("Fundation Name", options=fundations, key=f"Payment_process_{number_order}_fundation")
-    counterparty = st.selectbox("Counterparty", options=counterparties, key=f"Payment_process_{number_order}_counterparty")
-    account = st.selectbox("Account Number Payment", options=account_numbers, key=f"Payment_process_{number_order}_account")
+    fund_title = "Fundation Name" if fund_title is None else fund_title
+    ctpy_title = "Counterparty" if ctpy_title is None else ctpy_title
+    acct_title = "Account Number Payment" if acct_title is None else acct_title
+
+    if fundations is not None :
+        fundation = st.selectbox(fund_title, options=fundations, key=key_fundation)
+    
+    if counterparties is not None :
+        counterparty = st.selectbox(ctpy_title, options=counterparties, key=key_counterparty)
+    
+    if account_numbers is not None :
+        account = st.selectbox(acct_title, options=account_numbers, key=key_account)
 
     return fundation, counterparty, account
 
@@ -31,6 +51,7 @@ def type_market_fields (
         
         type_market : Optional[Dict] = None,
         types : Optional[List[str]] = None,
+
         number_order : int = 1,
 
     ) :
@@ -53,29 +74,32 @@ def type_market_fields (
 def amount_currency_fields (
         
         currencies : Optional[List] = None,
-
         number_order : int = 1,
 
         key_amount : Optional[str] = None,
-        key_currency : Optional[str] = None
+        key_currency : Optional[str] = None,
+
+        amount_title : str = "Amount",
+        currency_title : str = "Currency"
 
     ) :
     """
     
     """
-    key_amount = f"amount_payment_{number_order}",
-    key_currency = f"currency_payement_{number_order}"
+    key_amount = f"amount_payment_{number_order}" if key_amount is None else key_amount
+    key_currency = f"currency_payement_{number_order}" if key_currency is None else key_currency
 
     col1, col2 = st.columns(2)
 
     with col1 :
-        amount = st.number_input("Amount", key=key_amount)
+
+        amount = st.number_input(amount_title, key=key_amount)
 
         if amount <= 0 :
             st.warning("Warning : Amount under or equals to 0...")
 
     with col2 :
-        currency = st.selectbox("Currency", options=currencies, key=key_currency)
+        currency = st.selectbox(currency_title, options=currencies, key=key_currency)
 
     return amount, currency
 

@@ -751,6 +751,20 @@ GREEKS_OVERVIEW_COLUMNS = {
 GREEK_REGEX_PATTERN=os.getenv("GREEK_REGEX_PATTERN")
 GREEKS_REGEX = re.compile(GREEK_REGEX_PATTERN, re.IGNORECASE)
 
+GREEKS_RISKS_EQUITY_COLUMNS = {
+
+    "Underlying" : pl.Utf8,
+    "Delta" : pl.Float64,
+    "Gamma" : pl.Float64,
+    "Vega" : pl.Float64,
+    "Theta" : pl.Float64,
+    "Delta % NAV" : pl.Float64,
+    "Gamma % NAV" : pl.Float64,
+    "Vega % NAV" : pl.Float64,
+    "Theta % NAV" : pl.Float64
+
+}
+
 
 GREEKS_CROSS_DELTA_REGEX_PATTERN=os.getenv("GREEKS_CROSS_DELTA_REGEX_PATTERN")
 GREEKS_CROSS_DELTA_REGEX = re.compile(GREEKS_CROSS_DELTA_REGEX_PATTERN, re.IGNORECASE)

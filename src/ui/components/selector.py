@@ -22,7 +22,7 @@ def date_selector (
     return st.date_input(label, value=default_value, key=key)
 
 
-def number_of_payments_selector (
+def number_of_items_selector (
         
         label : str = "Select number of Payments",
         min_value : int = 1,

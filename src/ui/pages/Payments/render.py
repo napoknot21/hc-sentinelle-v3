@@ -7,14 +7,15 @@ from typing import Optional, Dict
 from src.ui.pages.Payments.booker import *
 from src.ui.pages.Payments.display import display
 from src.ui.pages.Payments.process import process
+from src.ui.pages.Payments.security import security
 
 from src.ui.components.text import center_h1, center_h3
 from src.ui.styles.base import risk_menu
 
 payments_subpages = [
 
-    {"name" : "Process",    "page": process,   "icon": "cash-coin"},
-    #{"name" : "Security", "page"  : security, "icon" : ""},
+    {"name" : "Process",    "page" : process,   "icon" : "cash-coin"},
+    {"name" : "Security",   "page" : security,  "icon" : "eye"},
     {"name" : "Display",    "page" : display,   "icon" : "eye"},
     {"name" : "Booker",     "page" : booker,    "icon" : "book"},
 

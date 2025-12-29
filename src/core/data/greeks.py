@@ -19,13 +19,15 @@ from src.config.parameters import (
     GREEKS_VEGA_BUCKET_REGEX, GREEKS_ASSET_CLASS_RULES,
     GREEKS_DELTA_PNL_STRESS_COLUMNS, GREEKS_DELTA_PNL_STRESS_REGEX, GREEKS_DELTA_STRESS_NAV_REGEX,
     GREEKS_LONG_SHORT_DELTA_COLUMNS, GREEKS_LONG_SHORT_DELTA_REGEX, GREEKS_DELTA_STRESS_NAV_COLUMNS,
-    GREEKS_DELTA_STRESS_ABS_COLUMNS, GREEKS_DELTA_STRESS_ABS_REGEX
+    GREEKS_DELTA_STRESS_ABS_COLUMNS, GREEKS_DELTA_STRESS_ABS_REGEX, GREEKS_RISK_CREDIT_COLUMNS,
+    GREEKS_RISK_CREDIT_REGEX, GREEKS_RISKS_EQUITY_COLUMNS
 )
 from src.config.paths import (
     GREEKS_FUNDS_DIR_PATHS, GREEKS_GAMMA_PNL_FUNDS_DIR_PATHS,
     GREEKS_VEGA_BUCKET_FUNDS_DIR_PATHS, GREEKS_VEGA_STRESS_PNL_FUNDS_DIR_PATHS,
     GREEKS_DELTA_STRESS_ABS_FUNDS_DIR_PATHS, GREEKS_DELTA_STRESS_NAV_FUNDS_DIR_PATHS,
-    GREEKS_LONG_SHORT_DELTA_FUNDS_DIR_PATHS, GREEKS_DELTA_PNL_STRESS_FUNDS_DIR_PATHS
+    GREEKS_LONG_SHORT_DELTA_FUNDS_DIR_PATHS, GREEKS_DELTA_PNL_STRESS_FUNDS_DIR_PATHS,
+    GREEKS_RISK_CREDIT_FUNDS_DIR_PATHS, GREEKS_RISK_EQUITY
 
 )
 
@@ -236,14 +238,6 @@ def gamma_pnl (
     dataframe = dataframe.filter(pl.col("Underlying") != "Total")
 
     return dataframe, md5, real_date
-
-
-def greeks_risk_analysis () :
-    """
-    Docstring for greeks_risk_analysis
-    """
-
-    return None
 
 
 def delta_pnl_stress (
@@ -473,10 +467,90 @@ def vega_bucket (
     return dataframe, md5, real_date
 
 
+
+
+def greeks_risk_analysis (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+    ) :
+    """
+    Docstring for greeks_risk_analysis
+    """
+    df_greeks, md5_greeks, greeks_date = greeks_risk(date, fund)
+    df_credit, md5_credit, credit_date = risk_credit(date, fund)
+
+    return df_greeks, greeks_date, md5_greeks, df_credit, credit_date, md5_credit
+
+
+
+
+def greeks_risk (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        filename : Optional[str] = None,
+
+        regex : Optional[re.Pattern] = None,
+        path_by_fund : Optional[str] = None, 
+        schema_overrides : Optional[Dict] = None,
+
+        mode : str = "le"
+
+    ) :
+    """
+    
+    """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    path_by_fund = GREEKS_RISK_EQUITY if path_by_fund is None else path_by_fund
+
+    regex = GREEKS_REGEX if regex is None else regex
+    schema_overrides = GREEKS_RISKS_EQUITY_COLUMNS if schema_overrides is None else schema_overrides
+
+    dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+
+    return dataframe, md5, real_date
+
+
+
+def risk_credit (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        fund : Optional[str] = None,
+
+        filename : Optional[str] = None,
+
+        regex : Optional[re.Pattern] = None,
+        path_by_fund : Optional[str] = None, 
+        schema_overrides : Optional[Dict] = None,
+
+        mode : str = "le"
+
+    ) :
+    """
+    
+    """
+    date = str_to_date(date)
+    fund = FUND_HV if fund is None else fund
+
+    path_by_fund = GREEKS_RISK_CREDIT_FUNDS_DIR_PATHS if path_by_fund is None else path_by_fund
+
+    regex = GREEKS_RISK_CREDIT_REGEX if regex is None else regex
+    schema_overrides = GREEKS_RISK_CREDIT_COLUMNS if schema_overrides is None else schema_overrides
+
+    dataframe, md5, real_date = read_greeks_by_date(date, fund, None, path_by_fund, schema_overrides, regex, mode)
+
+    return dataframe, md5, real_date
+
+
 # Filter and compute functions
 
 
-def filter_gamma_pnl_by_assets (
+def filter_greeks_by_assets (
         
         dataframe : Optional[pl.DataFrame] = None,
         md5 : Optional[str] = None,
@@ -489,7 +563,7 @@ def filter_gamma_pnl_by_assets (
     
     ) :
     """
-    Docstring for filter_gamma_pnl_by_assets
+    Docstring for filter_greeks_by_assets
     
     :param dataframe: Description
     :type dataframe: Optional[pl.DataFrame]
