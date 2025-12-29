@@ -666,6 +666,29 @@ PAYMENTS_BOOK_WR = os.getenv("PAYMENTS_BOOK_WR")
 
 PAYMENTS_BOOKS = [PAYMENTS_BOOK_HV, SUBRED_BOOK_HV, PAYMENTS_BOOK_WR, SUBRED_BOOK_WR]
 
+
+# ------------------ UBS Settlement ------------------
+
+UBS_PAYMENTS_EXCEL_COLUMNS = [
+
+    "B",  # fund
+    "C",  # Trade Ref
+    "D",  # Reason for Payment / Receive
+    "E",  # Acc Nb
+    "F",  # Ctpy / Broker
+    "G",  # Pays/Receives
+    "H",  # Amount
+    "I",  # Currecy
+    "J",  # Value Date
+    "K",  # FX rate
+
+    "M",  # Correspond BIC
+    "N",  # IBAN
+    "O",  # Benef BIC
+    
+]
+
+
 # ------------------ Leverages ------------------
 
 
@@ -1037,3 +1060,13 @@ VOL_REALIZED_FUNDS_COLS = {
     os.getenv("FUND_WR") : VOL_REALIZED_WR_COLUMNS,
 
 }
+
+
+
+# ------------ Trade Recap --------------
+
+TRADE_RECAP_LAUNCHER_FILE=os.getenv("TRADE_RECAP_LAUNCHER_FILE")
+
+TRADE_RECAP_RAW_FILE_REGEX_PATTERN = os.getenv("TRADE_RECAP_RAW_FILE_REGEX_PATTERN")
+TRADE_RECAP_RAW_FILE_REGEX = re.compile(TRADE_RECAP_RAW_FILE_REGEX_PATTERN, re.IGNORECASE)
+

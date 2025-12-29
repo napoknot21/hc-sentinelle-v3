@@ -468,6 +468,7 @@ def convert_payement_to_excel (
     if payment is None or len(payment) <= 0 :
         return None
     
+    columns_index =  PAYMENTS_EXCEL_COLUMNS if columns_index is None else columns_index
     template_abs_path = PAYMENTS_EXCEL_TEMPLATE_ABS_PATH if template_abs_path is None else template_abs_path
     dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
 
@@ -478,7 +479,7 @@ def convert_payement_to_excel (
 
     row_idx = 3
 
-    for value, col_letter in zip(payment, PAYMENTS_EXCEL_COLUMNS) :
+    for value, col_letter in zip(payment, columns_index) :
 
         cell_ref = f"{col_letter}{row_idx}"
         cell = sheet[cell_ref]
@@ -495,4 +496,145 @@ def convert_payement_to_excel (
     
     return filled_path
 
+
+def convert_ubs_instruction_payments_to_excel (
+        
+        payments : Optional[Tuple] = None,
+        template_abs_path : Optional[str] = None,
+
+        filename : Optional[str] = None,
+        dir_abs_path : Optional[str] = None,
+
+        columns_index : Optional[List[str]] = None,
+
+    ) :
+    """
+    Docstring for convert_ubs_instruction_payment_to_excel
+    """
+    response = {
+
+        "success" : False,
+        "message" : None,
+        "path" : None
+
+    }
+
+    if payments is None or len(payments) <= 0 :
+
+        log("[-] No collateral passed for conversion.")
+        return response
+    
+    template_abs_path = UBS_PAYMENTS_INTRUCTION_TEMPLATE_ABS_PATH if template_abs_path is None else template_abs_path 
+    
+    filename = f"UBS_Payment_Instruction_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" if filename is None else filename
+    dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
+    columns_index = UBS_PAYMENTS_EXCEL_COLUMNS if columns_index is None else columns_index
+
+    os.makedirs(dir_abs_path, exist_ok=True)
+
+    workbook = openpyxl.load_workbook(template_abs_path)
+    sheet = workbook.active
+
+    row_idx = 7
+    line_reason = 2
+
+    for payment in payments :
+
+        for value, col_letter in zip(payment, columns_index) :
+
+            cell_ref = f"{col_letter}{row_idx}"
+            cell = sheet[cell_ref]
+            
+            if value is None :
+                continue
+
+            cell.value = value
+
+            if isinstance(value, (dt.date, dt.datetime)):
+                cell.number_format = "DD/MM/YYYY"
+
+        row_idx += line_reason
+
+    filled_path = os.path.join(dir_abs_path, filename)
+    
+    try :
+
+        workbook.save(filled_path)
+
+        response["success"] = True
+        response["path"] = filled_path
+        response["message"] = "Cash Transfer For billateral OTC Successfully loaded and filled"
+
+        log(f"[+] {response["message"]}")
+
+    except : 
+        log("[-] Error during saving process.")
+    
+    return response
+
+
+def convert_ubs_collateral_management_to_excel (
+        
+        collaterals : Optional[Tuple] = None,
+        template_abs_path : Optional[str] = None,
+
+        filename : Optional[str] = None,
+        dir_abs_path : Optional[str] = None,
+    
+    ) :
+    """
+    Docstring for convert_ubs_collateral_management_to_excel
+    
+    :param collaterals: Description
+    :type collaterals: Optional[Tuple]
+    :param template_abs_path: Description
+    :type template_abs_path: Optional[str]
+    :param dir_abs_path: Description
+    :type dir_abs_path: Optional[str]
+    """
+    response = {
+
+        "success" : False,
+        "message" : None,
+        "path" : None
+
+    }
+
+    if collaterals is None or len(collaterals) <= 0 :
+
+        log("[-] No collateral passed for conversion.")
+        return response
+    
+    template_abs_path = UBS_COLLATERAL_MANAGEMENT_TEMPLATE_ABS_PATH if template_abs_path is None else template_abs_path 
+    
+    filename = f"UBS_Collateral_Management_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" if filename is None else filename
+    dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
+
+    os.makedirs(dir_abs_path, exist_ok=True)
+
+    workbook = openpyxl.load_workbook(template_abs_path)
+    sheet = workbook.active
+
+    row_idx = 7
+    line_reason = 2
+
+    for collateral in collaterals :
+        print("Hello")
+
+    filled_path = os.path.join(dir_abs_path, filename)
+    
+    try :
+
+        workbook.save(filled_path)
+
+        response["success"] = True
+        response["path"] = filled_path
+        response["message"] = "Collateral Successfully loaded and filled"
+
+        log(f"[+] {response["message"]}")
+
+    except : 
+        log("[-] Error during saving process.")
+    
+    return response
 
