@@ -8,19 +8,20 @@ from typing import List, Optional, Dict, Tuple
 from src.ui.components.text import center_h2, center_h5, left_h5
 from src.ui.components.selector import number_of_items_selector, date_selector
 from src.ui.components.input import (
-    general_payment_fields, type_market_fields, amount_currency_fields,
-    name_reference_bank_fields, bank_benificiary_fields, iban_field,
-    extra_options_fields, direction_flow_fields
+    general_payment_fields, type_market_setlement_fields, amount_currency_fields,
+    ubs_broker_fields, bank_benificiary_fields, iban_field,
+    extra_options_fields, direction_flow_fields, product_n_trade_ref_fields
 )
 
 from src.core.data.payments import (
     find_beneficiary_by_ctpy_ccy_n_type, process_excel_to_pdf, process_payments_to_excel, 
-    create_payement_email
+    create_payement_email, load_beneficiaries_db
 )
 
+from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH
 from src.config.parameters import (
-    PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_TYPES_MARKET,
-    PAYMENTS_REFERENCES_CTPY, PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS
+    PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_TYPES_MARKET, UBS_PAYMENTS_TYPES, UBS_PAYMENTS_MARKET,
+    PAYMENTS_REFERENCES_CTPY, PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME
 )
 
 from src.utils.data_io import convert_ubs_instruction_payments_to_excel, export_excel_to_pdf
@@ -74,12 +75,24 @@ def input_payment_section (nb_payments : int = 1) :
 
             center_h5(f"Settlement {i+1}")
             
-            funda, ctpy, acc = fund_ctpy_n_acc_section(number_order=i+1)
+            _, ctpy, acc = fund_ctpy_n_acc_section(number_order=i+1)
+            product, trade_ref = product_n_trade_ref_section(number_order=i+1)
+            _, market = type_market_section(number_order=i+1)
             date = value_date_section(number_order=i+1)
             amount, currency = amount_n_currency_section(number_order=i+1)
             direction, reason = direction_n_reason_section(number_order=i+1)
 
-            payment = (None, None, reason, acc, ctpy, direction, amount, currency, date, "NaN", None, None, None)
+            swift_def, swift_ben_def, iban_def = None, None, None
+
+            df, md5 = load_beneficiaries_db(UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_BENECIFIARY_SHEET_NAME, PAYMENTS_BENEFICIARY_COLUMNS)
+            row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, market, currency)
+            print(row)
+            if row is not None :
+                swift_def, _, swift_ben_def, iban_def = row
+            
+            swift_bank, iban, swift_benif = swift_iban_section(swift_def, iban_def, swift_ben_def, number_order=i+1)
+
+            payment = (product, trade_ref, reason, acc, ctpy, direction, amount, currency, date, "NaN", swift_bank, iban, swift_benif)
             payments.append(payment)
 
     return payments
@@ -120,7 +133,28 @@ def product_n_trade_ref_section (
     """
     Docstring for product_n_trade_ref_section
     """
-    return None
+    product, trade_ref = product_n_trade_ref_fields(number_order)
+
+    return product, trade_ref
+
+
+def type_market_section (
+
+        types : Optional[List[str]] = None,
+        markets : Optional[List[str]] = None,
+
+        number_order : int = 1,
+
+    ) :
+    """
+    Docstring for type_market_section
+    """
+    types = UBS_PAYMENTS_TYPES if types is None else types
+    markets = UBS_PAYMENTS_MARKET if markets is None else markets
+
+    type, market = type_market_setlement_fields(types, markets, number_order=number_order)
+
+    return type, market
 
 
 def direction_n_reason_section (
@@ -170,12 +204,19 @@ def amount_n_currency_section (currencies :  Optional[List[str]] = None, number_
 
 def swift_iban_section (
         
-        
+        swift_code : Optional[str] = None,
+        iban : Optional[str] = None,
+        swift_benef : Optional[str] = None,
+
+        number_order : int = 1,
 
     ) :
     """
     Docstring for swift_iban_section
     """
+    bic, iban, bic_ben = ubs_broker_fields(swift_code, iban, swift_benef, number_order=number_order)
+    
+    return bic, iban, bic_ben
 
 
 # Process and file creation

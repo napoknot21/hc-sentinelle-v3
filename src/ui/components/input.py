@@ -71,8 +71,77 @@ def type_market_fields (
     return type, market
 
 
-def product_n_trade_ref_fields () :
-    return None
+def type_market_setlement_fields (
+        
+        types : Optional[List[str]] = None,
+        markets : Optional[List[str]] = None,
+
+        number_order : int = 1,
+
+        key_type : Optional[str] = None,
+        key_market : Optional[str] = None,
+
+        label_type : Optional[str] = None,
+        label_market : Optional[str] = None
+
+    ) :
+    """
+    Docstring for type_market_setlement_fields
+    
+    :param types: Description
+    :type types: Optional[List[str]]
+    :param markets: Description
+    :type markets: Optional[List[str]]
+    """
+    key_type = f"UBS_OTC_Payment_{number_order}_type" if key_type is None else key_type
+    key_market = f"UBS_OTC_Payment_{number_order}_market" if key_market is None else key_market
+
+    label_type = "Type" if label_type is None else label_type
+    label_market = "Market" if label_market is None else label_market
+
+    col1, col2 = st.columns(2)
+
+    with col1 : 
+        type = st.selectbox(label_type, types, key=key_type)
+
+    with col2 :
+        market = st.selectbox(label_market, markets, key=key_market)
+
+    return type, market
+
+
+def product_n_trade_ref_fields (
+        
+        number_order : int = 1,
+        
+        key_product : Optional[str] = None,
+        key_trade_ref : Optional[str] = None,
+
+        label_product : Optional[str] = None,
+        label_trade_ref : Optional[str] = None,
+    
+    ) :
+    """
+    Docstring for product_n_trade_ref_fields
+    
+    :param number_order: Description
+    :type number_order: int
+    """
+    key_product = f"UBS_OTC_Payment_{number_order}_product" if key_product is None else key_product
+    key_trade_ref = f"UBS_OTC_Payment_{number_order}_trade_ref" if key_trade_ref is None else key_trade_ref
+
+    label_product = "Product" if label_product is None else label_product
+    label_trade_ref = "Trade Reference" if label_trade_ref is None else label_trade_ref
+
+    col1, col2 = st.columns(2)
+
+    with col1 :
+        product = st.text_input(label_product, key=key_product)
+
+    with col2 : 
+        trade_ref = st.text_input(label_trade_ref, key=key_trade_ref)
+
+    return product, trade_ref
 
 
 def direction_flow_fields (
@@ -107,6 +176,7 @@ def direction_flow_fields (
 def amount_currency_fields (
         
         currencies : Optional[List] = None,
+
         number_order : int = 1,
 
         key_amount : Optional[str] = None,
@@ -141,12 +211,11 @@ def name_reference_bank_fields (
         
         default_name : Optional[str] = None,
         default_reference : Optional[str] = None,
+        
+        number_order : int = 1,
 
         key_name : Optional[str] = None,
         key_ref : Optional[str] = None,
-
-        number_order : int = 1
-
 
     ) -> Tuple[str, str]:
     """
@@ -193,7 +262,6 @@ def bank_benificiary_fields (
         swift_bank_default : Optional[str] = None,
         benif_default : Optional[str] = None,
         swift_benif_default : Optional[str] = None,
-
 
         number_order : int = 1,
 
@@ -271,6 +339,70 @@ def iban_field (
     res = st.text_input("IBAN", key=key_iban)
 
     return res
+
+
+def ubs_broker_fields (
+        
+        bic_default : Optional[str] = None,
+        iban_default : Optional[str] = None,
+        bic_ben_default : Optional[str] = None,
+
+        number_order : int = 1,
+
+        key_bic : Optional[str] = None,
+        key_iban : Optional[str] = None,
+        key_bic_ben : Optional[str] = None,
+
+        label_bic : Optional[str] = None,
+        label_iban : Optional[str] = None,
+        label_bic_ben : Optional[str] = None,
+
+    ) :
+    """
+    Docstring for ubs_broker_fields
+    
+    :param iban_def: Description
+    :type iban_def: Optional[str]
+    """
+    key_bic = f"UBS_OTC_Payment_{number_order}_bic" if key_bic is None else key_bic
+    key_iban = f"UBS_OTC_Payment_{number_order}_iban" if key_iban is None else key_iban
+    key_bic_ben = f"UBS_OTC_Payment_{number_order}_bic_ben" if key_bic_ben is None else key_bic_ben
+
+    key_bic_default = f"{key_bic}_default"
+    key_iban_default = f"{key_iban}_default"
+    key_bic_ben_default = f"{key_bic_ben}_default"
+
+    label_bic = "Correspondent BIC" if label_bic is None else label_bic
+    label_iban = "IBAN" if label_iban is None else label_iban
+    label_bic_ben = "Benficiary BIC" if label_bic_ben is None else label_bic_ben
+
+    # If the default changed → update session_state
+    last_bic = st.session_state.get(key_bic_default)
+    last_iban = st.session_state.get(key_iban_default)
+    last_bic_ben = st.session_state.get(key_bic_ben_default)
+
+    if bic_default is not None and last_bic != bic_default:
+        st.session_state[key_bic] = bic_default
+
+    if iban_default is not None and last_iban != iban_default:
+        st.session_state[key_iban] = iban_default
+    
+    if bic_ben_default is not None and last_bic_ben != bic_ben_default:
+        st.session_state[key_bic_ben] = bic_ben_default
+
+
+    # Render widget (session_state provides the value)
+    col1, col2 = st.columns(2)
+
+    with col1 : 
+        bic = st.text_input(label_bic, key=key_bic)
+
+    with col2 : 
+        bic_ben = st.text_input(label_bic_ben, key=key_bic_ben)
+
+    iban = st.text_input(label_iban, key=key_iban)
+
+    return bic, iban, bic_ben
 
 
 def extra_options_fields (

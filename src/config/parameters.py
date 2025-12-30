@@ -688,6 +688,9 @@ UBS_PAYMENTS_EXCEL_COLUMNS = [
     
 ]
 
+UBS_PAYMENTS_TYPES = ["Option Premium", "Option Exercice"]
+UBS_PAYMENTS_MARKET = ["FX", "Equity"]
+
 
 # ------------------ Leverages ------------------
 

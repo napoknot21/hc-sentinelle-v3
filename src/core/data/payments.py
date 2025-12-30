@@ -117,13 +117,12 @@ def find_beneficiary_by_ctpy_ccy_n_type (
     """
     
     """
-    dataframe, _ = load_beneficiaries_db() if dataframe is None else dataframe
+    dataframe, _ = load_beneficiaries_db() if dataframe is None else (dataframe, md5)
     columns = PAYMENTS_BENEFICIARY_COLUMNS if columns is None else columns
 
     specific_cols = list(columns.keys())[:3]
 
     if counterparty is None or type_ben is None or currency is None :
-        print("Here ?")
         return None
 
     df_match = (
@@ -131,9 +130,9 @@ def find_beneficiary_by_ctpy_ccy_n_type (
         dataframe
         .filter(
 
-            (pl.col(specific_cols[0]) == counterparty) &
-            (pl.col(specific_cols[1]) == type_ben) &
-            (pl.col(specific_cols[2]) == currency)
+            (pl.col(specific_cols[0]).str.strip_chars() == counterparty.strip()) &
+            (pl.col(specific_cols[1]).str.strip_chars() == type_ben.strip()) &
+            (pl.col(specific_cols[2]).str.strip_chars() == currency.strip())
 
         )
 
@@ -142,7 +141,6 @@ def find_beneficiary_by_ctpy_ccy_n_type (
     if df_match.is_empty() :
         return None
 
-    print(df_match)
     row = df_match.row(0)
 
     benef_bank  = row[3]
