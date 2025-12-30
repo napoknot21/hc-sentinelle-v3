@@ -16,7 +16,7 @@ from src.ui.styles.base import risk_menu
 
 payments_subpages = [
 
-    {"name" : "Process Payment UBS",    "page": payments_process,       "icon": "cash-coin"},
+    {"name" : "Process Payment UBS",    "page" : payments_process,      "icon": "cash-coin"},
     {"name" : "Collateral Management",  "page" : colleteral_management, "icon" : "cash-coin"},
     {"name" : "Display",                "page" : display,               "icon" : "eye"},
     {"name" : "Booker",                 "page" : booker,                "icon" : "book"},

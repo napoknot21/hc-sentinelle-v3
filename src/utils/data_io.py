@@ -413,7 +413,15 @@ def export_dataframe_to_csv (df : pl.DataFrame, separator : str = ",", output_ab
         return response
     
 
-def export_excel_to_pdf (file_abs_path : Optional[str] = None, output_filename : Optional[str] = None, output_dir_path : Optional[str] = None) :
+def export_excel_to_pdf (
+        
+        file_abs_path : Optional[str] = None,
+        
+        output_filename : Optional[str] = None,
+        output_dir_path : Optional[str] = None,
+
+        sheet_number : int = 0    
+    ) :
     """
     
     """
@@ -439,15 +447,28 @@ def export_excel_to_pdf (file_abs_path : Optional[str] = None, output_filename :
         # user will not even see the excel opening up
         app.visible = False
         
-        book = app.books.open(file_abs_path)
-        sheet = book.sheets[0]
-       
-        # Save excel workbook as pdf
-        full_path = os.path.join(output_dir_path, output_filename)
-        sheet.to_pdf(path=full_path, show=False)
-        
-        response["success"] = True
-        response["path"] = full_path
+        try :
+
+            book = app.books.open(file_abs_path)
+            sheet = book.sheets[sheet_number]
+
+            log(f"[+] Excel File successfully opened and loaded")
+
+            # Save excel workbook as pdf
+            full_path = os.path.join(output_dir_path, output_filename)
+            sheet.to_pdf(path=full_path, show=False)
+
+            log(f"[+] PDF file saved successfully")
+            
+            response["success"] = True
+            response["path"] = full_path
+            response["message"] = "Excel File successfully converted to PDF"
+
+            log(f"[+] {response['message']}")
+
+        except Exception as e :
+
+            log(f"[-] Error during excel to pdf conversion", "error")
 
     return response
 

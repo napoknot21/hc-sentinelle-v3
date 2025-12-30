@@ -10,7 +10,7 @@ from src.ui.components.selector import number_of_items_selector, date_selector
 from src.ui.components.input import (
     general_payment_fields, type_market_fields, amount_currency_fields,
     name_reference_bank_fields, bank_benificiary_fields, iban_field,
-    extra_options_fields
+    extra_options_fields, direction_flow_fields
 )
 
 from src.core.data.payments import (
@@ -20,7 +20,7 @@ from src.core.data.payments import (
 
 from src.config.parameters import (
     PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_TYPES_MARKET,
-    PAYMENTS_REFERENCES_CTPY, PAYMENTS_ACCOUNTS
+    PAYMENTS_REFERENCES_CTPY, PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS
 )
 
 from src.utils.data_io import convert_ubs_instruction_payments_to_excel, export_excel_to_pdf
@@ -30,7 +30,7 @@ def payments_process (default_value : int = 1) :
     """
     Docstring for payments_process
     """
-    center_h2("Process Payments")
+    center_h2("OTC Payments")
     nb_payments = nb_of_payments_section(default_value)
 
     payments = input_payment_section(nb_payments)
@@ -72,27 +72,83 @@ def input_payment_section (nb_payments : int = 1) :
 
         with col :
 
-            left_h5(f"Settlement {i+1}")
+            center_h5(f"Settlement {i+1}")
             
+            funda, ctpy, acc = fund_ctpy_n_acc_section(number_order=i+1)
             date = value_date_section(number_order=i+1)
             amount, currency = amount_n_currency_section(number_order=i+1)
+            direction, reason = direction_n_reason_section(number_order=i+1)
 
-            payment = (None, None, None, None, None, None, amount, currency, date, None, None, None, None)
+            payment = (None, None, reason, acc, ctpy, direction, amount, currency, date, "NaN", None, None, None)
             payments.append(payment)
 
     return payments
 
 
+def fund_ctpy_n_acc_section (
+        
+        fundations : Optional[List[str]] = None,
+        counterparties : Optional[Dict] = None,
+        accounts : Optional[List[str]] = None,
+
+        number_order : int = 1
+        
+    ) :
+    """
+    Docstring for fund_ctpy_n_acc_section
+    """
+    fundations = PAYMENTS_FUNDS if fundations is None else fundations
+
+    counterparties_dict = PAYMENTS_COUNTERPARTIES if counterparties is None else counterparties
+    counterparties = list(counterparties_dict.keys())
+
+    accounts = PAYMENTS_ACCOUNTS if accounts is None else accounts
+
+    key_fundation = f"UBS_OTC_Payment_{number_order}_fundation"
+    key_counterparty = f"UBS_OTC_Payment_{number_order}_counterparty"
+    key_account = f"UBS_OTC_Payment_{number_order}_account"
+
+    fund, ctpy, acc = general_payment_fields(fundations, counterparties, accounts, number_order, key_fundation, key_counterparty, key_account)
+
+    return fund, ctpy, acc
+
+
+def product_n_trade_ref_section (
+
+        number_order : int = 1,
+    ) :
+    """
+    Docstring for product_n_trade_ref_section
+    """
+    return None
+
+
+def direction_n_reason_section (
+        
+        directions : Optional[List] = None,
+        number_order : int = 1,
+    ) :
+    """
+    Docstring for product_n_trade_ref_section
+    """
+    directions = PAYMENTS_DIRECTIONS if directions is None else directions
+
+    key_direction = f"UBS_OTC_Payment_{number_order}_direction" 
+    key_reason = f"UBS_OTC_Payment_{number_order}_reason" 
+
+    direction, reason = direction_flow_fields(directions, None, key_direction, key_reason, number_order=number_order)
+
+    return direction, reason
 
 
 def value_date_section (number_order : int = 1) :
     """
     Docstring for value_date_section
     """
-    date = date_selector("Value Date", key=f"settlements_date_{number_order}")
+    key_date = f"UBS_OTC_Payment_{number_order}_date"
+    date = date_selector("Value Date", key=key_date)
 
     return date
-
 
 
 def amount_n_currency_section (currencies :  Optional[List[str]] = None, number_order : int = 1) :
@@ -102,15 +158,27 @@ def amount_n_currency_section (currencies :  Optional[List[str]] = None, number_
     :param number_order: Description
     :type number_order: int
     """
-    key_amount = f"UBS_Settlement_amount_{number_order}"
-    key_currency = f"UBS_Settlement_currency_{number_order}"
-
     currencies = PAYMENTS_CONCURRENCIES if currencies is None else currencies
+
+    key_amount = f"UBS_OTC_Payment_{number_order}_amount"
+    key_currency = f"UBS_OTC_Payment_{number_order}_currency"
 
     amount, currency = amount_currency_fields(currencies, number_order, key_amount, key_currency)
 
     return amount, currency
 
+
+def swift_iban_section (
+        
+        
+
+    ) :
+    """
+    Docstring for swift_iban_section
+    """
+
+
+# Process and file creation
 
 def process_payements_section (
         
@@ -141,3 +209,5 @@ def process_payements_section (
         st.error(f"{response["message"]}")
 
     return None
+
+

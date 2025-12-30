@@ -71,6 +71,39 @@ def type_market_fields (
     return type, market
 
 
+def product_n_trade_ref_fields () :
+    return None
+
+
+def direction_flow_fields (
+        
+        directions : Optional[List] = None,
+        reasons : Optional[List] = None,
+
+        key_direction : Optional[str] = None,
+        key_reason : Optional[str] = None,
+
+        label_direction : Optional[str] = None,
+        label_reason : Optional[str] = None,
+        
+        number_order : int = 1
+
+    ) :
+    """
+    Docstring for direction_flow_fields
+    """
+    key_direction = f"Payment_process_{number_order}_direction" if key_direction is None else key_direction
+    key_reason = f"Payment_process_{number_order}_direction" if key_reason is None else key_reason
+
+    label_direction = "Direction Flow" if label_direction is None else label_direction
+    label_reason = "Trade Reason" if label_reason is None else label_reason
+    
+    direction = st.selectbox(label_direction, options=directions, key=key_direction)
+    reason = st.text_input(label_reason, key=key_reason)
+    
+    return direction, reason
+
+
 def amount_currency_fields (
         
         currencies : Optional[List] = None,
@@ -238,7 +271,6 @@ def iban_field (
     res = st.text_input("IBAN", key=key_iban)
 
     return res
-
 
 
 def extra_options_fields (

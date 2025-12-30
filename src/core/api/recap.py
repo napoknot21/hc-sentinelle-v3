@@ -17,6 +17,7 @@ from src.config.parameters import TRADE_RECAP_LAUNCHER_FILE, TRADE_RECAP_RAW_FIL
 
 from src.utils.data_io import load_excel_to_dataframe
 from src.utils.formatters import date_to_str
+from src.utils.logger import log
 
 
 def trade_recap_launcher (
@@ -40,8 +41,10 @@ def trade_recap_launcher (
     Retries up to loopback times if it fails.
     """
 
-    if loopback <= 0:
-        raise RuntimeError("[-] Error: impossible to run trade recap after retries")
+    if loopback <= 0 :
+
+        log("[-] Impossible to run trade recap after retries", "error")
+        return False
 
     date_str = date_to_str(date)
     regex = TRADE_RECAP_RAW_FILE_REGEX if regex is None else regex
@@ -50,11 +53,12 @@ def trade_recap_launcher (
     root_dir_abs = TRADE_RECAP_ABS_PATH if root_dir_abs is None else root_dir_abs
     raw_dir_abs = TREADE_RECAP_DATA_RAW_DIR_ABS_PATH if raw_dir_abs is None else raw_dir_abs
 
-    # script_path in the command (not launcher_file alone)
     script_path = os.path.join(root_dir_abs, launcher_file)
 
-    if not os.path.isfile(script_path):
-        raise FileNotFoundError(f"[-] Script not found: {script_path}")
+    if not os.path.isfile(script_path) :
+
+        log(f"[-] Script not found : {script_path}", "error")
+        return False
 
     os.makedirs(raw_dir_abs, exist_ok=True)
 
@@ -66,9 +70,10 @@ def trade_recap_launcher (
         "--no-draft",
     ]
 
-    print(f"[Run] attempt={loopback} | cmd={' '.join(cmd)} | cwd={root_dir_abs}")
+    log(f"[*] [Trade Recap] [Run] attempt={loopback}")
 
-    try:
+    try :
+        
         proc = subprocess.run(
             cmd,
             capture_output=True,
@@ -80,26 +85,28 @@ def trade_recap_launcher (
         )
 
         # Optional: print output if you want
-        if proc.stdout:
-            print("[STDOUT]\n", proc.stdout)
-        if proc.stderr:
-            print("[STDERR]\n", proc.stderr)
+        if proc.stdout :
+            log(f"[*] {proc.stdout}")
+        
+        if proc.stderr :
+            log(f"[!] {proc.stderr}", "warning")
 
-        return proc  # or return None if you prefer
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e :
+        
+        log("[!] Retrying...", "warning")
 
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        print("\n[!] Retrying...")
         # Show debug info
-        if isinstance(e, subprocess.CalledProcessError):
-            print("[STDOUT]\n", e.stdout or "")
-            print("[STDERR]\n", e.stderr or "")
-        else:
-            print(f"[Timeout] after {timeout_s}s")
+        if isinstance(e, subprocess.CalledProcessError) :
+            log(f"[-] {e.stderr}", "error")
+        
+        else :
+            log(f"[*] [Timeout] after {timeout_s}s")
 
         time.sleep(retry_sleep_s)
 
-        # ✅ recursive call using keyword args => no arg shifting
+        # Recursive call using keyword args => no arg shifting
         return trade_recap_launcher(
+
             date=date,
             regex=regex,
             launcher_file=launcher_file,
@@ -108,6 +115,7 @@ def trade_recap_launcher (
             loopback=loopback - 1,
             timeout_s=timeout_s,
             retry_sleep_s=retry_sleep_s,
+            
         )
     
     return True
