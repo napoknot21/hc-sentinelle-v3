@@ -17,11 +17,10 @@ from src.core.data.payments import (
 )
 
 from src.config.parameters import (
-    PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_TYPES_MARKET,
-    PAYMENTS_REFERENCES_CTPY, PAYMENTS_ACCOUNTS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME
+    PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_BOOKS,
+    PAYMENTS_DIRECTIONS, PAYMENTS_ACCOUNTS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME
 )
 from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH
-
 from src.utils.formatters import date_to_str
 
 
@@ -32,12 +31,12 @@ def colleteral_management (default_value : int = 1) :
     center_h2("Collateral Management")
     nb_collateral = nb_of_payments_section(default_value)
 
-    collaterals = input_collateral_section(nb_payments=nb_collateral)
+    collaterals, bookers = input_collateral_section(nb_payments=nb_collateral)
 
     st.write('')
     left_h5("Export option")
 
-    if st.button("Process Cash Collateral") :
+    if st.button("Process Securities") :
         st.warning("Hello World")
 
     return None
@@ -63,7 +62,9 @@ def input_collateral_section (nb_payments : int = 1) :
     :type nb_payments: int
     """
     cols = st.columns(nb_payments)
+
     collaterals = []
+    bookers = []
 
     for i, col in enumerate(cols) :
 
@@ -72,7 +73,7 @@ def input_collateral_section (nb_payments : int = 1) :
             center_h5(f"Collateral {i+1}")
             
             fund, ctpy, acc = fund_ctpy_n_acc_section(number_order=i+1)
-            type_collateral = type_return_section(number_order=i+1)
+            direction, type_collateral = type_return_section(number_order=i+1)
 
             amount, currency = amount_n_currency_section(number_order=i+1)
             t_date, v_date = value_date_section(number_order=i+1)
@@ -80,19 +81,27 @@ def input_collateral_section (nb_payments : int = 1) :
             swift_def, swift_ben_def, iban_def = None, None, None
             
             df, md5 = load_beneficiaries_db(UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_BENECIFIARY_SHEET_NAME, PAYMENTS_BENEFICIARY_COLUMNS)
-            row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, None, currency)
+            row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, "Collateral Management", currency)
             st.warning(row)
-
             if row is not None :
                 swift_def, _, swift_ben_def, iban_def = row
             
             swift_bank, iban, swift_benif = swift_iban_section(swift_def, iban_def, swift_ben_def, number_order=i+1)
             
-            
+            book = book_section(number_order=i+1)
+
             collateral = (type_collateral, acc, fund, ctpy, None, currency, amount, t_date, v_date, swift_bank, iban, swift_benif)
+            booked = (amount, direction, v_date, book)
+            
+            if book is not None :
+                bookers.append(booked)
+            
             collaterals.append(collateral)
 
-    return collaterals
+            st.warning(collaterals)
+            st.warning(bookers)
+
+    return collaterals, bookers
 
 
 def fund_ctpy_n_acc_section (
@@ -136,17 +145,17 @@ def type_return_section (
     """
     Docstring for type_return_section
     """
-    flows = ["Given", "Receive"] if flows is None else flows
+    flows = PAYMENTS_DIRECTIONS if flows is None else flows
     returns = ["Yes", "No"] if returns is None else returns
 
     flow, ret = type_return_fields(flows, returns, number_order=number_order)
 
-    type_cash = type_name + " " + flow
+    type_cash = type_name + " " + ("Give" if flow == "Pay" else flow)
     
-    if ret is "Yes" :
+    if ret == "Yes" :
         type_cash += " - Return" 
 
-    return type_cash
+    return flow, type_cash
 
 
 def value_date_section (number_order : int = 1, format : str = "%d.%m.%Y") :
@@ -159,7 +168,7 @@ def value_date_section (number_order : int = 1, format : str = "%d.%m.%Y") :
     col1, col2 = st.columns(2) 
     
     with col1 :
-        t_date = date_selector("Termination Date", key=key_date_t)
+        t_date = date_selector("Trade Date", key=key_date_t)
     
     with col2 :
         v_date = date_selector("Valuation Date", key=key_date_v)
@@ -196,10 +205,47 @@ def swift_iban_section (
 
         number_order : int = 1,
 
+        key_bic : Optional[str] = None,
+        key_iban : Optional[str] = None,
+        key_bic_ben :Optional[str] = None,
+
     ) :
     """
     Docstring for swift_iban_section
     """
-    bic, iban, bic_ben = ubs_broker_fields(swift_code, iban, swift_benef, number_order=number_order)
+    key_bic = f"Settlement_Collateral_{number_order}_bic" if key_bic is None else key_bic
+    key_iban = f"Settlement_Collateral_{number_order}_iban" if key_iban is None else key_iban
+    key_bic_ben = f"Settlement_Collateral_{number_order}_bic_ben" if key_bic_ben is None else key_bic_ben
+
+    bic, iban, bic_ben = ubs_broker_fields(
+        swift_code, iban, swift_benef, number_order=number_order,
+        key_bic=key_bic, key_iban=key_iban, key_bic_ben=key_bic_ben
+    )
     
     return bic, iban, bic_ben
+
+
+def book_section (
+        
+        books : Optional[List[str]] = None,
+
+        number_order : int = 1,
+
+        key_check : Optional[str] = None,
+        key_book : Optional[str] = None,
+        
+    ) :
+    """
+    
+    """
+    books = PAYMENTS_BOOKS if books is None else books
+    
+    key_check = f"Settlement_Collateral_{number_order}_check" if key_check is None else key_check
+    key_book = f"Settlement_Collateral_{number_order}_book" if key_book is None else key_book
+
+    book = None
+    
+    if st.checkbox("Book Option", key=key_check) :
+        book = st.selectbox("Book", options=books, key=key_book)
+
+    return book

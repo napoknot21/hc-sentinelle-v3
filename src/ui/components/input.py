@@ -468,7 +468,7 @@ def type_return_fields (
     key_flow = f"Settlement_collateral_{number_order}_flow" if key_flow is None else key_flow
     key_return = f"Settlement_collateral_{number_order}_return" if key_return is None else key_return
 
-    label_flow = "Given/Receive" if label_flow is None else label_flow
+    label_flow = "Direction" if label_flow is None else label_flow
     label_return = "Return" if label_return is None else label_return
 
     col1, col2 = st.columns(2)

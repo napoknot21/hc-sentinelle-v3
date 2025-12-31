@@ -113,7 +113,7 @@ def find_beneficiary_by_ctpy_ccy_n_type (
 
         columns : Optional[Dict] = None,
 
-    ) -> :
+    ) :
     """
     
     """
@@ -121,12 +121,13 @@ def find_beneficiary_by_ctpy_ccy_n_type (
     columns = PAYMENTS_BENEFICIARY_COLUMNS if columns is None else columns
 
     specific_cols = list(columns.keys())[:3]
+    df_match = dataframe
 
     if counterparty is not None :
 
         df_match = (
             
-            dataframe
+            df_match
             .filter((pl.col(specific_cols[0]).str.strip_chars() == counterparty.strip()))
 
         )
@@ -135,7 +136,7 @@ def find_beneficiary_by_ctpy_ccy_n_type (
 
          df_match = (
             
-            dataframe
+            df_match
             .filter(pl.col(specific_cols[1]).str.strip_chars() == type_ben.strip())
         
         )
@@ -144,7 +145,7 @@ def find_beneficiary_by_ctpy_ccy_n_type (
 
          df_match = (
 
-            dataframe
+            df_match
             .filter(pl.col(specific_cols[2]).str.strip_chars() == currency.strip())
         
         )           

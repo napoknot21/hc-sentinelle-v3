@@ -9,19 +9,18 @@ from src.ui.components.text import center_h2, center_h5, left_h5
 from src.ui.components.selector import number_of_items_selector, date_selector
 from src.ui.components.input import (
     general_payment_fields, type_market_setlement_fields, amount_currency_fields,
-    ubs_broker_fields, bank_benificiary_fields, iban_field,
-    extra_options_fields, direction_flow_fields, product_n_trade_ref_fields
+    ubs_broker_fields, direction_flow_fields, product_n_trade_ref_fields
 )
 
 from src.core.data.payments import (
-    find_beneficiary_by_ctpy_ccy_n_type, process_excel_to_pdf, process_payments_to_excel, 
-    create_payement_email, load_beneficiaries_db
+    find_beneficiary_by_ctpy_ccy_n_type, load_beneficiaries_db
 )
 
 from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH
 from src.config.parameters import (
-    PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_TYPES_MARKET, UBS_PAYMENTS_TYPES, UBS_PAYMENTS_MARKET,
-    PAYMENTS_REFERENCES_CTPY, PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME
+    PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, UBS_PAYMENTS_TYPES,
+    UBS_PAYMENTS_MARKET, PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS, PAYMENTS_BENEFICIARY_COLUMNS, 
+    PAYMENTS_BENECIFIARY_SHEET_NAME
 )
 
 from src.utils.data_io import convert_ubs_instruction_payments_to_excel, export_excel_to_pdf
