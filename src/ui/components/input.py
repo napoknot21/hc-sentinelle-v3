@@ -431,4 +431,89 @@ def check_inputs (
     return True
 
 
+def type_return_fields (
+        
+        flows : Optional[List[str]] = None,
+        returns : Optional[List[str]] = None,
 
+        number_order : int = 1,
+
+        key_flow : Optional[str] = None,
+        key_return : Optional[str] = None,
+
+        label_flow : Optional[str] = None,
+        label_return : Optional[str] = None,
+
+    ) -> Tuple[Optional[str], Optional[str]] :
+    """
+    Docstring for type_return_fields
+    
+    :param flows: Description
+    :type flows: Optional[List[str]]
+    :param returns: Description
+    :type returns: Optional[List[str]]
+    :param number_order: Description
+    :type number_order: int
+    :param key_flow: Description
+    :type key_flow: Optional[str]
+    :param key_return: Description
+    :type key_return: Optional[str]
+    :param label_flow: Description
+    :type label_flow: Optional[str]
+    :param label_return: Description
+    :type label_return: Optional[str]
+    :return: Description
+    :rtype: Tuple[str | None, str | None]
+    """
+    key_flow = f"Settlement_collateral_{number_order}_flow" if key_flow is None else key_flow
+    key_return = f"Settlement_collateral_{number_order}_return" if key_return is None else key_return
+
+    label_flow = "Given/Receive" if label_flow is None else label_flow
+    label_return = "Return" if label_return is None else label_return
+
+    col1, col2 = st.columns(2)
+
+    with col1 :
+        flow = st.selectbox(label_flow, options=flows, key=key_flow)
+
+    with col2 :
+        ret = st.selectbox(label_return, options=returns, key=key_return)
+
+    return flow, ret
+
+
+
+def dates_sections (
+        
+        date_t : Optional[str | dt.datetime | dt.date] = None,
+        date_v : Optional[str | dt.datetime | dt.date] = None,
+
+        number_order : int = 1,
+
+        key_date_t : Optional[str] = None,
+        key_date_v : Optional[str] = None,
+        
+        label_date_t : Optional[str] = None,
+        label_date_v : Optional[str] = None, 
+
+    ) :
+    """
+    Docstring for dates_sections
+    
+    :param date_t: Description
+    :type date_t: Optional[str | dt.datetime | dt.date]
+    :param date_v: Description
+    :type date_v: Optional[str | dt.datetime | dt.date]
+    :param number_order: Description
+    :type number_order: int
+    :param key_date_t: Description
+    :type key_date_t: Optional[str]
+    :param key_date_v: Description
+    :type key_date_v: Optional[str]
+    :param label_date_t: Description
+    :type label_date_t: Optional[str]
+    :param label_date_v: Description
+    :type label_date_v: Optional[str]
+    """
+    
+    return None

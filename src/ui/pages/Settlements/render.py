@@ -4,11 +4,11 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 from typing import Optional, Dict
 
-from src.ui.pages.Payments.booker import *
+#from src.ui.pages.Payments.booker import booker
 from src.ui.pages.Settlements.payments import payments_process
 from src.ui.pages.Settlements.collateral import colleteral_management
 from src.ui.pages.Settlements.booker import booker
-from src.ui.pages.Payments.process import process
+from src.ui.pages.Settlements.security import security
 from src.ui.pages.Settlements.display import display
 
 from src.ui.components.text import center_h1, center_h3
@@ -18,6 +18,7 @@ payments_subpages = [
 
     {"name" : "Process Payment UBS",    "page" : payments_process,      "icon": "cash-coin"},
     {"name" : "Collateral Management",  "page" : colleteral_management, "icon" : "cash-coin"},
+    {"name" : "Security",               "page" : security,              "icon" : "cash-coin"},
     {"name" : "Display",                "page" : display,               "icon" : "eye"},
     {"name" : "Booker",                 "page" : booker,                "icon" : "book"},
 

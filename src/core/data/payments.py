@@ -113,7 +113,7 @@ def find_beneficiary_by_ctpy_ccy_n_type (
 
         columns : Optional[Dict] = None,
 
-    ) :
+    ) -> :
     """
     
     """
@@ -122,30 +122,41 @@ def find_beneficiary_by_ctpy_ccy_n_type (
 
     specific_cols = list(columns.keys())[:3]
 
-    if counterparty is None or type_ben is None or currency is None :
-        return None
+    if counterparty is not None :
 
-    df_match = (
-
-        dataframe
-        .filter(
-
-            (pl.col(specific_cols[0]).str.strip_chars() == counterparty.strip()) &
-            (pl.col(specific_cols[1]).str.strip_chars() == type_ben.strip()) &
-            (pl.col(specific_cols[2]).str.strip_chars() == currency.strip())
+        df_match = (
+            
+            dataframe
+            .filter((pl.col(specific_cols[0]).str.strip_chars() == counterparty.strip()))
 
         )
 
-    )
+    if type_ben is not None :
 
+         df_match = (
+            
+            dataframe
+            .filter(pl.col(specific_cols[1]).str.strip_chars() == type_ben.strip())
+        
+        )
+
+    if type_ben is not None :
+
+         df_match = (
+
+            dataframe
+            .filter(pl.col(specific_cols[2]).str.strip_chars() == currency.strip())
+        
+        )           
+                 
     if df_match.is_empty() :
-        return None
+        return None, None, None, None
 
     row = df_match.row(0)
 
     benef_bank  = row[3]
     swift_code  = row[4]
-    swift_ben   = row[5] if row[5] is not None else "Nan"
+    swift_ben   = row[5] if row[5] is not None else "NaN"
     iban        = row[6]
 
     return swift_code, benef_bank, swift_ben, iban
