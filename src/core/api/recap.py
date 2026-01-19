@@ -3,19 +3,16 @@ from __future__ import annotations
 import os
 import re
 import sys
-import glob
 import time
 import subprocess
 
 import datetime as dt
-import polars as pl
 
-from typing import List, Optional, Dict
+from typing import Optional
 
 from src.config.paths import TRADE_RECAP_ABS_PATH, TREADE_RECAP_DATA_RAW_DIR_ABS_PATH
 from src.config.parameters import TRADE_RECAP_LAUNCHER_FILE, TRADE_RECAP_RAW_FILE_REGEX
 
-from src.utils.data_io import load_excel_to_dataframe
 from src.utils.formatters import date_to_str
 from src.utils.logger import log
 
@@ -35,7 +32,7 @@ def trade_recap_launcher (
         timeout_s : int = 30000,
         retry_sleep_s: float = 5.0,
 
-    ) :
+    ) -> bool :
     """
     Runs: python main.py --start-date <date> --end-date <date> --no-draft
     Retries up to loopback times if it fails.
@@ -63,11 +60,13 @@ def trade_recap_launcher (
     os.makedirs(raw_dir_abs, exist_ok=True)
 
     cmd = [
+
         sys.executable,
-        script_path,                 # ✅ important
+        script_path,
         "--start-date", date_str,
         "--end-date", date_str,
-        "--no-draft",
+        "--no-draft"
+
     ]
 
     log(f"[*] [Trade Recap] [Run] attempt={loopback}")
@@ -75,6 +74,7 @@ def trade_recap_launcher (
     try :
         
         proc = subprocess.run(
+
             cmd,
             capture_output=True,
             text=True,
@@ -82,6 +82,7 @@ def trade_recap_launcher (
             timeout=timeout_s,
             cwd=root_dir_abs,
             env=os.environ.copy(),
+        
         )
 
         # Optional: print output if you want

@@ -1066,10 +1066,57 @@ VOL_REALIZED_FUNDS_COLS = {
 
 
 
-# ------------ Trade Recap --------------
+# -------------- Trade Recap --------------
 
 TRADE_RECAP_LAUNCHER_FILE=os.getenv("TRADE_RECAP_LAUNCHER_FILE")
 
 TRADE_RECAP_RAW_FILE_REGEX_PATTERN = os.getenv("TRADE_RECAP_RAW_FILE_REGEX_PATTERN")
 TRADE_RECAP_RAW_FILE_REGEX = re.compile(TRADE_RECAP_RAW_FILE_REGEX_PATTERN, re.IGNORECASE)
 
+
+TRADE_RECAP_MIN_COLUMNS = {
+
+    "tradeId" : pl.Int64,
+    "tradeDescription" : pl.Utf8,
+    "tradeName" : pl.Utf8,
+    "tradeType" : pl.Utf8,
+    "assetClass" : pl.Utf8,
+    "bookId": pl.Int64,
+    "bookName" : pl.Utf8,
+    "counterparty" : pl.Utf8,
+    "creationTime" : pl.Utf8,
+    "originatingAction" : pl.Utf8,
+    "originatingInstrumentType" : pl.Utf8,
+
+
+}
+
+
+TRADE_RECAP_MAX_COLUMNS = {
+
+
+
+}
+
+
+
+# -------------- Agreaggated Positions --------------
+
+AGGREGATED_POSITIONS_COLUMNS = {
+
+    "Asset Class" : pl.Utf8,
+    "Counterparty" : pl.Utf8,
+    "Portfolio Name" : pl.Utf8,
+    "Underlying Asset" : pl.Utf8,
+    "Trade Type" : pl.Utf8,
+    "Product Name" : pl.Utf8,
+    "Issuer" : pl.Utf8,
+    "Instrument Type" : pl.Utf8,
+    "Product Code" : pl.Utf8,
+    "Trade Date" : pl.Datetime,
+    "Trade Code" : pl.Utf8,
+    "Remaining Notional" : pl.Float64,
+    "Termination Date" : pl.Datetime,
+    "MV" : pl.Float64,
+
+}

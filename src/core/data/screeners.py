@@ -53,7 +53,7 @@ def read_db_gross_data_by_date (
     leverages_paths = SCREENERS_FUNDS_DIR_PATHS if leverages_paths is None else leverages_paths
     dir_path = leverages_paths.get(fund)
 
-    filename, _ = find_most_recent_file_by_date(date, dir_path, regex) if filename is None else (filename, _)
+    filename, real_date = find_most_recent_file_by_date(date, dir_path, regex) if filename is None else (filename, date)
 
     if filename is None :
         return None, None
@@ -68,7 +68,7 @@ def read_db_gross_data_by_date (
         log("[-] Error loading Leverages per Underlying file", "error")
         return None, None
 
-    return dataframe, md5
+    return dataframe, md5, real_date
 
 
 def tarf_visualizer_by_date (
@@ -97,7 +97,7 @@ def tarf_visualizer_by_date (
     regex = SCREENERS_REGEX if regex is None else regex
     schema_overrides = SCREENERS_COLUMNS_TARF if schema_overrides is None else schema_overrides
 
-    _dataframe, md5 = read_db_gross_data_by_date(date, fund, regex) if _dataframe is None else (_dataframe, md5)
+    _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex) if _dataframe is None else (_dataframe, md5, date)
 
     _dataframe = _dataframe.select([col for col in schema_overrides if col in _dataframe.columns])
 
@@ -110,7 +110,7 @@ def tarf_visualizer_by_date (
 
     print(df_grouped)
 
-    return df_grouped, md5
+    return df_grouped, md5, real_date
 
 
 def fx_carry_by_date (
@@ -134,7 +134,7 @@ def fx_carry_by_date (
     regex = SCREENERS_REGEX if regex is None else regex
     schema_overrides = SCREENERS_COLUMNS_FX if schema_overrides is None else schema_overrides
         
-    _dataframe, md5 = read_db_gross_data_by_date(date, fund, regex) if _dataframe is None else (_dataframe, md5)
+    _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex) if _dataframe is None else (_dataframe, md5, date)
     _dataframe = _dataframe.select([col for col in schema_overrides if col in _dataframe.columns])
 
     df_filter_tok = filter_token_col_from_df(_dataframe, "Portfolio Name", "FX_CARRY")
@@ -145,7 +145,7 @@ def fx_carry_by_date (
 
     df_grouped = df_grouped.drop("Portfolio Name")
     
-    return df_grouped, md5
+    return df_grouped, md5, real_date
 
 
 def tail_trades_by_date (
@@ -169,7 +169,7 @@ def tail_trades_by_date (
     regex = SCREENERS_REGEX if regex is None else regex
     schema_overrides = SCREENERS_COLUMNS_TAIL if schema_overrides is None else schema_overrides
         
-    _dataframe, md5 = read_db_gross_data_by_date(date, fund, regex) if _dataframe is None else (_dataframe, md5)
+    _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex) if _dataframe is None else (_dataframe, md5, date)
     _dataframe = _dataframe.select([col for col in schema_overrides if col in _dataframe.columns])
 
     df_filter_tok = _dataframe.filter(
@@ -178,7 +178,7 @@ def tail_trades_by_date (
     )
     print(df_filter_tok)
     
-    return df_filter_tok, md5
+    return df_filter_tok, md5, real_date
 
 
 

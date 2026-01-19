@@ -10,11 +10,8 @@ import streamlit as st
 from typing import Optional, List, Dict, Any
 
 from src.core.api.client import get_trade_manager
-
 from src.config.parameters import FUND_HV, SUBRED_BOOKS_FUNDS, SUBRED_STRUCT_COLUMNS, SUBRED_COLS_NEEDED
-
 from src.utils.formatters import date_to_str, str_to_date, format_numeric_columns_to_string
-
 
 
 def get_subred_by_date (

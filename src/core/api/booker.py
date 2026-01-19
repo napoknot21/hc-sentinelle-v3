@@ -11,7 +11,7 @@ sys.path.append(LIBAPI_ABS_PATH)
 from src.utils.formatters import date_to_str
 from src.utils.logger import log
 
-from libapi.ice.trade_manager import TradeManager # type: ignore
+from src.core.api.client import get_trade_manager
 
 
 def post_margin_call_on_ice (
@@ -35,13 +35,14 @@ def post_margin_call_on_ice (
         return None
 
     date = date_to_str(date)
-    tm = TradeManager()
+    tm = get_trade_manager()
 
     response = tm.post_margin_call(currency, date, amount, book, counterparty, direction)
 
     if response is None :
 
         log("[*] Retrying API Call", "warning")
+
         return post_margin_call_on_ice(
             currency, date, amount, book, counterparty, direction, loopback-1
         )

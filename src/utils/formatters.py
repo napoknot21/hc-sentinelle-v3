@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import math
 import time
 import hashlib
 import calendar
@@ -584,6 +585,9 @@ def format_numeric_columns_to_string(
             .map_elements(
         
                 lambda x, f=fmt: (
+                    " - "
+                    if x is None or (isinstance(x, float) and math.isnan(x))
+                    else 
                     f.format(x)
                     .replace(",", thousand_sep)
                     .replace(".", decimal_sep)
@@ -652,6 +656,24 @@ def colorize_dataframe_positive_negatif_vals (
         if pd.isna(val):
             return ""
         
+        s = str(val).strip()
+
+        # your placeholder (and other common placeholders)
+        if s in {"-", " -", "—", "", "nan", "NaN", "None", "null"}:
+            return ""
+        
+        s_norm = s.replace(" ", "").replace(",", "")
+
+        # If you may have "%" like "1.23%", handle it:
+        if s_norm.endswith("%"):
+            s_norm = s_norm[:-1]
+
+        try:
+            x = float(s_norm)
+        except Exception:
+            return ""
+
+        
         return "color: green;" if float(val) >= 0 else "color: red;"
 
     styled = (
@@ -669,6 +691,4 @@ def colorize_dataframe_positive_negatif_vals (
     
 
     return styled
-
-
 

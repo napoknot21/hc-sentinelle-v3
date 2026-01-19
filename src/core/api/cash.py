@@ -13,29 +13,6 @@ from src.config.parameters import FUND_NAME_MAP, PAIRS
 from src.utils.formatters import date_to_str, normalize_fx_dict
 
 
-def get_cash (
-        
-        fund : Optional[str] = None,
-        date : Optional[str] = None,
-
-        books : Optional[List[str]] = None,
-
-        tm : Optional[Any] = None,
-        ic : Optional[Any] = None,
-
-    ) -> Optional[pl.DataFrame] :
-    """
-    
-    """
-    fund = FUND_NAME_MAP if fund is None else fund
-    date = date_to_str(date) if date is None else date
-
-
-    ic = get_ice_calculator() if tm is None else tm
-    tm = get_trade_manager() if ic is None else ic
-
-
-
 def call_api_for_pairs (
     
         target_date : Optional[str | dt.datetime] = None,

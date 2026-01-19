@@ -4,8 +4,10 @@ import os
 import logging
 import datetime as dt
 
+from logging.handlers import TimedRotatingFileHandler
+
 from src.config.paths import LOGS_DIR_REL_PATH
-os.makedirs(LOGS_DIR_REL_PATH, exist_ok=True)
+
 
 
 def log (message: str, level: str = "info", module: str = "sentinelle"):
@@ -54,25 +56,36 @@ def get_logger (name: str = "sentinelle") -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
-    if not logger.handlers :
+    logger.propagate = False
 
-        # Format for log messages
-        formatter = logging.Formatter(
-            fmt="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
-        )
+    if logger.handlers :
+        return logger
+    
+    # Format for log messages
+    formatter = logging.Formatter(
+        fmt="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
-        # File handler
-        LOG_FILE_NAME=os.path.join(LOGS_DIR_REL_PATH, f"sentinelle_{dt.datetime.now().strftime('%Y-%m-%d')}.log")
-        file_handler = logging.FileHandler(LOG_FILE_NAME)
+    # File handler
+    os.makedirs(LOGS_DIR_REL_PATH, exist_ok=True)
 
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+    filename = f"sentinelle_{dt.datetime.now().strftime('%Y-%m-%d')}.log"
+    LOG_FILE_NAME = os.path.join(LOGS_DIR_REL_PATH, filename)
 
-        # Console handler
-        #console_handler = logging.StreamHandler()
-        #console_handler.setFormatter(formatter)
+    file_handler = TimedRotatingFileHandler(
+    
+        filename=LOG_FILE_NAME,
+        when="midnight",
+        interval=1,
+        backupCount=30,
+        encoding="utf-8",
+        utc=False,
+        delay=True
+    
+    )
 
-        #logger.addHandler(console_handler)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
 
     return logger

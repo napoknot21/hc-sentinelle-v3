@@ -48,7 +48,13 @@ def nb_of_payments_section (default_value : int = 1, max_value : int = 4) :
     """
     
     """
-    nb_payments = number_of_items_selector("Select number of Cash Collateral", default_value, max_value)
+    nb_payments = number_of_items_selector(
+
+        "Select number of Cash Collateral",
+        default_value,
+        max_value
+        
+    )
 
     return nb_payments
 
