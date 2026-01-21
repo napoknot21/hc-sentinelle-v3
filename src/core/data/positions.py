@@ -100,7 +100,7 @@ def asset_class_cascade_by_date (
     schema_overrides = AGGREGATED_POSITIONS_COLUMNS if schema_overrides is None else schema_overrides
 
     _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex=regex, schema_overrides=schema_overrides) if _dataframe is None else (_dataframe, md5, date)
-    st.write(_dataframe)
+    
     _dataframe = _dataframe.filter(pl.col("Asset Class") == (asset_class))
 
     return _dataframe, md5, real_date

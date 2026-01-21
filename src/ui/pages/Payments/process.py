@@ -72,6 +72,8 @@ def payments_section (nb_payments : int = 1) :
             payment = input_payment_section(i)
             payments.append(payment)
 
+            print(payments)
+
     return payments
 
 
@@ -88,14 +90,15 @@ def input_payment_section (i : int = 0) :
     date, amount, currency = date_n_amount_section(number_order=i+1)
     name, reference = statement_reference_setion(ctpy, type, number_order=i+1)
 
-    swift_def, benif_def, swift_ben_def, iban_def = None, None, None, None
+    bank_def, swift_def, benif_def, swift_ben_def, iban_def = None, None, None, None, None
 
     row = find_beneficiary_by_ctpy_ccy_n_type(None, None, ctpy, market, currency)
 
     if row is not None :
-        swift_def, benif_def, swift_ben_def, iban_def = row
+        bank_def, swift_def, benif_def, swift_ben_def, iban_def = row
 
-    bank, swift_bank, benif, swift_benif = bank_benificiary_section(ctpy, swift_def, benif_def, swift_ben_def, order_number=i+1)
+    bank, swift_bank, benif, swift_benif  = bank_benificiary_section(bank_def, swift_def, benif_def, swift_ben_def, order_number=i+1)
+
     iban = iban_section(iban_def, order_number=i+1)
     
     # Final payement "object"
@@ -191,23 +194,18 @@ def statement_reference_setion (
 
 def bank_benificiary_section (
         
-        counterparty : Optional[str] = None,
-        
-        swift_bank : Optional[str] = None,
-        benif : Optional[str] = None,
-        swift_benif : Optional[str] = None,
+        bank_def : Optional[str] = None,
+        swift_bank_def : Optional[str] = None,
+        benif_def : Optional[str] = None,
+        swift_benif_def : Optional[str] = None,
 
-        counterparties : Optional[Dict] = None,
         order_number : int = 1
     
     ) :
     """
 
     """
-    counterparties = PAYMENTS_COUNTERPARTIES if counterparties is None else counterparties
-    bank_name = counterparties.get(counterparty).get("bank")
-
-    bank, swift_bank, benif, swift_benif = bank_benificiary_fields(bank_name, swift_bank, benif, swift_benif, order_number)
+    bank, swift_bank, benif, swift_benif = bank_benificiary_fields(bank_def, swift_bank_def, benif_def, swift_benif_def, order_number)
 
     return bank, swift_bank, benif, swift_benif
 

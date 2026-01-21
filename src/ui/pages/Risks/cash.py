@@ -79,6 +79,10 @@ def cash_amount_section (
         st.write('')
         cash_per_ctpy_table(dataframe, md5, date, ("Bank", "Type"), "Amount in CCY")
 
+        if st.button("Refresh Cash") :
+            # TODO : Integrate Cash-Updater Script
+            return None
+
     return None
 
 

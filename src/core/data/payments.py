@@ -151,16 +151,17 @@ def find_beneficiary_by_ctpy_ccy_n_type (
         )           
                  
     if df_match.is_empty() :
-        return None, None, None, None
+        return None, None, None, None, None
 
     row = df_match.row(0)
 
-    benef_bank  = row[3]
-    swift_code  = row[4]
-    swift_ben   = row[5] if row[5] is not None else "NaN"
-    iban        = row[6]
+    bank        = row[3]
+    benef_bank  = row[4]
+    swift_code  = row[5]
+    swift_ben   = row[6] if row[6] is not None else "NaN"
+    iban        = row[7]
 
-    return swift_code, benef_bank, swift_ben, iban
+    return bank, swift_code, benef_bank, swift_ben, iban
 
 
 def process_payments_to_excel (
@@ -175,7 +176,7 @@ def process_payments_to_excel (
     """
     if payments is None or len(payments) == 0 :
     
-        log("No payement information to convert", "error")
+        log("[-] No payement information to convert", "error")
         return False
     
     dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path

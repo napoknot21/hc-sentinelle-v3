@@ -47,14 +47,12 @@ def read_db_gross_data_by_date (
     regex = SCREENERS_REGEX if regex is None else regex
 
     schema_overrides = _merge_all_overrides_schemas() if schema_overrides is None else schema_overrides
-    print(schema_overrides)
     specific_cols = list(schema_overrides.keys())
 
     leverages_paths = SCREENERS_FUNDS_DIR_PATHS if leverages_paths is None else leverages_paths
     dir_path = leverages_paths.get(fund)
 
     filename, real_date = find_most_recent_file_by_date(date, dir_path, regex) if filename is None else (filename, date)
-
     if filename is None :
         return None, None
     
@@ -97,7 +95,7 @@ def tarf_visualizer_by_date (
     regex = SCREENERS_REGEX if regex is None else regex
     schema_overrides = SCREENERS_COLUMNS_TARF if schema_overrides is None else schema_overrides
 
-    _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex) if _dataframe is None else (_dataframe, md5, date)
+    _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex=regex) if _dataframe is None else (_dataframe, md5, date)
 
     _dataframe = _dataframe.select([col for col in schema_overrides if col in _dataframe.columns])
 
@@ -134,7 +132,7 @@ def fx_carry_by_date (
     regex = SCREENERS_REGEX if regex is None else regex
     schema_overrides = SCREENERS_COLUMNS_FX if schema_overrides is None else schema_overrides
         
-    _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex) if _dataframe is None else (_dataframe, md5, date)
+    _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex=regex) if _dataframe is None else (_dataframe, md5, date)
     _dataframe = _dataframe.select([col for col in schema_overrides if col in _dataframe.columns])
 
     df_filter_tok = filter_token_col_from_df(_dataframe, "Portfolio Name", "FX_CARRY")
@@ -169,7 +167,7 @@ def tail_trades_by_date (
     regex = SCREENERS_REGEX if regex is None else regex
     schema_overrides = SCREENERS_COLUMNS_TAIL if schema_overrides is None else schema_overrides
         
-    _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex) if _dataframe is None else (_dataframe, md5, date)
+    _dataframe, md5, real_date = read_db_gross_data_by_date(date, fund, regex=regex) if _dataframe is None else (_dataframe, md5, date)
     _dataframe = _dataframe.select([col for col in schema_overrides if col in _dataframe.columns])
 
     df_filter_tok = _dataframe.filter(
@@ -332,6 +330,7 @@ def screeners_load_excel_to_dataframe (excel_file : str, sheet_name : str, speci
     if not os.path.isfile(excel_file) :
         
         print(f"\n[-] Fichier introuvable : {excel_file}\n")
+        st.cache_resource.clear()
         return None
 
     try :
@@ -340,9 +339,11 @@ def screeners_load_excel_to_dataframe (excel_file : str, sheet_name : str, speci
         # sving the time of execution
         
         if sheet_name is None :
-        
             sheet_index = 0
 
+        
+        print("================================1")
+        print()
         df = pl.read_excel(
 
             source=excel_file,
@@ -351,6 +352,8 @@ def screeners_load_excel_to_dataframe (excel_file : str, sheet_name : str, speci
             schema_overrides=schema_overrides,
 
         )
+        print("================================2")
+        print(df)
         
         csv_bytes = df.write_csv().encode("utf-8")
         md5_hash = hashlib.md5(csv_bytes).hexdigest()

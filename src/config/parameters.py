@@ -146,7 +146,7 @@ TARF_COLUMNS={
     # Fixing and FX echéances
     "FX Remaining Number of Fixings" : pl.Int64,
     "FX Projected Number of Expiries Remaining" : pl.Int64,
-    "FX Projected Last Expiry Date" : pl.Utf8,
+    #"FX Projected Last Expiry Date" : pl.Utf8,
     "FX Projected Payout at Next Fixing" : pl.Float64,
 
     # Performance & Accumulation
@@ -540,7 +540,7 @@ PAYMENTS_BENEFICIARY_COLUMNS = {
     "Counterparty" : pl.Utf8,
     "Type Payment" : pl.Utf8,
     "Currency" : pl.Utf8,
-    #"Bank" : pl.Utf8,
+    "Bank" : pl.Utf8,
 
     "Beneficiary Bank" : pl.Utf8,
     "Swift-Code" : pl.Utf8,
@@ -957,13 +957,13 @@ SCREENERS_COLUMNS_FX = {
 
     "Reference Spot" : pl.Float64,
     "Original Spot" : pl.Float64,
-    "FX ForwardRate" : pl.Float64,
+    #"FX ForwardRate" : pl.Float64,
     "Forward" : pl.Float64,
     "Forward Points" : pl.Float64,
 
     "Strike" : pl.Float64,
     "MV" : pl.Float64,
-    "Base Notional" : pl.Float64,
+    #"Base Notional" : pl.Float64,
     "FX Delta Base" : pl.Float64,
     
     "Trade Date" : pl.Date ,
@@ -982,14 +982,14 @@ SCREENERS_COLUMNS_TARF = {
     "Underlying Asset" : pl.Utf8,
     "Trade Date" : pl.Date ,
     "FX Next Fixing Date" : pl.Date,
-    "FX Projected Last Expiry Date" : pl.Date,
+    #"FX Projected Last Expiry Date" : pl.Date,
     "FX Remaining Target Term Per Base" : pl.Float64,
     "Expiry Date" : pl.Date,
     "Call/Put 1" :  pl.Utf8,
 
     # Amounts and notionals
     "Remaining Notional" : pl.Float64,
-    "Base Notional" : pl.Float64,
+    #"Base Notional" : pl.Float64,
     "Notional 1 Base" : pl.Float64,
     "Total Premium" : pl.Float64,
     "MV" : pl.Float64,
@@ -1003,7 +1003,7 @@ SCREENERS_COLUMNS_TARF = {
     # Greeks 
     "FX Delta Base" : pl.Float64,
     "FX Gamma Base" : pl.Float64,
-    "Theta" : pl.Float64,
+    "FX Theta Base" : pl.Float64,
 
     # Fixing and FX echéances
     "FX Remaining Number of Fixings" : pl.Int64,
@@ -1110,7 +1110,7 @@ AGGREGATED_POSITIONS_COLUMNS = {
     "Underlying Asset" : pl.Utf8,
     "Trade Type" : pl.Utf8,
     "Product Name" : pl.Utf8,
-    "Issuer" : pl.Utf8,
+    #"Issuer" : pl.Utf8,
     "Instrument Type" : pl.Utf8,
     "Product Code" : pl.Utf8,
     "Trade Date" : pl.Datetime,

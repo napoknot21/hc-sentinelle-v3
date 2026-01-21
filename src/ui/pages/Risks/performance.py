@@ -576,7 +576,7 @@ def asset_class_aggregated_positions_section (
     
     if st.button("Run Positions") :
         
-        dataframe, md5, _ = read_db_gross_data_by_date(date=date, fund=fundation)
+        dataframe, md5, real_date = read_db_gross_data_by_date(date=date, fund=fundation)
         df_gav, _ = gav_performance_normalized_base_100(
             st.session_state.start_date_perf,
             st.session_state.end_date_perf,
@@ -589,15 +589,15 @@ def asset_class_aggregated_positions_section (
         last_gav = round(float(aum) * float(last_gav) / 100, 2)
 
         st.divider()
-        cash_cascade_section(dataframe, md5, date, fundation, gav=last_gav)
+        cash_cascade_section(dataframe, md5, real_date, fundation, gav=last_gav)
         st.divider()
-        fx_cascade_section(dataframe, md5, date, fundation, gav=last_gav)
+        fx_cascade_section(dataframe, md5, real_date, fundation, gav=last_gav)
         st.divider()
-        exotic_cascade_section(dataframe, md5, date, fundation, gav=last_gav)
+        exotic_cascade_section(dataframe, md5, real_date, fundation, gav=last_gav)
         st.divider()
-        equity_cascade_section(dataframe, md5, date, fundation, gav=last_gav)
+        equity_cascade_section(dataframe, md5, real_date, fundation, gav=last_gav)
         st.divider()
-        rates_cascade_section(dataframe, md5, date, fundation, gav=last_gav)
+        rates_cascade_section(dataframe, md5, real_date, fundation, gav=last_gav)
 
     return None
 
@@ -626,6 +626,9 @@ def cash_cascade_section (
     """
     dataframe, md5, real_date = asset_class_cascade_by_date(date=date, fund=fundation) if dataframe is None else (dataframe, md5, date)
     
+    real_date = date_to_str(real_date)
+    left_h5(f"Cash Cascade Table as of {real_date}")
+
     dataframe = dataframe.filter(pl.col("Asset Class") == asset_class)
     dataframe = dataframe.with_columns(
 
@@ -707,6 +710,7 @@ def fx_cascade_section (
     
     )
     dataframe = dataframe.to_pandas()
+
 
     gb = GridOptionsBuilder.from_dataframe(dataframe)
     gb.configure_default_column(groupable=True, enableRowGroup=True, editable=False)

@@ -281,34 +281,31 @@ def bank_benificiary_fields (
     key_swift_def     = f"{key_swift}_default"
     key_swift_ben_def = f"{key_swift_ben}_default"
 
-    # ---------- BANK NAME ----------
-    last_bank_default = st.session_state.get(key_bank_def)
+    def _apply_default (widget_key: str, default_key: str, new_default: Optional[str]) -> None :
+        """
+        Apply new default ONLY if:
+          - new_default is not None
+          - and it changed compared to last stored default
+        """
+        last_default = st.session_state.get(default_key)
 
-    if last_bank_default != bank_name :
-        st.session_state[key_bank] = bank_name
-   
-    # ---------- BENEFICIARY BANK ----------
-    last_benif_default = st.session_state.get(key_benif_def)
+        if new_default is not None and last_default != new_default :
 
-    if last_benif_default != benif_default :
-        st.session_state[key_benif] = benif_default
+            st.session_state[widget_key] = new_default
+            st.session_state[default_key] = new_default
 
-    # ---------- SWIFT BANK ----------
-    last_swift_default = st.session_state.get(key_swift_def)
+    # Apply defaults safely
+    _apply_default(key_bank, key_bank_def, bank_name)
+    _apply_default(key_benif, key_benif_def, benif_default)
+    _apply_default(key_swift, key_swift_def, swift_bank_default)
+    _apply_default(key_swift_ben, key_swift_ben_def, swift_benif_default)
 
-    if last_swift_default != swift_bank_default :
-        st.session_state[key_swift] = swift_bank_default
-       
-    last_swift_ben_default = st.session_state.get(key_swift_ben_def)
-
-    if last_swift_ben_default != swift_benif_default:
-        st.session_state[key_swift_ben] = swift_benif_default
        
     # ---------- RENDER WIDGETS ----------
     col1, col2 = st.columns(2)
 
     with col1:
-        bank = st.text_input("Bank", key=f"bank_{number_order}")
+        bank = st.text_input("Bank", key=key_bank)
         benif = st.text_input("Beneficiary Bank", key=key_benif)
 
     with col2:
