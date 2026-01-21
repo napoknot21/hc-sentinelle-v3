@@ -7,6 +7,7 @@ import hashlib
 import calendar
 import polars as pl
 import datetime as dt
+import streamlit as st
 
 from typing import List, Optional, Dict, Tuple
 
@@ -654,6 +655,7 @@ def compute_monthly_returns (
 
     perf_df = pl.DataFrame(rows).sort("Year")
 
+    """
     # Hardcoding a exceptional value
     hardcoded = PERF_HARDCODED_VALUES if hardcoded is None else hardcoded
     hardcoded_fund = hardcoded.get(fund)
@@ -672,6 +674,7 @@ def compute_monthly_returns (
         .alias(hardcoded.get(fund).get("Month"))
 
     )
+    """
     
     return perf_df, md5
 
@@ -770,10 +773,80 @@ def portfolio_allocation_analysis (
             pl.col("MV").alias("Generated PNL of Asset Class"),
         ]
     )
-    
-    print(ptf_agg)
 
     return ptf_agg
 
 
+def hardcode_performance_monthly_values (
+        
+        dataframe : Optional[pl.DataFrame] =  None,
+        md5 : Optional[str] = None,
+
+        fundation : Optional[str] = None,
+        hardcoded : Optional[Dict] = None,
+
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
+    """
+    Docstring for hardcode_performance_monthly_values
     
+    :param dataframe: Description
+    :type dataframe: Optional[pl.DataFrame]
+    :param md5: Description
+    :type md5: Optional[str]
+    :param fundation: Description
+    :type fundation: Optional[str]
+    :param hardcoded: Description
+    :type hardcoded: Optional[Dict]
+    :return: Description
+    :rtype: Tuple[DataFrame | None, str | None]
+    """
+    if dataframe is None or dataframe.is_empty() :
+        return dataframe, md5
+    
+    fundation = FUND_HV if fundation is None else fundation
+    hardcoded = PERF_HARDCODED_VALUES if hardcoded is None else hardcoded
+
+    entries = hardcoded.get(fundation)
+    out = dataframe
+
+    for entry in entries :
+
+        year = entry.get("Year")
+        month = entry.get("Month")
+        value = entry.get("Value")
+
+        if year is None or month is None or value is None :
+            continue
+
+        year = int(year)
+        new_value = float(value)
+
+        if month not in out.columns or "Total" not in out.columns :
+            continue
+
+        # Compute delta = new - old
+        out = out.with_columns(
+            
+            (
+                pl.when(pl.col("Year") == year)
+                  .then(new_value - pl.col(month))
+                  .otherwise(0.0)
+            ).alias("__delta__")
+        
+        )
+
+        # Replace month value
+        out = out.with_columns(
+        
+            pl.when(pl.col("Year") == year)
+              .then(pl.lit(new_value))
+              .otherwise(pl.col(month))
+              .alias(month)
+        
+        )
+
+        # Adjust Total
+        out = out.with_columns((pl.col("Total") + pl.col("__delta__")).alias("Total")).drop("__delta__")
+
+    return out, md5
+

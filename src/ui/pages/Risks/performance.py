@@ -29,7 +29,7 @@ from src.core.data.subred import *
 from src.core.data.nav import (
     read_nav_estimate_by_fund, rename_nav_estimate_columns, estimated_gross_performance,
     compute_monthly_returns, compute_mv_change_by_dates, portfolio_allocation_analysis,
-    get_estimated_nav_df_by_date, gav_performance_normalized_base_100
+    get_estimated_nav_df_by_date, gav_performance_normalized_base_100, hardcode_performance_monthly_values
 )
 from src.core.data.volatility import (
     read_realized_vol_by_dates, compute_realized_vol_by_dates, compute_annualized_realized_vol,
@@ -99,10 +99,10 @@ def estimated_gross_perf_section (
 
     month_cols = [c for c in dataframe.columns if c not in ["Year"]]
     dataframe, md5 = calculate_total_n_rv_estimated_perf(dataframe, md5, fundation, month_cols)
- 
+    dataframe, md5 = hardcode_performance_monthly_values(dataframe, md5, fundation)
+
     month_cols = month_cols + ["Total", "RV"]
     dataframe = format_numeric_columns_to_string(dataframe, month_cols)
-
     styler  = colorize_dataframe_positive_negatif_vals(dataframe, month_cols)
 
     st.dataframe(styler)

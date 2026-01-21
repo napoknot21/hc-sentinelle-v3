@@ -299,14 +299,21 @@ SUBRED_BOOKS_FUNDS = {
 
 PERF_HARDCODED_VALUES = {
 
-    os.getenv("FUND_HV") : {
+    os.getenv("FUND_HV") : [
+        
+        {
+            "Year" : os.getenv("PERF_YEAR_HARDCODED_VALUE"),
+            "Month" : os.getenv("PERF_MONTH_HARDCODED_VALUE"),
+            "Value" : os.getenv("PERF_VALUE_HARDCODED_VALUE"),
+        },
 
-        "Year" : os.getenv("PERF_YEAR_HARDCODED_VALUE"),
-        "Month" : os.getenv("PERF_MONTH_HARDCODED_VALUE"),
-        "Value" : os.getenv("PERF_VALUE_HARDCODED_VALUE"),
-
-    }
-
+        {
+            "Year" : os.getenv("PERF_YEAR_HARDCODED_VALUE_2"),
+            "Month" : os.getenv("PERF_MONTH_HARDCODED_VALUE_2"),
+            "Value" : os.getenv("PERF_VALUE_HARDCODED_VALUE_2"),
+        },
+        
+    ]
 }
 
 
