@@ -106,7 +106,6 @@ def asset_class_cascade_by_date (
     return _dataframe, md5, real_date
 
 
-
 def tarf_visualizer_by_date (
         
         _dataframe : Optional[pl.DataFrame] = None,
@@ -147,7 +146,6 @@ def tarf_visualizer_by_date (
     print(df_grouped)
 
     return df_grouped, md5, real_date
-
 
 
 def find_most_recent_file_by_date (
@@ -215,35 +213,6 @@ def find_most_recent_file_by_date (
         return best_global_name, key_g[0]
 
     return None, None
-    
-
-def _merge_all_overrides_schemas (
-        
-        tarf_schema : Optional[Dict] = None,
-        fx_schema :  Optional[Dict] = None,
-        tail_schema : Optional[Dict] = None,
-
-    ) -> Optional[Dict] :
-    """
-    Docstring for _merge_all_overrides_schemas
-    
-    :param tarf_schema: Description
-    :type tarf_schema: Optional[Dict]
-    :param fx_schema: Description
-    :type fx_schema: Optional[Dict]
-    :param tail_schema: Description
-    :type tail_schema: Optional[Dict]
-    """
-    tarf_schema = SCREENERS_COLUMNS_TARF if tarf_schema is None else tarf_schema
-    fx_schema = SCREENERS_COLUMNS_FX if fx_schema is None else fx_schema
-    tail_schema = SCREENERS_COLUMNS_TAIL if tail_schema is None else tail_schema
-
-    schema_overrides = tarf_schema.copy()
-    schema_overrides.update(fx_schema)
-    schema_overrides.update(tail_schema)
-
-    return schema_overrides
-
 
 
 

@@ -1083,18 +1083,20 @@ TRADE_RECAP_RAW_FILE_REGEX = re.compile(TRADE_RECAP_RAW_FILE_REGEX_PATTERN, re.I
 
 TRADE_RECAP_MIN_COLUMNS = {
 
+    "tradeLegId" : pl.Int64, 
     "tradeId" : pl.Int64,
-    "tradeDescription" : pl.Utf8,
-    "tradeName" : pl.Utf8,
-    "tradeType" : pl.Utf8,
     "assetClass" : pl.Utf8,
+    "tradeType" : pl.Utf8,
+    "tradeDescription" : pl.Utf8,
+    "tradeLegCode" : pl.Utf8,
+    "tradeName" : pl.Utf8,
     "bookId": pl.Int64,
     "bookName" : pl.Utf8,
     "counterparty" : pl.Utf8,
     "creationTime" : pl.Utf8,
+    "instrument.instrumentType" : pl.Utf8,
     "originatingAction" : pl.Utf8,
-    "originatingInstrumentType" : pl.Utf8,
-
+    #"originatingInstrumentType" : pl.Utf8,
 
 }
 

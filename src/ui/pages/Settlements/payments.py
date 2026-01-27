@@ -85,9 +85,10 @@ def input_payment_section (nb_payments : int = 1) :
 
             df, md5 = load_beneficiaries_db(UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_BENECIFIARY_SHEET_NAME, PAYMENTS_BENEFICIARY_COLUMNS)
             row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, market, currency)
-            print(row)
+            #print(row)
+            st.write(row)
             if row is not None :
-                swift_def, _, swift_ben_def, iban_def = row
+                _, swift_def, _, swift_ben_def, iban_def = row
             
             swift_bank, iban, swift_benif = swift_iban_section(swift_def, iban_def, swift_ben_def, number_order=i+1)
 

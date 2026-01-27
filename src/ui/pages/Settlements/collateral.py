@@ -90,7 +90,7 @@ def input_collateral_section (nb_payments : int = 1) :
             row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, "Collateral Management", currency)
             st.warning(row)
             if row is not None :
-                swift_def, _, swift_ben_def, iban_def = row
+                _, swift_def, _, swift_ben_def, iban_def = row
             
             swift_bank, iban, swift_benif = swift_iban_section(swift_def, iban_def, swift_ben_def, number_order=i+1)
             

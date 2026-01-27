@@ -325,15 +325,26 @@ def iban_field (
     key_iban = f"iban_{number_order}"
     key_default = f"{key_iban}_default"
 
+    if key_iban not in st.session_state :
+
+        st.session_state[key_iban] = iban_default or ""
+        st.session_state[key_default] = iban_default
+
     # If the default changed → update session_state
     last_default = st.session_state.get(key_default)
 
-    if iban_default is not None and last_default != iban_default:
+    if iban_default is not None and last_default != iban_default :
+
+        user_has_edited = (st.session_state.get(key_iban, "") != (last_default or ""))
+
+        if not user_has_edited :
+            st.session_state[key_iban] = iban_default or ""
+        
+        st.session_state[key_default] = iban_default
         st.session_state[key_iban] = iban_default
 
-
     # Render widget (session_state provides the value)
-    res = st.text_input("IBAN", key=key_iban)
+    res = st.text_input("IBAN", key=key_iban, max_chars=max_length)
 
     return res
 
