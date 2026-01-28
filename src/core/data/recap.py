@@ -281,39 +281,55 @@ def apply_user_review_defaults(df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 
-def apply_otc_fx_logic_to_trade (
-        
-        dataframe : Optional[pl.DataFrame],
-        md5 : Optional[str] = None,
+def apply_otc_fx_logic_to_trade(
+    dataframe: Optional[pl.DataFrame],
+    md5: Optional[str] = None,
+    columns: Optional[List] = None,
+) -> Optional[pl.DataFrame]:
 
-        columns : Optional[List] = None,
-    
-    ) -> Optional[pl.DataFrame] :
-    """
-    Docstring for apply_otc_fx_logic_to_trade
-    
-    :param dataframe: Description
-    :type dataframe: Optional[pl.DataFrame]
-    :param md5: Description
-    :type md5: Optional[str]
-    """
     columns = ["Label", "assetClass", "tradeLegCode", "tradeDescription"] if columns is None else columns
 
-    if dataframe is None or dataframe.is_empty() :
+    if dataframe is None or dataframe.is_empty():
         return None
-    
-    for col in columns :
 
-        if col not in dataframe.columns :
-            raise ValueError(f"Missing required column: {col}")
+    # --- Ensure Label exists
+    if "Label" not in dataframe.columns:
+        dataframe = dataframe.with_columns(pl.lit("").cast(pl.Utf8).alias("Label"))
 
-    # Select FX Trades
-    ac = pl.col("assetClass").fill_null("").str.to_uppercase()
+    # ✅ Apply prefill ONLY if the whole Label column is empty (null/"")
+    label_is_empty_expr = (
+        pl.col("Label")
+        .fill_null("")
+        .cast(pl.Utf8)
+        .str.strip_chars()
+        == ""
+    )
+
+    has_any_label = dataframe.select((~label_is_empty_expr).any()).item()
+    if has_any_label:
+        return dataframe
+
+    # --- Make missing columns safe (Complete view may not have them)
+    if "assetClass" not in dataframe.columns:
+        # can't classify -> leave Label as-is (still empty) or set default
+        return dataframe
+
+    if "tradeLegCode" not in dataframe.columns:
+        dataframe = dataframe.with_columns(pl.lit("").cast(pl.Utf8).alias("tradeLegCode"))
+
+    if "tradeDescription" not in dataframe.columns:
+        dataframe = dataframe.with_columns(pl.lit("").cast(pl.Utf8).alias("tradeDescription"))
+
+    # --- FX / OTC detection rule
+    ac = pl.col("assetClass").fill_null("").cast(pl.Utf8).str.to_uppercase()
 
     text_col = (
         pl.concat_str(
-            [pl.col("tradeLegCode").fill_null(""), pl.col("tradeDescription").fill_null("")],
-            separator=" "
+            [
+                pl.col("tradeLegCode").fill_null("").cast(pl.Utf8),
+                pl.col("tradeDescription").fill_null("").cast(pl.Utf8),
+            ],
+            separator=" ",
         )
         .str.to_uppercase()
     )
@@ -323,13 +339,11 @@ def apply_otc_fx_logic_to_trade (
         | ((ac == "EQ") & ~text_col.str.contains(r"\bLISTED\b"))
     )
 
-
-    df_fx = dataframe.with_columns(
-
+    df_out = dataframe.with_columns(
         pl.when(is_otc)
-          .then(pl.lit("OTC"))
-          .otherwise(pl.lit("FX"))
-          .alias("Label")
+        .then(pl.lit("OTC"))
+        .otherwise(pl.lit("FX"))
+        .alias("Label")
     )
 
-    return df_fx
+    return df_out
