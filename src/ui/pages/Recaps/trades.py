@@ -18,53 +18,55 @@ from src.core.data.recap import (
     apply_otc_fx_logic_to_trade,
 )
 
-# ============================================================
-# Helpers
-# ============================================================
 
-def split_master_recap_otc_fx(
-    df: pl.DataFrame,
-    label_col: str = "Label",
-    drop_cols: Optional[List[str]] = None,
-) -> Tuple[pl.DataFrame, pl.DataFrame]:
+def split_master_recap_otc_fx (
+        
+        df: pl.DataFrame,
+        label_col: str = "Label",
+        drop_cols: Optional[List[str]] = None,
+    
+    ) -> Tuple[pl.DataFrame, pl.DataFrame] :
     """
     Split df into OTC and FX based on Label, and drop helper cols.
     Other labels are ignored.
     """
-    if drop_cols is None:
+    if drop_cols is None :
         drop_cols = ["Select", "Label"]
 
-    if df is None or df.is_empty():
+    if df is None or df.is_empty() :
         return pl.DataFrame(), pl.DataFrame()
 
-    if label_col not in df.columns:
+    if label_col not in df.columns :
         raise ValueError(f"Missing column: {label_col}")
 
     df_otc = df.filter(pl.col(label_col) == "OTC")
     df_fx = df.filter(pl.col(label_col) == "FX")
 
-    for c in drop_cols:
-        if c in df_otc.columns:
+    for c in drop_cols :
+
+        if c in df_otc.columns :
             df_otc = df_otc.drop(c)
-        if c in df_fx.columns:
+        
+        if c in df_fx.columns :
             df_fx = df_fx.drop(c)
 
     return df_otc, df_fx
 
 
-def drop_temp_cols_master(df: pl.DataFrame, drop_cols: Optional[List[str]] = None) -> pl.DataFrame:
+def drop_temp_cols_master (df : pl.DataFrame, drop_cols: Optional[List[str]] = None) -> pl.DataFrame :
     """
     Drop temp columns from master after validation (Select, Label).
     """
-    if df is None or df.is_empty():
+    if df is None or df.is_empty() :
         return pl.DataFrame()
 
     drop_cols = ["Select", "Label"] if drop_cols is None else drop_cols
     existing = [c for c in drop_cols if c in df.columns]
+    
     return df.drop(existing) if existing else df
 
 
-def polars_to_excel_bytes(df: pl.DataFrame, sheet_name: str = "Data") -> bytes:
+def polars_to_excel_bytes (df : pl.DataFrame, sheet_name: str = "Data") -> bytes :
     """
     Convert a Polars DataFrame to an Excel file in-memory.
     Replace this with your formatting/export script later if needed.
@@ -82,32 +84,40 @@ def _build_row_key_expr(cols: List[str]) -> pl.Expr:
     return pl.concat_str([pl.col(c).fill_null("").cast(pl.Utf8) for c in cols], separator="|")
 
 
-def apply_labels_from_light_to_complete(
-    df_light: pl.DataFrame,
-    df_complete: pl.DataFrame,
-    label_col: str = "Label",
-    select_col: str = "Select",
-) -> pl.DataFrame:
+def apply_labels_from_light_to_complete (
+        
+        df_light: pl.DataFrame,
+        df_complete: pl.DataFrame,
+
+        label_col: str = "Label",
+        select_col: str = "Select",
+    
+    ) -> pl.DataFrame :
     """
     Transfer (Label, Select) from df_light to df_complete using a key built from shared columns.
     Best-effort: if there are duplicates on the key, keep last.
     """
-    if df_light is None or df_light.is_empty():
+    if df_light is None or df_light.is_empty() :
         return df_complete
-    if df_complete is None or df_complete.is_empty():
+    
+    if df_complete is None or df_complete.is_empty() :
         return df_complete
 
     common = [c for c in df_light.columns if c in df_complete.columns and c not in (label_col, select_col)]
-    if not common:
+    
+    if not common :
+
         # fallback: align by row order (risky)
         n = min(df_light.height, df_complete.height)
         light_slice = df_light.head(n).select([label_col, select_col])
+        
         comp_slice = df_complete.head(n).with_columns(
             [
                 light_slice.get_column(label_col).alias(label_col),
                 light_slice.get_column(select_col).alias(select_col),
             ]
         )
+
         return pl.concat([comp_slice, df_complete.slice(n, df_complete.height - n)], how="vertical")
 
     k_expr = _build_row_key_expr(common)
@@ -134,27 +144,34 @@ def apply_labels_from_light_to_complete(
     return out
 
 
-# ============================================================
-# Main entry
-# ============================================================
 
-def trades() -> None:
+
+def trades () -> None :
     """
     Main entry
     """
     filename, date = date_history_section()
 
-    if filename is None or date is None:
+    if filename is None or date is None :
         return None
 
     st.divider()
 
     edit_master_trade_recap_section(date, filename)
 
+
     return None
 
 
-def date_history_section(format: Optional[str] = "%Y_%m_%d") -> Tuple[Optional[str], Optional[str | dt.datetime | dt.date]]:
+def date_history_section (format : Optional[str] = "%Y_%m_%d") -> Tuple[Optional[str], Optional[str | dt.datetime | dt.date]] :
+    """
+    Docstring for date_history_section
+    
+    :param format: Description
+    :type format: Optional[str]
+    :return: Description
+    :rtype: Tuple[str | None, str | datetime | date | None]
+    """
     date = st.date_input("Choose a date")
 
     if st.button("Run Trade Recap"):
@@ -165,35 +182,36 @@ def date_history_section(format: Optional[str] = "%Y_%m_%d") -> Tuple[Optional[s
     date = str_to_date(date)
     real_date = str_to_date(real_date, format)
 
-    if date != real_date:
-        st.warning("No trade Recap generated for the selected Date")
+    if date != real_date :
+
+        st.warning("[-] No trade Recap generated for the selected Date")
         return None, None
 
-    st.warning(f"Trade recap already generated for the selected date: {filename}")
+    st.warning(f"[+] Trade recap already generated for the selected date: {filename}")
+    
     return filename, real_date
 
 
-# ============================================================
-# UI + Logic
-# ============================================================
 
-def edit_master_trade_recap_section(
-    date: Optional[str | dt.datetime | dt.date] = None,
-    filename: Optional[str] = None,
-    view: Optional[bool] = True,
-) -> None:
+def edit_master_trade_recap_section (
+        
+        date: Optional[str | dt.datetime | dt.date] = None,
+        filename: Optional[str] = None,
+        
+        view: Optional[bool] = True,
+    
+    ) -> None:
     """
     - Edit mode: user can edit Select + Label.
     - Validate mode: freeze master (drop Select/Label), split OTC/FX.
       Display: light.
       Export/email: complete (all columns).
     """
-
     view = view_selector_section()  # True => Light, False => Complete
 
     meta = (str(date), str(filename))
     validated_key = f"trade_recap_validated::{meta[0]}::{meta[1]}"
-
+    """
     # reset state when date/filename changes
     if st.session_state.get("trade_recap_meta") != meta:
         st.session_state["trade_recap_meta"] = meta
@@ -218,14 +236,17 @@ def edit_master_trade_recap_section(
         st.session_state.pop("trade_recap_editor_complete", None)
         st.session_state.pop("trade_recap_label_choice_light", None)
         st.session_state.pop("trade_recap_label_choice_complete", None)
-
+    """
     # load the chosen view into cache
     cache_key = "trade_recap_df_light" if view else "trade_recap_df_complete"
-    if st.session_state.get(cache_key) is None:
-        st.session_state[cache_key] = prepare_master_trade_recap_section(date, filename, view)
+
+    if st.session_state.get(cache_key) is None :
+        st.session_state[cache_key] = prepare_master_trade_recap_section(None, None, date, filename, view)
 
     df = st.session_state.get(cache_key)
-    if df is None or df.is_empty():
+
+    if df is None or df.is_empty() :
+
         st.info("No table loaded yet.")
         return None
 
@@ -234,7 +255,8 @@ def edit_master_trade_recap_section(
     # ============================================================
     # ✅ FROZEN MODE
     # ============================================================
-    if is_validated:
+    if is_validated :
+
         st.success("✅ Master recap validated — frozen.")
 
         # display (light)
@@ -357,20 +379,24 @@ def edit_master_trade_recap_section(
         st.success("Applied (Label set on selected rows).")
         st.rerun()
 
-    # ✅ Validate button
-    if st.button("Validate Master Recap", type="primary"):
+    # Validate button
+    if st.button("Validate Master Recap", type="primary") :
 
         df_current = st.session_state.get(cache_key)
-        if df_current is None or df_current.is_empty():
+
+        if df_current is None or df_current.is_empty() :
+
             st.warning("Nothing to validate.")
             return None
 
         # ALWAYS load complete for export/email
-        if st.session_state.get("trade_recap_df_complete") is None:
-            st.session_state["trade_recap_df_complete"] = prepare_master_trade_recap_section(date, filename, view=False)
+        if st.session_state.get("trade_recap_df_complete") is None :
+            st.session_state["trade_recap_df_complete"] = prepare_master_trade_recap_section(df_current, None, date, filename, view=False)
 
         df_complete = st.session_state.get("trade_recap_df_complete")
-        if df_complete is None or df_complete.is_empty():
+
+        if df_complete is None or df_complete.is_empty() :
+
             st.warning("Complete view is empty — cannot export.")
             return None
 
@@ -397,23 +423,39 @@ def edit_master_trade_recap_section(
 
         st.session_state[validated_key] = True
         st.success("Master recap validated. Display=light, Export/Email=complete.")
-        st.rerun()
+
+        #st.rerun()
 
     return None
 
 
-def prepare_master_trade_recap_section(
-    date: Optional[str | dt.datetime | dt.date] = None,
-    filename: Optional[str] = None,
-    view: Optional[bool] = True,
-) -> pl.DataFrame:
-    dataframe, md5, _ = read_trade_recap_by_date(date, filename, light=view)
+def prepare_master_trade_recap_section (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        date: Optional[str | dt.datetime | dt.date] = None,
+        filename: Optional[str] = None,
+
+        view: Optional[bool] = True,
+    
+    ) -> pl.DataFrame :
+    """
+    Docstring for prepare_master_trade_recap_section
+    
+    :param date: Description
+    :type date: Optional[str | dt.datetime | dt.date]
+    :param filename: Description
+    :type filename: Optional[str]
+    :param view: Description
+    :type view: Optional[bool]
+    :return: Description
+    :rtype: DataFrame
+    """
+    dataframe, md5, _ = read_trade_recap_by_date(date, filename, light=view) if dataframe is None else (dataframe, md5, date)
 
     if dataframe is None or dataframe.is_empty():
         return pl.DataFrame()
-
-    # dataframe = clean_structure_from_dataframe(dataframe, md5)
-    # dataframe = apply_user_review_defaults(dataframe)
 
     if "Select" not in dataframe.columns:
         dataframe = dataframe.with_columns(pl.lit(False).alias("Select"))
@@ -429,20 +471,25 @@ def prepare_master_trade_recap_section(
     ).select(["Select", "Label"] + [c for c in dataframe.columns if c not in ("Select", "Label")])
 
     dataframe = apply_otc_fx_logic_to_trade(dataframe)
+
     return dataframe
 
 
-def view_selector_section(
-    views: Optional[List[str]] = None,
-    label_view: Optional[str] = None,
-    key_view: Optional[str] = None,
-) -> bool:
+def view_selector_section (
+        
+        views: Optional[List[str]] = None,
+        label_view: Optional[str] = None,
+        key_view: Optional[str] = None,
+
+    ) -> bool :
     """
     View selector (Light vs Complete)
     """
     views = ["Light", "Complete"] if views is None else views
     label_view = "Select a view" if label_view is None else label_view
+    
     key_view = "Recaps_Trades_view_selector" if key_view is None else key_view
 
     v = st.selectbox(label_view, views, key=key_view)
+    
     return v == views[0]

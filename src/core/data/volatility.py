@@ -148,13 +148,16 @@ def compute_annualized_realized_vol (
     return round(float(annualized_vol), 2)
 
 
-def calculate_total_n_rv_estimated_perf (
+def calculate_rv_estimated_perf (
         
         dataframe : Optional[pl.DataFrame] = None,
         md5 : Optional[str] = None,
 
         fund : Optional[str] = None,
         columns : Optional[List[str]] = None,
+
+        annualize : bool = True,
+        min_months : int = 2
 
     ) :
     """
@@ -166,20 +169,48 @@ def calculate_total_n_rv_estimated_perf (
     :type md5: Optional[str]
     """
     fund = FUND_HV if fund is None else fund
+
     columns = [c for c in dataframe.columns if c != "Year"] if columns is None else columns
+
+    # keep only month columns
+    columns = [c for c in columns if c not in ["Total", "RV"]]
 
     dataframe = dataframe.with_columns(
 
-        pl.sum_horizontal(
+
+        pl.concat_list(
+
             [
-                pl.col(c).cast(pl.Float64).fill_null(0).fill_nan(0)
+                pl.when(pl.col(c).is_nan())
+                  .then(pl.lit(None))
+                  .otherwise(pl.col(c))
                 for c in columns
             ]
+
         )
-        .alias("Total")
+        .list.eval(pl.element().drop_nulls())
+        .alias("rv_values")
 
     )
 
+    rv_expr = pl.col("rv_values").list.std()
+
+    if annualize :
+        rv_expr = rv_expr * (12.0 ** 0.5)
+
+    dataframe = dataframe.with_columns(
+
+        pl.when(pl.col("rv_values").list.len() >= min_months)
+          .then(rv_expr)
+          .otherwise(pl.lit(None))
+          .alias("RV")
+
+    )
+
+    dataframe = dataframe.drop("rv_values")
+
+    return dataframe, md5
+    """
     years = dataframe.get_column("Year").to_list()
     rv_map: dict[int, float] = {}
     
@@ -207,6 +238,7 @@ def calculate_total_n_rv_estimated_perf (
     )
 
     return dataframe, md5
+    """
 
 
 

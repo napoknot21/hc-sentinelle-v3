@@ -574,6 +574,7 @@ def compute_monthly_returns (
     :param md5: Description
     :type md5: Optional[str]
     """
+
     fund = FUND_HV if fund is None else fund
     dataframe, md5 = estimated_gross_performance(fund=fund, columns_fund=columns_fund) if dataframe is None else (dataframe, md5)
 
@@ -593,8 +594,44 @@ def compute_monthly_returns (
 
     )
 
-    monthly = monthly.with_columns(pl.col("last_nav").shift(1).alias("prev_last_nav"))
+    # --- previous group values (raw) ---
+    monthly = monthly.with_columns(
 
+        pl.col(year_month[0]).shift(1).alias("prev_year"),
+        pl.col(year_month[1]).shift(1).alias("prev_month"),
+        pl.col("last_nav").shift(1).alias("prev_last_nav_raw"),
+
+    )
+
+    # --- expected (M-1) ---
+    monthly = monthly.with_columns(
+
+        pl.when(pl.col(year_month[1]) == 1)
+          .then(pl.col(year_month[0]) - 1)
+          .otherwise(pl.col(year_month[0]))
+          .alias("prev_year_expected"),
+
+        pl.when(pl.col(year_month[1]) == 1)
+          .then(pl.lit(12))
+          .otherwise(pl.col(year_month[1]) - 1)
+          .alias("prev_month_expected"),
+
+    )
+
+    # --- keep prev_last_nav only if the previous group is STRICTLY (M-1) ---
+    monthly = monthly.with_columns(
+
+        pl.when(
+            (pl.col("prev_year") == pl.col("prev_year_expected")) &
+            (pl.col("prev_month") == pl.col("prev_month_expected"))
+        )
+        .then(pl.col("prev_last_nav_raw"))
+        .otherwise(pl.lit(None))
+        .alias("prev_last_nav")
+
+    )
+
+    # --- start nav: last(M-1) if exists, else first(M) ---
     monthly = monthly.with_columns(
 
         pl.when(pl.col("prev_last_nav").is_not_null())
@@ -604,6 +641,7 @@ def compute_monthly_returns (
 
     )
 
+    # valid month: either >=2 points in M, or 1 point in M but we have last(M-1)
     valid_month = (
 
         (pl.col("rows_in_month") >= 2) |
@@ -654,29 +692,106 @@ def compute_monthly_returns (
         rows.append(row)
 
     perf_df = pl.DataFrame(rows).sort("Year")
+    print("Hello Xorld")
+    print(perf_df)
 
+    return perf_df, md5
+
+
+def compute_yearly_returns (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        fund :  Optional[str] = None,
+        columns_fund : Optional[Dict] = None,
+
+        date_col : str = "date",
+        year_col : str = "Year",
+
+    ) :
     """
-    # Hardcoding a exceptional value
-    hardcoded = PERF_HARDCODED_VALUES if hardcoded is None else hardcoded
-    hardcoded_fund = hardcoded.get(fund)
+    """
+    fund = FUND_HV if fund is None else fund
 
-    if hardcoded_fund is None :
-        return perf_df, md5
+    columns_fund = NAV_FUNDS_COLUMNS if columns_fund is None else columns_fund
+    nav_col = columns_fund.get(fund)
 
-    value = (-1.0) * float(hardcoded.get(fund).get("Value"))
+    dataframe, md5 = compute_monthly_returns(None, None, fund, columns_fund) if dataframe is None else (dataframe, md5)
+    print("Lecture")
+    print(dataframe)
+    source_df, source_md5 = estimated_gross_performance(None, None, fund, columns_fund)
+    print("Lecture 2")
+    print(source_df)
+    
+    source_df = (
 
-    perf_df = perf_df.with_columns(
-
-        pl
-        .when(pl.col("Year") == int(hardcoded.get(fund).get("Year")))
-        .then(pl.lit(value))
-        .otherwise(pl.col(hardcoded.get(fund).get("Month")))
-        .alias(hardcoded.get(fund).get("Month"))
+        source_df
+        .sort(date_col)
+        .with_columns(pl.col(date_col).dt.year().alias(year_col))
 
     )
-    """
-    
-    return perf_df, md5
+
+    yearly = (
+
+        source_df
+        .group_by(year_col)
+        .agg(
+            pl.count().alias("rows_in_year"),
+            pl.col(nav_col).first().alias("first_nav"),
+            pl.col(nav_col).last().alias("last_nav"),
+        )
+        .sort(year_col)
+
+    )
+
+    yearly = yearly.with_columns(
+
+        pl.col(year_col).shift(1).alias("prev_year"),
+        pl.col("last_nav").shift(1).alias("prev_last_nav_raw"),
+
+    )
+
+    yearly = yearly.with_columns(
+
+        pl.when(pl.col("prev_year") == (pl.col(year_col) - 1))
+          .then(pl.col("prev_last_nav_raw"))
+          .otherwise(pl.lit(None))
+          .alias("prev_last_nav")
+
+    )
+
+    yearly = yearly.with_columns(
+
+        pl.when(pl.col("prev_last_nav").is_not_null())
+          .then(pl.col("prev_last_nav"))
+          .otherwise(pl.col("first_nav"))
+          .alias("start_nav")
+
+    )
+
+    valid_year = (
+
+        (pl.col("rows_in_year") >= 2) |
+        ((pl.col("rows_in_year") == 1) & pl.col("prev_last_nav").is_not_null())
+
+    )
+
+    yearly = yearly.with_columns(
+
+        pl.when(valid_year)
+          .then(((pl.col("last_nav") / pl.col("start_nav")) - 1.0) * 100.0)
+          .otherwise(pl.lit(None))
+          .alias("Total")
+
+    )
+
+    yearly = yearly.select([pl.col(year_col).alias("Year"), "Total"])
+
+    dataframe = dataframe.join(yearly, on="Year", how="left")
+
+    return dataframe, md5
+
 
 
 def build_performance_dataframe (
@@ -808,7 +923,7 @@ def hardcode_performance_monthly_values (
 
     entries = hardcoded.get(fundation)
     out = dataframe
-
+    """
     for entry in entries :
 
         year = entry.get("Year")
@@ -847,6 +962,6 @@ def hardcode_performance_monthly_values (
 
         # Adjust Total
         out = out.with_columns((pl.col("Total") + pl.col("__delta__")).alias("Total")).drop("__delta__")
-
+    """
     return out, md5
 
