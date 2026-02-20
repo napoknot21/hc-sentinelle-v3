@@ -9,7 +9,7 @@ from typing import Optional
 from src.utils.formatters import date_to_str, str_to_date
 
 #from src.core.api.simm import *
-from src.core.data.simm import get_simm_by_date, get_simm_history
+from src.core.data.simm import get_simm_by_date, get_simm_history, rename_ancien_simm_counterparties
 from src.core.data.nav import read_history_nav_from_excel
 
 from src.ui.components.text import center_h2
@@ -73,10 +73,15 @@ def date_simm_bar_section (
     
     """
     dataframe, md5 = get_simm_by_date(date, fundation)
-
     date = date_to_str(date)
+
     fig = simm_ctpy_im_vm_chart(dataframe, md5, date, "Counterparty", ("IM", "MV"))
 
+    if fig is None :
+    
+        st.warning(f"No SIMM data available for {date} and fund {fundation}.")
+        return 
+    
     st.plotly_chart(fig, use_container_width=True)
     
     return None
@@ -119,6 +124,8 @@ def im_over_time_section (
     dataframe = dataframe.filter(pl.col("Date") <= date)
 
     date = date_to_str(date)
+    dataframe = rename_ancien_simm_counterparties(dataframe)
+
     fig = simm_over_time_chart(
     
         dataframe, md5,
@@ -145,6 +152,8 @@ def mv_over_time_section (
     dataframe = dataframe.filter(pl.col("Date") <= date)
 
     date = date_to_str(date)
+    dataframe = rename_ancien_simm_counterparties(dataframe)
+
     fig = simm_over_time_chart(
     
         dataframe, md5,

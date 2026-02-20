@@ -96,7 +96,6 @@ def input_payment_section (i : int = 0) :
 
     if row is not None :
         bank_def, swift_def, benif_def, swift_ben_def, iban_def = row
-
     bank, swift_bank, benif, swift_benif  = bank_benificiary_section(bank_def, swift_def, benif_def, swift_ben_def, order_number=i+1)
 
     iban = iban_section(iban_def, order_number=i+1)

@@ -282,68 +282,82 @@ def apply_user_review_defaults(df: pl.DataFrame) -> pl.DataFrame:
 
 
 def apply_otc_fx_logic_to_trade(
-    dataframe: Optional[pl.DataFrame],
-    md5: Optional[str] = None,
-    columns: Optional[List] = None,
-) -> Optional[pl.DataFrame]:
+        
+        dataframe: Optional[pl.DataFrame],
+        md5: Optional[str] = None,
+        columns: Optional[List] = None,
+        
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]]:
+    """
+    Applies OTC/FX/LISTED labelling logic to trades based on asset class and instrument type.
 
-    columns = ["Label", "assetClass", "tradeLegCode", "tradeDescription"] if columns is None else columns
+    Rules:
+        - FX + instrument type in (Spot, Forward, Swap) → "FX", else → "OTC"
+        - EQ + trade description or instrument type contains "LISTED" → "LISTED", else → "OTC"
+        - COMMODITY → "OTC"
+        - Else → "LISTED"
 
+    :param dataframe: Input Polars DataFrame
+    :param md5: Optional md5 hash passthrough
+    :param columns: Optional list of columns to use (default applied if None)
+    :return: Tuple of (labelled DataFrame or None, md5 or None)
+    """
     if dataframe is None or dataframe.is_empty():
-        return None
+        return dataframe, md5
 
-    # --- Ensure Label exists
+    # --- Guard: Label must exist
     if "Label" not in dataframe.columns:
         dataframe = dataframe.with_columns(pl.lit("").cast(pl.Utf8).alias("Label"))
 
-    # ✅ Apply prefill ONLY if the whole Label column is empty (null/"")
-    label_is_empty_expr = (
-        pl.col("Label")
-        .fill_null("")
-        .cast(pl.Utf8)
-        .str.strip_chars()
-        == ""
-    )
-
-    has_any_label = dataframe.select((~label_is_empty_expr).any()).item()
-    if has_any_label:
-        return dataframe
-
-    # --- Make missing columns safe (Complete view may not have them)
+    # --- Guard: assetClass must exist
     if "assetClass" not in dataframe.columns:
-        # can't classify -> leave Label as-is (still empty) or set default
-        return dataframe
+        print("\n[-] No Asset Class present in the dataframe, skipping...")
+        return dataframe, md5
 
-    if "tradeLegCode" not in dataframe.columns:
-        dataframe = dataframe.with_columns(pl.lit("").cast(pl.Utf8).alias("tradeLegCode"))
+    # --- Skip if any label is already populated
+    label_is_populated = (
+        pl.col("Label").fill_null("").cast(pl.Utf8).str.strip_chars() != ""
+    )
+    if dataframe.select(label_is_populated.any()).item():
+        return dataframe, md5
 
-    if "tradeDescription" not in dataframe.columns:
-        dataframe = dataframe.with_columns(pl.lit("").cast(pl.Utf8).alias("tradeDescription"))
+    # --- Safely resolve optional columns
+    for col_name in ("tradeLegCode", "tradeDescription"):
+        if col_name not in dataframe.columns:
+            dataframe = dataframe.with_columns(pl.lit("").cast(pl.Utf8).alias(col_name))
 
-    # --- FX / OTC detection rule
-    ac = pl.col("assetClass").fill_null("").cast(pl.Utf8).str.to_uppercase()
+    # --- Resolve instrument type (prefer instrument.instrumentType, fallback to fields.instrumentType)
+    if "instrument.instrumentType" in dataframe.columns:
+        raw_instrument_type = pl.col("instrument.instrumentType")
+    elif "fields.instrumentType" in dataframe.columns:
+        raw_instrument_type = pl.col("fields.instrumentType")
+    else:
+        raw_instrument_type = pl.lit("")
 
-    text_col = (
-        pl.concat_str(
-            [
-                pl.col("tradeLegCode").fill_null("").cast(pl.Utf8),
-                pl.col("tradeDescription").fill_null("").cast(pl.Utf8),
-            ],
-            separator=" ",
-        )
-        .str.to_uppercase()
+    instrument_type  = raw_instrument_type.fill_null("").cast(pl.Utf8).str.to_uppercase()
+    trade_description = pl.col("tradeDescription").fill_null("").cast(pl.Utf8).str.to_uppercase()
+    ac               = pl.col("assetClass").fill_null("").cast(pl.Utf8).str.to_uppercase()
+
+    # --- Conditions
+    is_fx        = ac == "FX"
+    is_eq        = ac == "EQ"
+    is_commodity = ac == "COMMODITY"
+
+    fx_instrument = instrument_type.is_in(["SPOT", "FORWARD", "SWAP"])
+    has_listed    = (
+        trade_description.str.contains("LISTED")  # tradeDescription column
+        | instrument_type.str.contains("LISTED")  # instrument.instrumentType column (already uppercased)
     )
 
-    is_otc = (
-        ((ac == "FX") & ~text_col.str.contains(r"\b(SPOT|FORWARD|FX SWAP)\b"))
-        | ((ac == "EQ") & ~text_col.str.contains(r"\bLISTED\b"))
+    # --- Label expression (mirrors the rule image exactly)
+    label_expr = (
+        pl.when(is_fx & fx_instrument).then(pl.lit("FX"))
+          .when(is_fx & ~fx_instrument).then(pl.lit("OTC"))
+          .when(is_eq & has_listed).then(pl.lit("LISTED"))
+          .when(is_eq & ~has_listed).then(pl.lit("OTC"))
+          .when(is_commodity).then(pl.lit("OTC"))
+          .otherwise(pl.lit("LISTED"))  # default per the rules
+          .alias("Label")
     )
 
-    df_out = dataframe.with_columns(
-        pl.when(is_otc)
-        .then(pl.lit("OTC"))
-        .otherwise(pl.lit("FX"))
-        .alias("Label")
-    )
-
-    return df_out
+    return dataframe.with_columns(label_expr), md5

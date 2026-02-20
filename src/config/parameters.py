@@ -109,6 +109,14 @@ SIMM_COLUMNS = {
 SIMM_RENAME_COLUMNS : dict[str, str] = {k: v["name"] for k, v in SIMM_COLUMNS.items()}
 
 
+SIMM_MAPPING_COUNTERPARTIES = {
+
+    os.getenv("SIMM_COUNTERPARTY_GS_ANCIENT") : os.getenv("PAYMENTS_COUNTERPARTY_GS"),
+    os.getenv("SIMM_COUNTERPARTY_MS_ANCIENT") : os.getenv("PAYMENTS_COUNTERPARTY_MS"),
+    os.getenv("SIMM_COUNTERPARTY_SAXO_ANCIENT") : os.getenv("PAYMENTS_COUNTERPARTY_SAXO"),
+
+}
+
 # ---------------- FX Screeners (Tarf) ----------------
 
 
@@ -666,7 +674,7 @@ PAYMENTS_EMAIL_SUBJECT = os.getenv("PAYMENTS_EMAIL_SUBJECT")
 PAYMENTS_RAW_BODY = os.getenv("PAYMENTS_EMAIL_BODY", "")
 PAYMENTS_EMAIL_BODY = PAYMENTS_RAW_BODY.replace("\\n", "\n")
 
-PAYMENTS_DIRECTIONS = ["Pay", "Receive"]
+PAYMENTS_DIRECTIONS = ["Receive", "Pay"]
 
 PAYMENTS_BOOK_HV = os.getenv("PAYMENTS_BOOK_HV")
 PAYMENTS_BOOK_WR = os.getenv("PAYMENTS_BOOK_WR")
@@ -698,6 +706,42 @@ UBS_PAYMENTS_EXCEL_COLUMNS = [
 UBS_PAYMENTS_TYPES = ["Option Premium", "Option Exercice"]
 UBS_PAYMENTS_MARKET = ["FX", "Equity"]
 
+
+UBS_PAYMENTS_FUNDS = [
+
+    PAYMENTS_HV_FUND,
+    PAYMENTS_WR_FUND
+
+]
+
+UBS_PAYMENTS_ACCOUNT_1 = os.getenv("UBS_PAYMENTS_ACCOUNT_1")
+UBS_PAYMENTS_ACCOUNT_2 = os.getenv("UBS_PAYMENTS_ACCOUNT_2")
+
+
+UBS_PAYMENTS_ACCOUNTS = {
+
+    PAYMENTS_HV_FUND : UBS_PAYMENTS_ACCOUNT_1,
+    PAYMENTS_WR_FUND : UBS_PAYMENTS_ACCOUNT_2
+
+}
+
+UBS_PAYMENTS_DIRECTIONS = ["Buy", "Sell"]
+
+UBS_FX_PAYMENT_COLUMNS = {
+
+    "Fund Number (LUX)" : pl.Int64,
+    "Reference" : pl.Utf8,
+    "Buy/Sell" : pl.Utf8,
+    "Currency" : pl.Utf8,
+    "Nominal" : pl.Float64,
+    "Counter Currency" : pl.Utf8,
+    "Rate" : pl.Float64,
+    "Settlement Amount" : pl.Float64,
+    "Trade Date" : pl.Date,
+    "Maturity" : pl.Date,
+    "BIC Code CP" : pl.Utf8,
+
+}
 
 # ------------------ Leverages ------------------
 
@@ -964,13 +1008,13 @@ SCREENERS_COLUMNS_FX = {
 
     "Reference Spot" : pl.Float64,
     "Original Spot" : pl.Float64,
-    #"FX ForwardRate" : pl.Float64,
+    "FX ForwardRate" : pl.Float64,
     "Forward" : pl.Float64,
     "Forward Points" : pl.Float64,
 
     "Strike" : pl.Float64,
     "MV" : pl.Float64,
-    #"Base Notional" : pl.Float64,
+    "Base Notional" : pl.Float64,
     "FX Delta Base" : pl.Float64,
     
     "Trade Date" : pl.Date ,

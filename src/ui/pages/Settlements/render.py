@@ -7,6 +7,7 @@ from typing import Optional, Dict
 #from src.ui.pages.Payments.booker import booker
 from src.ui.pages.Settlements.payments import payments_process
 from src.ui.pages.Settlements.collateral import colleteral_management
+from src.ui.pages.Settlements.forex import forex
 from src.ui.pages.Settlements.booker import booker
 from src.ui.pages.Settlements.security import security
 from src.ui.pages.Settlements.display import display
@@ -18,6 +19,7 @@ payments_subpages = [
 
     {"name" : "Process Payment UBS",    "page" : payments_process,      "icon": "cash-coin"},
     {"name" : "Collateral Management",  "page" : colleteral_management, "icon" : "cash-coin"},
+    {"name" : "FX Payments",            "page" : forex,                 "icon" : "currency-dollar"},
     {"name" : "Security",               "page" : security,              "icon" : "cash-coin"},
     {"name" : "Display",                "page" : display,               "icon" : "eye"},
     {"name" : "Booker",                 "page" : booker,                "icon" : "book"},

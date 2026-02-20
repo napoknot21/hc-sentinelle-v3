@@ -420,7 +420,8 @@ def export_excel_to_pdf (
         output_filename : Optional[str] = None,
         output_dir_path : Optional[str] = None,
 
-        sheet_number : int = 0    
+        sheet_number : int = 0,
+        orientation : int = 1, # 1 for portrait, 2 for landscape
     ) :
     """
     
@@ -438,6 +439,7 @@ def export_excel_to_pdf (
         # No file existed. Error returned
         return response
     
+    output_filename = f"UBS_Payment_Instruction_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf" if output_filename is None else output_filename 
 
     output_dir_path = PAYMENTS_FILES_ABS_PATH if output_dir_path is None else output_dir_path
     os.makedirs(output_dir_path, exist_ok=True)
@@ -453,6 +455,8 @@ def export_excel_to_pdf (
             sheet = book.sheets[sheet_number]
 
             log(f"[+] Excel File successfully opened and loaded")
+
+            sheet.api.PageSetup.Orientation = orientation
 
             # Save excel workbook as pdf
             full_path = os.path.join(output_dir_path, output_filename)
@@ -658,4 +662,6 @@ def convert_ubs_collateral_management_to_excel (
         log("[-] Error during saving process.")
     
     return response
+
+
 

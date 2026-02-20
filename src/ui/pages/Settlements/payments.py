@@ -13,14 +13,14 @@ from src.ui.components.input import (
 )
 
 from src.core.data.payments import (
-    find_beneficiary_by_ctpy_ccy_n_type, load_beneficiaries_db
+    find_beneficiary_by_ctpy_ccy_n_type, load_beneficiaries_db, create_payement_email
 )
 
 from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH
 from src.config.parameters import (
-    PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, UBS_PAYMENTS_TYPES,
-    UBS_PAYMENTS_MARKET, PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS, PAYMENTS_BENEFICIARY_COLUMNS, 
-    PAYMENTS_BENECIFIARY_SHEET_NAME
+    PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, UBS_PAYMENTS_TYPES,
+    UBS_PAYMENTS_MARKET, UBS_PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS, PAYMENTS_BENEFICIARY_COLUMNS, 
+    PAYMENTS_BENECIFIARY_SHEET_NAME, UBS_PAYMENTS_FUNDS
 )
 
 from src.utils.data_io import convert_ubs_instruction_payments_to_excel, export_excel_to_pdf
@@ -72,31 +72,46 @@ def input_payment_section (nb_payments : int = 1) :
 
         with col :
 
-            center_h5(f"Settlement {i+1}")
-            
-            _, ctpy, acc = fund_ctpy_n_acc_section(number_order=i+1)
-            product, trade_ref = product_n_trade_ref_section(number_order=i+1)
-            _, market = type_market_section(number_order=i+1)
-            date = value_date_section(number_order=i+1)
-            amount, currency = amount_n_currency_section(number_order=i+1)
-            direction, reason = direction_n_reason_section(number_order=i+1)
-
-            swift_def, swift_ben_def, iban_def = None, None, None
-
-            df, md5 = load_beneficiaries_db(UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_BENECIFIARY_SHEET_NAME, PAYMENTS_BENEFICIARY_COLUMNS)
-            row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, market, currency)
-            #print(row)
-            st.write(row)
-            if row is not None :
-                _, swift_def, _, swift_ben_def, iban_def = row
-            
-            swift_bank, iban, swift_benif = swift_iban_section(swift_def, iban_def, swift_ben_def, number_order=i+1)
-
-            payment = (product, trade_ref, reason, acc, ctpy, direction, amount, currency, date, "NaN", swift_bank, iban, swift_benif)
+            payment = ubs_payment_object(i)           
             payments.append(payment)
 
     return payments
 
+
+def ubs_payment_object (i : int = 1) :
+    """
+    Docstring for ubs_payment_object
+    
+    :param nb_payments: Description
+    :type nb_payments: int
+    """
+    center_h5(f"Settlement {i+1}")
+
+    _, ctpy, acc = fund_ctpy_n_acc_section(number_order=i+1)
+    product, trade_ref = product_n_trade_ref_section(number_order=i+1)
+    _, market = type_market_section(number_order=i+1)
+    
+    product = market
+    
+    date = value_date_section(number_order=i+1)
+    amount, currency = amount_n_currency_section(number_order=i+1)
+    direction, reason = direction_n_reason_section(number_order=i+1)
+
+    swift_def, swift_ben_def, iban_def = None, None, None
+
+    if direction == "Pay" :
+            
+        df, md5 = load_beneficiaries_db(UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_BENECIFIARY_SHEET_NAME, PAYMENTS_BENEFICIARY_COLUMNS)
+        row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, market, currency)
+        
+        if row is not None :
+            _, swift_def, _, swift_ben_def, iban_def = row
+        
+    swift_bank, iban, swift_benif = swift_iban_section(swift_def, iban_def, swift_ben_def, number_order=i+1)
+
+    payment = (product, trade_ref, reason, acc, ctpy, direction, amount, currency, date, "NaN", swift_bank, iban, swift_benif)
+
+    return payment
 
 def fund_ctpy_n_acc_section (
         
@@ -110,12 +125,12 @@ def fund_ctpy_n_acc_section (
     """
     Docstring for fund_ctpy_n_acc_section
     """
-    fundations = PAYMENTS_FUNDS if fundations is None else fundations
+    fundations = UBS_PAYMENTS_FUNDS if fundations is None else fundations
 
     counterparties_dict = PAYMENTS_COUNTERPARTIES if counterparties is None else counterparties
     counterparties = list(counterparties_dict.keys())
 
-    accounts = PAYMENTS_ACCOUNTS if accounts is None else accounts
+    accounts = UBS_PAYMENTS_ACCOUNTS if accounts is None else accounts
 
     key_fundation = f"UBS_OTC_Payment_{number_order}_fundation"
     key_counterparty = f"UBS_OTC_Payment_{number_order}_counterparty"
@@ -135,7 +150,7 @@ def product_n_trade_ref_section (
     """
     product, trade_ref = product_n_trade_ref_fields(number_order)
 
-    return product, trade_ref
+    return None, trade_ref
 
 
 def type_market_section (
@@ -233,17 +248,37 @@ def process_payements_section (
     :type payments: Optional[List]
     """
     response = convert_ubs_instruction_payments_to_excel(payments)
-
     status = response["success"]
 
     if status is True :
 
-        pdf_status = export_excel_to_pdf(response.get("path"), "Paymentsdsds.pdf")
+        filename, _ = os.path.splitext(os.path.basename(response.get("path")))
+        pdf_status = export_excel_to_pdf(response.get("path"), filename + ".pdf")
+        #st.write(pdf_status)
         
-        st.warning(f"{response["message"]}")
-        st.warning(f"Successfully at {response.get("path")}")
+        if pdf_status.get("success") :
 
+            st.warning(f"{pdf_status["message"]}")
+            st.warning(f"Successfully at {pdf_status.get("path")}")
+            
+            email = create_payement_email(files_attached=[pdf_status.get("path")])
 
+            if email.get("success") :
+                
+                path = email.get("path")
+
+                print(f"\n[+] Mesage created and stored in {path}")
+                st.info("Email successfully created. Ready to download")
+                
+                with open(email.get("path"), "rb") as f :
+                    file_bytes = f.read()
+
+                st.download_button(
+                    "Download Payment instruction",
+                    data=file_bytes,
+                    file_name=os.path.basename(email.get("path")),
+                    mime="application/octet-stream",  # ou "application/vnd.ms-outlook" si .msg
+                )
 
     else :
         

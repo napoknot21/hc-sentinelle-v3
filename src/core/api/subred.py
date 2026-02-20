@@ -105,7 +105,7 @@ def api_call_subred (
     tradelegs : List[Dict] = response.get("tradeLegs")
 
     dataframe = pl.DataFrame(tradelegs, schema_overrides=schema_overrides).select(specific_cols)
-    print(dataframe)
+    #print(dataframe)
     
     return dataframe
 

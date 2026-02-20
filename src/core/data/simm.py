@@ -14,7 +14,10 @@ from src.utils.data_io import load_excel_to_dataframe
 from src.utils.formatters import date_to_str, str_to_date
 
 from src.config.paths import SIMM_FUNDS_DIR_PATHS
-from src.config.parameters import FUND_HV, SIMM_HIST_NAME_DEFAULT, SIMM_CUTOFF_DATE, SIMM_COLUMNS, SIMM_RENAME_COLUMNS
+from src.config.parameters import (
+    FUND_HV, SIMM_HIST_NAME_DEFAULT, SIMM_CUTOFF_DATE, SIMM_COLUMNS,
+    SIMM_RENAME_COLUMNS, SIMM_MAPPING_COUNTERPARTIES
+)
 
 
 SCHEMA_OVERRIDES = {v["name"] : v["type"] for v in SIMM_COLUMNS.values()}
@@ -269,3 +272,25 @@ def get_simm_abs_path_by_fund (
 
     return file_abs_path
 
+
+def rename_ancien_simm_counterparties (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        rename_mapping : Optional[Dict] = None, # SIMM_RENAME_COLUMNS
+        column : Optional[str] = "Counterparty"
+
+    ) -> Optional[pl.DataFrame] :
+    """
+    """
+    if dataframe is None :
+
+        log("[-] No dataframe provided for renaming.", "error")
+        return None
+    
+    rename_mapping = SIMM_MAPPING_COUNTERPARTIES if rename_mapping is None else rename_mapping
+
+    dataframe = dataframe.with_columns(
+        pl.col(column).cast(pl.Utf8).replace(rename_mapping).alias(column)
+    )
+
+    return dataframe

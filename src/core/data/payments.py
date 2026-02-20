@@ -9,7 +9,8 @@ from typing import Optional, Dict, List
 
 from src.config.parameters import (
     PAYMENTS_COLUMNS, SECURITIES_COLUMNS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME,
-    PAYMENTS_EMAIL_FROM, PAYMENTS_EMAIL_CCs, PAYMENTS_EMAIL_SUBJECT, PAYMENTS_EMAIL_TO, PAYMENTS_EMAIL_BODY
+    PAYMENTS_EMAIL_FROM, PAYMENTS_EMAIL_CCs, PAYMENTS_EMAIL_SUBJECT, PAYMENTS_EMAIL_TO, PAYMENTS_EMAIL_BODY,
+    UBS_FX_PAYMENT_COLUMNS
 )
 from src.config.paths import (
     PAYMENTS_DB_ABS_PATH, PAYMENTS_DB_REL_PATH,
@@ -285,3 +286,32 @@ def create_payement_email (
 
     return status
 
+
+def create_settlement_fx_payment_excel (payments : Optional[List] = None, schema_overrides : Optional[Dict] = None) :
+    """
+    
+    """
+    if payments is None or len(payments) == 0 :
+    
+        log("[-] No payement information to convert", "error")
+        return False
+    
+    dataframe = pl.DataFrame(schema_overrides=schema_overrides)
+
+    schema_overrides = UBS_FX_PAYMENT_COLUMNS if schema_overrides is None else schema_overrides
+    columns = list(schema_overrides.keys())
+
+    #for payment in payments :
+
+    try :
+        
+        dataframe = pl.DataFrame(payments, schema=columns, orient="row")
+        #dataframe = pl.concat([dataframe, df_payment], how="vertical")
+        dataframe = dataframe.cast(schema_overrides, strict=False)
+
+
+    except :
+        
+        log("[-] Error during conversion", "error")
+
+    return dataframe
