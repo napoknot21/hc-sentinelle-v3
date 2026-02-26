@@ -4,11 +4,12 @@ import os
 import time
 import hashlib
 import openpyxl
+import itertools
 import xlwings as xw
 import polars as pl
 
 from typing import Dict, Optional, List, Tuple
-
+from openpyxl.utils import get_column_letter
 from src.config.parameters import *
 from src.config.paths import *
 from src.utils.logger import *
@@ -551,7 +552,7 @@ def convert_ubs_instruction_payments_to_excel (
     
     template_abs_path = UBS_PAYMENTS_INTRUCTION_TEMPLATE_ABS_PATH if template_abs_path is None else template_abs_path 
     
-    filename = f"UBS_Payment_Instruction_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" if filename is None else filename
+    filename = f"UBS_OTC_Payment_Instruction_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" if filename is None else filename
     dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
     columns_index = UBS_PAYMENTS_EXCEL_COLUMNS if columns_index is None else columns_index
 
@@ -605,6 +606,9 @@ def convert_ubs_collateral_management_to_excel (
 
         filename : Optional[str] = None,
         dir_abs_path : Optional[str] = None,
+
+        matrix_input_positions : Optional[Dict] = None,
+        collat_row_reason : int = 18,
     
     ) :
     """
@@ -636,15 +640,54 @@ def convert_ubs_collateral_management_to_excel (
     dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
 
     os.makedirs(dir_abs_path, exist_ok=True)
+    matrix_input_positions = UBS_COLLATERAL_EXCEL_COLUMNS if matrix_input_positions is None else matrix_input_positions
+    
+    workbook = openpyxl.load_workbook(template_abs_path)
+    sheet = workbook.active
+
+    # parsed_positions: { index_int: (col_letters, base_row_int) }
+    # sanity check: mapping indices must fit in tuple length
+    try:
+        max_idx = max(matrix_input_positions.keys())
+        first_len = len(collaterals[0])
+        if first_len <= max_idx:
+            raise ValueError(
+                f"matrix_input_positions expects index {max_idx} but collateral tuple has length {first_len}"
+            )
+    except Exception as e:
+        response["message"] = f"Invalid inputs: {e}"
+        return response
 
     workbook = openpyxl.load_workbook(template_abs_path)
     sheet = workbook.active
 
-    row_idx = 7
-    line_reason = 2
+    # Cache merged ranges once (faster + simpler)
+    merged_ranges = list(sheet.merged_cells.ranges)
 
-    for collateral in collaterals :
-        print("Hello")
+    for i, collateral in enumerate(collaterals) :
+
+        row_offset = i * collat_row_reason
+
+        for idx, base_cell in matrix_input_positions.items():
+            value = collateral[idx]
+            if value is None:
+                continue
+
+            # Parse base cell like "E8"
+            col = "".join(filter(str.isalpha, base_cell)).upper()
+            row = int("".join(filter(str.isdigit, base_cell)))
+
+            target = f"{col}{row + row_offset}"
+
+            # If target is part of a merged range, write to the anchor cell of that range
+            cell_obj = sheet[target]
+            if isinstance(cell_obj, openpyxl.cell.cell.MergedCell):
+                for mr in merged_ranges:
+                    if target in mr:
+                        target = f"{get_column_letter(mr.min_col)}{mr.min_row}"
+                        break
+
+            sheet[target].value = value
 
     filled_path = os.path.join(dir_abs_path, filename)
     

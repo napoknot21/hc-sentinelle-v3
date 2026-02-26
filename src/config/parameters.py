@@ -727,6 +727,22 @@ UBS_PAYMENTS_ACCOUNTS = {
 
 UBS_PAYMENTS_DIRECTIONS = ["Buy", "Sell"]
 
+UBS_COLLATERAL_EXCEL_COLUMNS = {
+
+    0  : "E8",   # type_collateral
+    1  : "E10",  # account
+    2  : "E11",  # fund
+    4  : "E14",  # external ref (if used)
+    5  : "C16",  # currency
+    6  : "G16",  # amount
+    7  : "C18",  # trade date
+    8  : "G18",  # value date
+    9  : "D20",  # BIC fund
+    10 : "D20",  # account
+    11 : "D22",  # Beneficiary BIC
+
+}
+
 UBS_FX_PAYMENT_COLUMNS = {
 
     "Fund Number (LUX)" : pl.Int64,

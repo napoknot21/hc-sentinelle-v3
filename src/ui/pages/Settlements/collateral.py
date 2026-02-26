@@ -22,6 +22,7 @@ from src.config.parameters import (
 )
 from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH
 from src.utils.formatters import date_to_str
+from src.utils.data_io import convert_ubs_collateral_management_to_excel, export_excel_to_pdf
 
 
 def colleteral_management (default_value : int = 1) :
@@ -37,7 +38,7 @@ def colleteral_management (default_value : int = 1) :
     left_h5("Export option")
 
     if st.button("Process Securities") :
-        st.warning("Hello World")
+        process_collaterals_section(collaterals)
 
     return None
 
@@ -88,7 +89,7 @@ def input_collateral_section (nb_payments : int = 1) :
             
             df, md5 = load_beneficiaries_db(UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_BENECIFIARY_SHEET_NAME, PAYMENTS_BENEFICIARY_COLUMNS)
             row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, "Collateral Management", currency)
-            st.warning(row)
+
             if row is not None :
                 _, swift_def, _, swift_ben_def, iban_def = row
             
@@ -103,9 +104,6 @@ def input_collateral_section (nb_payments : int = 1) :
                 bookers.append(booked)
             
             collaterals.append(collateral)
-
-            st.warning(collaterals)
-            st.warning(bookers)
 
     return collaterals, bookers
 
@@ -255,3 +253,58 @@ def book_section (
         book = st.selectbox("Book", options=books, key=key_book)
 
     return book
+
+
+def process_collaterals_section (
+        
+        collaterals : Optional[List] = None,
+
+    ) :
+    """
+    Docstring for process_payements_section
+    
+    :param payments: Description
+    :type payments: Optional[List]
+    """
+    response = convert_ubs_collateral_management_to_excel(collaterals)
+    status = response["success"]
+
+    st.write(response)
+    if status is True :
+
+        filename, _ = os.path.splitext(os.path.basename(response.get("path")))
+        pdf_status = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=1)
+        
+        if pdf_status.get("success") :
+
+            st.warning(f"{pdf_status["message"]}")
+            st.warning(f"Successfully at {pdf_status.get("path")}")
+            
+            email = create_payement_email(files_attached=[pdf_status.get("path")])
+
+            if email.get("success") :
+                
+                path = email.get("path")
+
+                print(f"\n[+] Mesage created and stored in {path}")
+                st.info("Email successfully created. Ready to download")
+                
+                with open(email.get("path"), "rb") as f :
+                    file_bytes = f.read()
+
+                st.download_button(
+                    "Download Payment instruction",
+                    data=file_bytes,
+                    file_name=os.path.basename(email.get("path")),
+                    mime="application/octet-stream",  # ou "application/vnd.ms-outlook" si .msg
+                )
+        
+        else  :
+
+            st.error("[-] Error during Payment generation")
+
+    else :
+        
+        st.error(f"{response["message"]}")
+
+    return None

@@ -253,8 +253,7 @@ def process_payements_section (
     if status is True :
 
         filename, _ = os.path.splitext(os.path.basename(response.get("path")))
-        pdf_status = export_excel_to_pdf(response.get("path"), filename + ".pdf")
-        #st.write(pdf_status)
+        pdf_status = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=2)
         
         if pdf_status.get("success") :
 
@@ -279,6 +278,10 @@ def process_payements_section (
                     file_name=os.path.basename(email.get("path")),
                     mime="application/octet-stream",  # ou "application/vnd.ms-outlook" si .msg
                 )
+        
+        else  :
+
+            st.error("[-] Error during Payment generation")
 
     else :
         
@@ -287,3 +290,11 @@ def process_payements_section (
     return None
 
 
+def history_section () :
+    """
+    
+    """
+    # Add tthe payemenst to an historic
+
+
+    return None
