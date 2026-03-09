@@ -37,7 +37,7 @@ def colleteral_management (default_value : int = 1) :
     st.write('')
     left_h5("Export option")
 
-    if st.button("Process Securities") :
+    if st.button("Process Collaterals") :
         process_collaterals_section(collaterals)
 
     return None

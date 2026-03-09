@@ -5,7 +5,7 @@ import datetime as dt
 
 from typing import List, Optional, Dict, Tuple
 
-from src.config.parameters import PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_DIRECTIONS, PAYMENTS_BOOKS
+from src.config.parameters import PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_DIRECTIONS, PAYMENTS_BOOKS, BOOKING_COUNTERPARTIES
 
 from src.ui.components.selector import date_selector
 from src.ui.components.input import amount_currency_fields
@@ -70,7 +70,7 @@ def counterparty_n_direction_section (
     :return: Description
     :rtype: Tuple[str | None, str | None]
     """
-    counterparties_dict = PAYMENTS_COUNTERPARTIES if counterparties is None else counterparties
+    counterparties_dict = BOOKING_COUNTERPARTIES if counterparties is None else counterparties
     counterparties = list(counterparties_dict.keys())
 
     directions = PAYMENTS_DIRECTIONS if directions is None else directions

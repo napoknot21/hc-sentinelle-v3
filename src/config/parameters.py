@@ -46,6 +46,13 @@ FUND_NAME_MAP = {
 
 }
 
+FUND_MAP = {
+
+    "HV" : FUND_HV,
+    "WR" : FUND_WR,
+
+}
+
 
 # ---------------- SIMM values ----------------
 
@@ -681,6 +688,39 @@ PAYMENTS_BOOK_WR = os.getenv("PAYMENTS_BOOK_WR")
 
 PAYMENTS_BOOKS = [PAYMENTS_BOOK_HV, SUBRED_BOOK_HV, PAYMENTS_BOOK_WR, SUBRED_BOOK_WR]
 
+BOOKING_COUNTERPARTIES = {
+
+    os.getenv("BOOKING_COUNTERPARTY_GS") : {
+
+        "initials" : "GS",
+        "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_GS")
+
+    },
+    
+    os.getenv("BOOKING_COUNTERPARTY_MS") : {
+    
+        "initials" : "MS",
+        "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_MS")
+
+    },
+
+    os.getenv("BOOKING_COUNTERPARTY_SAXO") : {
+        
+        "initials": os.getenv("PAYMENTS_COUNTERPARTY_SAXO"),
+        "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_SAXO")
+        
+    },
+
+    os.getenv("BOOKING_COUNTERPARTY_UBS") : {
+    
+        "initials" : "UBS",
+        "bank" : os.getenv("BOOKING_COUNTERPARTY_UBS")
+
+    },
+
+}
+
+
 
 # ------------------ UBS Settlement ------------------
 
@@ -724,6 +764,32 @@ UBS_PAYMENTS_ACCOUNTS = {
     PAYMENTS_WR_FUND : UBS_PAYMENTS_ACCOUNT_2
 
 }
+
+UBS_HV_NAME = os.getenv("UBS_HV_NAME")
+UBS_WR_NAME = os.getenv("UBS_WR_NAME")
+
+
+UBS_TRADE_RECAP_NUMBER = {
+
+    UBS_HV_NAME : UBS_PAYMENTS_ACCOUNT_1,
+    UBS_WR_NAME : UBS_PAYMENTS_ACCOUNT_2,
+
+}
+
+UBS_ENSURE_COLUMNS = [
+
+    "assetClass",
+    "premium.currency",
+    "premium.amount",
+    "instrument.notional",
+    "instrument.notionalCurrency",
+    "fields.CallNotional",
+    "fields.PutNotional",
+    "fields.CallCurrency",
+    "fields.PutCurrency",
+
+]
+
 
 UBS_PAYMENTS_DIRECTIONS = ["Buy", "Sell"]
 
@@ -1161,13 +1227,77 @@ TRADE_RECAP_MIN_COLUMNS = {
 }
 
 
-TRADE_RECAP_MAX_COLUMNS = {
+TRADE_RECAP_EMAIL_BODY_NO_TRADES = os.getenv("TRADE_RECAP_EMAIL_BODY_NO_TRADES")
 
+TRADE_RECAP_EMAIL_DEFAULT_BODY_INTRO = os.getenv("TRADE_RECAP_EMAIL_DEFAULT_BODY_INTRO")
 
+# TODO : Correc tthe level here -> split by ; 
+TRADE_RECAP_EMAIL_DEFAULT_MASTER_CC = os.getenv("TRADE_RECAP_EMAIL_DEFAULT_MASTER_CC")
+TRADE_RECAP_EMAIL_DEFAULT_OTC_CC = os.getenv("TRADE_RECAP_EMAIL_DEFAULT_OTC_CC")
+TRADE_RECAP_EMAIL_DEFAULT_FX_CC = os.getenv("TRADE_RECAP_EMAIL_DEFAULT_FX_CC")
+
+TRADE_RECAP_EMAIL_DEFAULT_MASTER_TO = os.getenv("TRADE_RECAP_EMAIL_DEFAULT_MASTER_TO")
+TRADE_RECAP_EMAIL_DEFAULT_OTC_TO = os.getenv("TRADE_RECAP_EMAIL_DEFAULT_OTC_TO")
+TRADE_RECAP_EMAIL_DEFAULT_FX_TO = os.getenv("TRADE_RECAP_EMAIL_DEFAULT_FX_TO")
+
+TRADE_RECAP_EMAIL_COLUMNS = {
+
+    "Label" : pl.Utf8,
+    "UBS Portfolio No" : pl.Int64,
+    "Fund Name" : pl.Utf8,
+    "counterparty" : pl.Utf8,
+    "tradeLegId" : pl.Utf8,
+    "tradeId" : pl.Int64,
+    "originatingAction" : pl.Utf8,
+    "tradeDate" : pl.Utf8,
+    "tradeDescription" : pl.Utf8,
+    "tradeName" : pl.Utf8,
+    "tradeType" : pl.Utf8,
+    "assetClass" : pl.Utf8,
+    #"bookId" : pl.Utf8,
+    "bookName" : pl.Utf8,
+    "creationTime" : pl.Utf8,
+    "customFields.ExternalID" : pl.Int64,
+    "terminationDate" : pl.Utf8,
+    "tradeLegCode" : pl.Utf8,
 
 }
 
 
+TRADE_RECAP_TH_STYLE = (
+    "border:1px solid #D1D5DB;"
+    "padding:8px 10px;"
+    "background:#F3F4F6;"
+    "text-align:left;"
+    "white-space:nowrap;"
+)
+
+
+TRADE_RECAP_NUM_TYPES = (
+    pl.Int8, pl.Int16, pl.Int32, pl.Int64,
+    pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64,
+    pl.Float32, pl.Float64,
+)
+
+# Inline styles → safe in Outlook/Word and browsers
+TRADE_RECAP_TABLE_STYLE = (
+    "border-collapse:collapse;"
+    "font-family:Segoe UI,Arial,sans-serif;"
+    "font-size:12px;"
+    "border:1px solid #D1D5DB;"
+    "table-layout:auto;"
+    "width:100%;"
+    "mso-table-lspace:0pt;mso-table-rspace:0pt;"
+)
+
+TRADE_RECAP_TD_STYLE = (
+    "border:1px solid #D1D5DB;"
+    "padding:8px 10px;"
+    "vertical-align:top;"
+    "word-break:break-word;"
+)
+
+TRADE_RECAP_TD_NUM_STYLE = TRADE_RECAP_TD_STYLE + "text-align:right;"
 
 # -------------- Agreaggated Positions --------------
 

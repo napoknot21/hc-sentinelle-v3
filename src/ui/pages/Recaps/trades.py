@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import io
+import os
+import tempfile
 import datetime as dt
 from typing import Optional, Tuple, List
 
@@ -8,12 +10,14 @@ import polars as pl
 import pandas as pd
 import streamlit as st
 
+from src.config.paths import TREADE_RECAP_DATA_RAW_DIR_ABS_PATH
 from src.utils.formatters import str_to_date
+from src.utils.data_io import export_dataframe_to_excel
 from src.ui.components.text import center_h5
 from src.core.api.recap import trade_recap_launcher
 from src.core.data.recap import (
     read_trade_recap_by_date, find_most_recent_file_by_date, clean_structure_from_dataframe,
-    apply_user_review_defaults, apply_otc_fx_logic_to_trade,
+    apply_user_review_defaults, apply_otc_fx_logic_to_trade, reconcile_edited_with_original
 )
 
 KEY_DF        = "dataframe_recap_daily"
@@ -56,6 +60,20 @@ def polars_to_excel_bytes (dataframe: pl.DataFrame, sheet_name: str = "Sheet1") 
             df_pd.to_excel(writer, sheet_name=sheet_name, index=False)
         
         return output.getvalue()
+
+
+def save_df_to_temp_excel(df: pl.DataFrame, prefix: str = "recap_raw_") -> str :
+    """
+    Save a Polars DataFrame to a named temp Excel file, return its path.
+    """
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx", prefix=prefix)
+    tmp.close()
+    
+    with pd.ExcelWriter(tmp.name, engine="xlsxwriter") as writer:
+        df.to_pandas().to_excel(writer, sheet_name="Sheet1", index=False)
+    
+    return tmp.name
+
 
 
 def generate_email_draft_bytes (
@@ -217,6 +235,7 @@ def trades () -> None :
     """
     Main entry.
     """
+    st.warning("THIS SECTION IN UNDER DEVELOPMENT !!!!")
     filename, date = date_history_section()
 
     if filename is None or date is None :
@@ -226,12 +245,14 @@ def trades () -> None :
 
     # ── Flush state when file changes ────────────────────────────────────────
     if st.session_state.get(KEY_FILE) != filename :
+
         for k in (KEY_DF, KEY_DF_BASE, KEY_MD5, KEY_VALIDATED) :
             st.session_state.pop(k, None)
+        
         st.session_state[KEY_EDITOR_GEN] = st.session_state.get(KEY_EDITOR_GEN, 0) + 1
         st.session_state[KEY_FILE] = filename
 
-    # ── Load + prepare (once per file, never overwrites user edits) ──────────
+    # Load + prepare (once per file, never overwrites user edits) 
     # Do NOT call read_trade_recap_by_date on every rerun – that would
     # overwrite KEY_DF with the raw file and destroy user label changes.
     # Only load when KEY_DF is absent or empty (first visit after a file change).
@@ -381,6 +402,15 @@ def edit_master_trade_recap_section (
     # Show the frozen validated dataframe so the user can see their changes
     st.dataframe(export_df, use_container_width=True)
 
+    output_dir = TREADE_RECAP_DATA_RAW_DIR_ABS_PATH
+    base, _ = os.path.splitext(filename)
+    out_path = f"{base}_MASTER.xlsx"
+    
+    output_abs_path = os.path.join(output_dir, out_path)
+
+    result = export_dataframe_to_excel(export_df, output_abs_path=output_abs_path)
+
+    ###########################-----------------------------------------------------------------------------------------------------------------------
     st.write("")
 
     if st.button("🔓 Reset & Edit Again", use_container_width=True) :
@@ -395,13 +425,14 @@ def edit_master_trade_recap_section (
     center_h5("Master Exports")
     st.write("")
 
+    master_df = pl.read_excel(output_abs_path)
     col_left, col_right = st.columns(2)
 
     with col_left :
         st.download_button(
             label               = "⬇️ Download Master Excel",
-            data                = polars_to_excel_bytes(export_df, sheet_name="MASTER"),
-            file_name           = f"MASTER_{date_str}.xlsx",
+            data                = polars_to_excel_bytes(master_df),
+            file_name           = out_path,
             mime                = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width = True,
         )

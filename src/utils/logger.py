@@ -4,13 +4,10 @@ import os
 import logging
 import datetime as dt
 
-from logging.handlers import TimedRotatingFileHandler
-
 from src.config.paths import LOGS_DIR_REL_PATH
 
 
-
-def log (message: str, level: str = "info", module: str = "sentinelle"):
+def log (message : str, level: str = "info", module: str = "sentinelle") :
     """
     Log a message with the desired log level and module name.
 
@@ -24,28 +21,29 @@ def log (message: str, level: str = "info", module: str = "sentinelle"):
     level = level.lower()
 
     if level == "debug" :
-        logger.debug(message) # [*]
+        logger.debug(message)  # [*]
 
     elif level == "warning" :
-        logger.warning(message) # [!]
+        logger.warning(message)  # [!]
 
     elif level == "error" :
-        logger.error(message) # [-]
+        logger.error(message)  # [-]
 
     elif level == "critical" :
-        logger.critical(message) # [-]
+        logger.critical(message)  # [-]
 
     else :
-        logger.info(message) # [+] or [*]
+        logger.info(message)  # [+] or [*]
 
     print(f"\n{message}")
 
 
-def get_logger (name: str = "sentinelle") -> logging.Logger:
+def get_logger(name: str = "sentinelle") -> logging.Logger :
     """
     Create or retrieve a logger with a given name.
 
-    Logs are written both to the console and to a rotating daily log file.
+    Logs are written both to the console and to a daily log file.
+    Automatically switches to a new file when the day changes.
 
     Args:
         name (str): Logger name (used to identify the module or context).
@@ -58,32 +56,49 @@ def get_logger (name: str = "sentinelle") -> logging.Logger:
 
     logger.propagate = False
 
+    # Vérifier si on doit changer de fichier (nouveau jour)
+    today = dt.datetime.now().strftime('%d-%m-%Y')
+    
     if logger.handlers :
-        return logger
+
+        # Vérifier si la date a changé
+        current_handler = logger.handlers[0]
+        
+        if hasattr(current_handler, '_log_date') and current_handler._log_date == today :
+            return logger
+        
+        else :
+
+            # Nouveau jour : fermer l'ancien handler et créer un nouveau
+            for handler in logger.handlers[:]:
+            
+                handler.close()
+                logger.removeHandler(handler)
     
     # Format for log messages
     formatter = logging.Formatter(
+
         fmt="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
+    
     )
 
     # File handler
     os.makedirs(LOGS_DIR_REL_PATH, exist_ok=True)
 
-    filename = f"sentinelle_{dt.datetime.now().strftime('%Y-%m-%d')}.log"
+    # Nom de fichier avec la date du jour au format dd-mm-yyyy
+    filename = f"sentinelle_{today}.log"
     LOG_FILE_NAME = os.path.join(LOGS_DIR_REL_PATH, filename)
 
-    file_handler = TimedRotatingFileHandler(
+    file_handler = logging.FileHandler(
     
         filename=LOG_FILE_NAME,
-        when="midnight",
-        interval=1,
-        backupCount=30,
-        encoding="utf-8",
-        utc=False,
-        delay=True
+        encoding="utf-8"
     
     )
+    
+    # Stocker la date pour vérification future
+    file_handler._log_date = today
 
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
