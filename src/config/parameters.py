@@ -257,6 +257,15 @@ NAV_PORTFOLIO_REGEX_PATTERN=os.getenv("NAV_PORTFOLIO_REGEX_PATTERN")
 NAV_PORTFOLIO_REGEX = re.compile(NAV_PORTFOLIO_REGEX_PATTERN, re.IGNORECASE)
 
 
+NAV_INDEX_PERF_COLUMNS = {
+
+    "SPX Index": pl.Float64,
+    "GSARIEH LX Equity": pl.Float64,
+    "MXWO Index": pl.Float64,
+    "SX5E Index": pl.Float64,
+
+}
+
 # ------------ Subred --------------
 
 SUBRED_BOOK_HV=os.getenv("SUBRED_BOOK_HV")

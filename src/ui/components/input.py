@@ -596,7 +596,7 @@ def iban_field (
     return res
 
 
-def ubs_broker_fields(
+def ubs_broker_fields (
     
         bic_default: Optional[str] = None,
         iban_default: Optional[str] = None,
@@ -612,7 +612,7 @@ def ubs_broker_fields(
         label_iban: Optional[str] = None,
         label_bic_ben: Optional[str] = None,
     
-    ) -> Tuple[str, str, str]:
+    ) -> Tuple[str, str, str] :
     """
     Render Streamlit fields for UBS broker information including BIC and IBAN codes.
     
@@ -655,27 +655,64 @@ def ubs_broker_fields(
     label_iban = "IBAN" if label_iban is None else label_iban
     label_bic_ben = "Benficiary BIC" if label_bic_ben is None else label_bic_ben
 
-    # If the default changed, update session_state
+    # Initialize session state if not exists
+    if key_bic not in st.session_state :
+
+        st.session_state[key_bic] = bic_default or ""
+        st.session_state[key_bic_default] = bic_default
+
+    if key_iban not in st.session_state :
+
+        st.session_state[key_iban] = iban_default or ""
+        st.session_state[key_iban_default] = iban_default
+
+    if key_bic_ben not in st.session_state :
+
+        st.session_state[key_bic_ben] = bic_ben_default or ""
+        st.session_state[key_bic_ben_default] = bic_ben_default
+
+    # If the default changed, update session_state (only if user hasn't edited)
     last_bic = st.session_state.get(key_bic_default)
     last_iban = st.session_state.get(key_iban_default)
     last_bic_ben = st.session_state.get(key_bic_ben_default)
 
-    if bic_default is not None and last_bic != bic_default:
-        st.session_state[key_bic] = bic_default
+    # BIC update logic
+    if bic_default is not None and last_bic != bic_default :
 
-    if iban_default is not None and last_iban != iban_default:
-        st.session_state[key_iban] = iban_default
+        user_has_edited_bic = (st.session_state.get(key_bic, "") != (last_bic or ""))
+        
+        if not user_has_edited_bic :
+            st.session_state[key_bic] = bic_default or ""
+        
+        st.session_state[key_bic_default] = bic_default
 
-    if bic_ben_default is not None and last_bic_ben != bic_ben_default:
-        st.session_state[key_bic_ben] = bic_ben_default
+    # IBAN update logic
+    if iban_default is not None and last_iban != iban_default :
+
+        user_has_edited_iban = (st.session_state.get(key_iban, "") != (last_iban or ""))
+        
+        if not user_has_edited_iban :
+            st.session_state[key_iban] = iban_default or ""
+        
+        st.session_state[key_iban_default] = iban_default
+
+    # BIC Beneficiary update logic
+    if bic_ben_default is not None and last_bic_ben != bic_ben_default :
+
+        user_has_edited_bic_ben = (st.session_state.get(key_bic_ben, "") != (last_bic_ben or ""))
+        
+        if not user_has_edited_bic_ben :
+            st.session_state[key_bic_ben] = bic_ben_default or ""
+        
+        st.session_state[key_bic_ben_default] = bic_ben_default
 
     # Render widgets
     col1, col2 = st.columns(2)
 
-    with col1:
+    with col1 :
         bic = st.text_input(label_bic, key=key_bic)
 
-    with col2:
+    with col2 :
         bic_ben = st.text_input(label_bic_ben, key=key_bic_ben)
 
     iban = st.text_input(label_iban, key=key_iban)

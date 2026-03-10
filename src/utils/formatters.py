@@ -74,6 +74,46 @@ def str_to_date (date : Optional[str | dt.date | dt.datetime] = None, format : s
     return date_obj
 
 
+def str_to_datetime (date : Optional[str | dt.date | dt.datetime] = None, format : str = "%Y-%m-%d %H:%S:M") -> dt.date :
+    """
+    
+    """
+    TIME_DIRECTIVES = ("%H", "%I", "%M", "%S", "%f", "%p")
+
+    if date is None:
+        date_obj = dt.datetime.now()
+    
+    elif isinstance(date, dt.datetime):
+        date_obj = date
+
+    elif isinstance(date, dt.date):
+        date_obj = dt.datetime.combine(date, dt.time.min)
+    
+    elif isinstance(date, str) :
+
+        try :
+            date_obj = dt.datetime.strptime(date, format)
+        
+        except ValueError :
+
+            try :
+                date_obj = dt.datetime.fromisoformat(date)
+            
+            except ValueError :
+                raise ValueError(f"Unrecognized date format: '{date}'")
+
+        # If neither the format nor the string itself carry time info, zero out the time
+        if not any(d in format for d in TIME_DIRECTIVES) and not any(d in date for d in TIME_DIRECTIVES):
+            date_obj = dt.datetime.combine(date_obj.date(), dt.time.min)
+
+    else:
+        raise TypeError("date must be a string, date, datetime, or None")
+    
+    return date_obj
+
+
+
+
 def shift_months (date : Optional[str | dt.date | dt.datetime] = None, months : int = 1) -> dt.date :
     """
     

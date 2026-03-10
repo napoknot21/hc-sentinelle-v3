@@ -14,13 +14,13 @@ from src.ui.pages.Recaps.render import render_recaps
 
 PAGES = [
 
-    ("Risks",               "exclamation-triangle-fill",    render_risks),
-    ("Reconciliation",      "arrow-repeat",                 render_reconciliation),
-    #("Ice API",            "server",                       render_trading),
-    ("Payments",            "cash",                         render_payments),
-    #("Statistics",         "graph-up",                     render_stats),
-    ("Heroics Settlements", "arrow-repeat" ,                render_settlements),
-    ("Heroics Trade Recaps", "graph-up",                    render_recaps),
+    ("Risks",                   "exclamation-triangle-fill",    render_risks),
+    ("Reconciliation",          "arrow-repeat",                 render_reconciliation),
+    #("Ice API",                "server",                       render_trading),
+    #("Payments",               "cash",                         render_payments),
+    #("Statistics",             "graph-up",                     render_stats),
+    ("Heroics Settlements",     "cash",                         render_settlements),
+    ("Heroics Trade Recaps",    "graph-up",                     render_recaps),
 
 ]
 

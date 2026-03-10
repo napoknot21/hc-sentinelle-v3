@@ -16,12 +16,15 @@ from src.config.parameters import (
 
 from src.ui.components.selector import date_selector
 from src.ui.components.text import center_h2, left_h5, left_h3
-from src.ui.components.charts import nav_estimate_performance_graph,mv_change_peformance_chart
+from src.ui.components.charts import (
+    nav_estimate_performance_graph, mv_change_peformance_chart, index_performance_graph
+)
 from src.ui.components.tables import show_aum_details_table
 
 from src.utils.dates import monday_of_week, previous_business_day, get_qtd_from_date, get_mtd_start
 from src.utils.formatters import (
-    date_to_str, str_to_date, format_numeric_columns_to_string, colorize_dataframe_positive_negatif_vals
+    date_to_str, str_to_date, format_numeric_columns_to_string, colorize_dataframe_positive_negatif_vals,
+    str_to_datetime
 )
 
 from src.core.api.subred import get_subred_by_date, fetch_subred_by_date
@@ -30,7 +33,7 @@ from src.core.data.nav import (
     read_nav_estimate_by_fund, rename_nav_estimate_columns, estimated_gross_performance,
     compute_monthly_returns, compute_mv_change_by_dates, portfolio_allocation_analysis,
     get_estimated_nav_df_by_date, gav_performance_normalized_base_100, hardcode_performance_monthly_values,
-    compute_yearly_returns
+    index_performance_normalized_base_0, compute_yearly_returns, 
 )
 from src.core.data.volatility import (
     read_realized_vol_by_dates, compute_realized_vol_by_dates, compute_annualized_realized_vol,
@@ -332,7 +335,8 @@ def charts_performance_section (
     
     """
     performance_charts_section(start_date, end_date, fundation)
-
+    #st.write('')
+    #performance_index_section(start_date, end_date, fundation)
     st.write('')
     anualised_volatility_section(fundation, start_date, end_date)
     st.write('')
@@ -360,13 +364,52 @@ def performance_charts_section (
     end_date = str_to_date(end_date)
 
     rename_cols = NAV_ESTIMATE_RENAME_COLUMNS if rename_cols is None else rename_cols
-    dataframe, md5 = gav_performance_normalized_base_100(start_date, end_date, fundation)
+    
+    dataframe_1, md5_1 = gav_performance_normalized_base_100(start_date, end_date, fundation)
+    dataframe_2, md5_2 = index_performance_normalized_base_0(start_date, end_date, fundation)
+
+    dataframe_1 = dataframe_1.rename({"date": "Dates"})
+    dataframe_2 = dataframe_2.with_columns(pl.col("Dates").dt.date())
+
+    dataframe = dataframe_1.join(dataframe_2, on="Dates", how="full").sort("Dates")
 
     fig = nav_estimate_performance_graph(
-        dataframe, md5, fundation, start_date, end_date, list(rename_cols.values()), "date"
+        dataframe, md5_1, fundation, start_date, end_date, list(dataframe.columns[:1]) + list(dataframe.columns[4:]), "Dates"
     )
 
+    if fig is None :
+        return None
+
     st.plotly_chart(fig)
+
+    return None
+
+
+def performance_index_section (
+    
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None,
+
+        fundation : Optional[str] = None,
+        rename_cols : Optional[Dict] = None,
+
+    ) :
+    """
+    
+    """
+    left_h5(f"{fundation} Index Performance {start_date} and {end_date}")
+
+    start_date = str_to_datetime(start_date)
+    end_date = str_to_datetime(end_date)
+
+    dataframe, md5 = index_performance_normalized_base_0(start_date, end_date, fundation)
+
+    fig = index_performance_graph(
+        dataframe, md5, fundation, start_date, end_date, dataframe.columns[1:] , "Dates"
+    )
+    
+    st.plotly_chart(fig)
+
 
     return None
 

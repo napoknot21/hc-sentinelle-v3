@@ -13,15 +13,19 @@ from typing import List, Optional, Dict, Tuple
 
 from src.utils.logger import log
 from src.utils.data_io import load_excel_to_dataframe
-from src.utils.formatters import date_to_str, str_to_date
+from src.utils.formatters import date_to_str, str_to_date, str_to_datetime
 #from src.core.data.volatility import compute_realized_vol_by_dates
 from src.config.parameters import (
     FUND_HV, NAV_HISTORY_COLUMNS, NAV_HIST_NAME_DEFAULT, NAV_CUTOFF_DATE,
     NAV_ESTIMATE_HIST_NAME_DEFAULT, NAV_ESTIMATE_COLUMNS, NAV_ESTIMATE_RENAME_COLUMNS,
     NAV_FUNDS_COLUMNS, NAV_PORTFOLIO_REGEX, NAV_PORTFOLIO_COLUMNS, PERF_HARDCODED_VALUES,
-    PERF_BOOKS_FUNS, PERF_ASSET_CLASSES_FUNDS, PERF_ALLOCATION_DATE, PERF_INITIAL_ALLOCATION
+    PERF_BOOKS_FUNS, PERF_ASSET_CLASSES_FUNDS, PERF_ALLOCATION_DATE, PERF_INITIAL_ALLOCATION,
+    NAV_INDEX_PERF_COLUMNS
 )
-from src.config.paths import NAV_PORTFOLIO_FUND_HV_DIR_PATH, NAV_PORTFOLIO_FUNDS_DIR_PATHS, NAV_ESTIMATE_FUNDS_DIR_PATHS
+from src.config.paths import (
+    NAV_PORTFOLIO_FUND_HV_DIR_PATH, NAV_PORTFOLIO_FUNDS_DIR_PATHS, 
+    NAV_ESTIMATE_FUNDS_DIR_PATHS, NAV_INDEX_PERF_ABS_PATH
+)
 
 
 def read_history_nav_from_excel (
@@ -236,8 +240,82 @@ def gav_performance_normalized_base_100 (
     return df_norm, md5
 
 
+def index_performance_normalized_base_0 (
+        
+        start_date : Optional[str | dt.date | dt.datetime] = None,
+        end_date : Optional[str | dt.date | dt.datetime] = None,
+        
+        fund : Optional[str] = None,
+        column : Optional[str] = None,
+
+    ) :
+    """
+    
+    """
+    start_date = str_to_datetime(start_date)
+    end_date = str_to_datetime(end_date)
+
+    fund = FUND_HV if fund is None else fund
+    column = "Dates" if column is None else column
+
+    dataframe, md5 = read_index_values_by_date()
+
+    df_filtered = dataframe.filter(
+        (pl.col(column) >= pl.lit(start_date)) & (pl.col(column) <= pl.lit(end_date))
+    )
+
+    df_ffill = (
+
+        df_filtered
+        .sort(column)
+        .with_columns(
+            [pl.col(c).forward_fill() for c in df_filtered.columns]
+        )
+    )
+
+    df_clean = df_ffill.drop_nulls(subset=df_ffill.columns[1:])
+
+    if df_clean.height == 0 :
+        return df_clean, md5
+    
+    # Normalization
+    df_equity = df_clean.with_columns(
+        [
+            (((pl.col(c) / pl.col(c).drop_nulls().first())) * 100).alias(c)
+            for c in df_clean.columns[1:]
+        ]
+    )
+
+    return df_equity, md5
 
 
+def read_index_values_by_date (
+        
+        file_abs_path : Optional[str] = None,
+        columns : Optional[Dict] = None,
+        rename_columns : Optional[Dict] = None,
+
+    ) :
+    """
+    """
+    file_abs_path = NAV_INDEX_PERF_ABS_PATH if file_abs_path is None else file_abs_path
+    columns = NAV_INDEX_PERF_COLUMNS if columns is None else columns
+    rename_columns = {"column_0": "Dates"} if rename_columns is None else rename_columns
+
+    dataframe, md5 = load_excel_to_dataframe(file_abs_path, schema_overrides=columns)
+
+    dataframe = (
+    
+        dataframe.rename(rename_columns)
+        .filter(pl.col("Dates") != "DATES")
+        .with_columns(
+            pl.col("Dates").str.strptime(pl.Datetime, strict=False)
+        )
+        .sort("Dates")
+    
+    )
+
+    return dataframe, md5
 
 
 def treat_string_nav_cols_df (

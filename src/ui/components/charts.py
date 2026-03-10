@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 from typing import Any, Optional, List, Tuple, Dict
 
 from src.utils.logger import log
-from src.utils.formatters import date_to_str, str_to_date, filter_token_col_from_df
+from src.utils.formatters import str_to_datetime, str_to_date, filter_token_col_from_df
 
 
 # ---------- Expiries ---------- 
@@ -174,6 +174,96 @@ def nav_estimate_performance_graph (
     print(_dataframe)
 
     return fig
+
+
+@st.cache_data()
+def index_performance_graph (
+        
+        _dataframe : pl.DataFrame,
+        md5 : str,
+
+        fundation : str,
+        
+        start_date : Optional[str | dt.datetime | dt.date] = None,
+        end_date : Optional[str | dt.datetime | dt.date] = None,
+        
+        y_colonnes : Optional[List[str]] = None,
+        x_colonne : Optional[str] = None,
+
+        yaxis_title : str = "GAV (%)"
+
+    ) : 
+    """
+    
+    """
+    if _dataframe is None :
+        
+        log("No dataframe entered. Returning a None chart...", "error")
+        st.cache_data.clear()
+
+        return None
+
+    end_date = str_to_datetime() if end_date is None else str_to_datetime(end_date)
+    start_date = str_to_datetime() if start_date is None else str_to_datetime(start_date)
+    
+    _dataframe = _dataframe.filter(
+        (pl.col(x_colonne) >= start_date) & (pl.col(x_colonne) <= end_date)
+    )
+    fig = go.Figure()
+
+    x_colonne_data = _dataframe[x_colonne]
+
+    for y_colonne in y_colonnes :
+        
+        y_colonne_data = _dataframe[y_colonne]
+
+        fig.add_trace(
+
+            go.Scatter(
+                x=x_colonne_data,
+                y=y_colonne_data,
+                mode="lines",
+                name=y_colonne,
+                line_shape="spline"
+            )
+
+        )
+
+    fig.update_layout(
+
+        xaxis_title=x_colonne,
+        yaxis_title=yaxis_title,
+
+        xaxis=dict(
+            title_font=dict(size=20),
+            tickfont=dict(size=14),  # Adjust tick font size and color
+            showticklabels=True,  # Ensure tick labels are shown
+        ),
+
+        yaxis=dict(
+            title_font=dict(size=20),
+            tickfont=dict(size=14),  # Adjust tick font size and color
+            showticklabels=True,  # Ensure tick labels are shown
+        ),
+
+        hovermode="x unified",
+
+        hoverlabel=dict(
+            bgcolor="white",
+            font_color="black",
+            font_size=16,
+        ),
+
+        height=350, 
+        width=1600,
+
+        margin=dict(l=0, r=0, t=0, b=0),  # Set margins to 0 to remove any padding
+    
+    )
+    print(_dataframe)
+
+    return fig
+
 
 
 @st.cache_data()

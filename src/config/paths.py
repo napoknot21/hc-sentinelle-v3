@@ -60,6 +60,7 @@ NAV_PORTFOLIO_FUNDS_DIR_PATHS = {
 
 }
 
+NAV_INDEX_PERF_ABS_PATH=os.getenv("NAV_INDEX_PERF_ABS_PATH")
 
 # -------- NAV Estimate Paths ----------
 
