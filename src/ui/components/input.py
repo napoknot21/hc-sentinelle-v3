@@ -720,6 +720,51 @@ def ubs_broker_fields (
     return bic, iban, bic_ben
 
 
+def ubs_ben_bic_field (
+    
+        bic_ben_default: Optional[str] = None,
+    
+        number_order: int = 1,
+
+        key_bic_ben: Optional[str] = None,
+        label_bic_ben: Optional[str] = None,
+    
+    ) -> Tuple[str, str, str] :
+    """
+
+    """
+    key_bic_ben = f"UBS_OTC_Payment_{number_order}_bic_ben" if key_bic_ben is None else key_bic_ben
+    key_bic_ben_default = f"{key_bic_ben}_default"
+    label_bic_ben = "BIC code" if label_bic_ben is None else label_bic_ben
+
+    if key_bic_ben not in st.session_state :
+
+        st.session_state[key_bic_ben] = bic_ben_default or ""
+        st.session_state[key_bic_ben_default] = bic_ben_default
+
+    # If the default changed, update session_state (only if user hasn't edited)
+    last_bic_ben = st.session_state.get(key_bic_ben_default)
+
+    # BIC Beneficiary update logic
+    if bic_ben_default is not None and last_bic_ben != bic_ben_default :
+
+        user_has_edited_bic_ben = (st.session_state.get(key_bic_ben, "") != (last_bic_ben or ""))
+        
+        if not user_has_edited_bic_ben :
+            st.session_state[key_bic_ben] = bic_ben_default or ""
+        
+        st.session_state[key_bic_ben_default] = bic_ben_default
+
+    # Render widgets
+    bic_ben = st.text_input(label_bic_ben, key=key_bic_ben)
+
+    return bic_ben
+
+
+
+
+
+
 def extra_options_fields() -> Tuple[bool, bool]:
     """
     Render Streamlit checkbox fields for extra payment processing options.

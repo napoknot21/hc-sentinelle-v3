@@ -20,7 +20,8 @@ from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH
 from src.config.parameters import (
     PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, UBS_PAYMENTS_TYPES,
     UBS_PAYMENTS_MARKET, UBS_PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS, PAYMENTS_BENEFICIARY_COLUMNS, 
-    PAYMENTS_BENECIFIARY_SHEET_NAME, UBS_PAYMENTS_FUNDS
+    PAYMENTS_BENECIFIARY_SHEET_NAME, UBS_PAYMENTS_FUNDS, UBS_SETTLEMENTS_OTC_PAYMENT_FROM,
+    UBS_SETTLEMENTS_OTC_PAYMENT_BODY
 )
 
 from src.utils.data_io import convert_ubs_instruction_payments_to_excel, export_excel_to_pdf
@@ -260,7 +261,10 @@ def process_payements_section (
             st.warning(f"{pdf_status["message"]}")
             st.warning(f"Successfully at {pdf_status.get("path")}")
             
-            email = create_payement_email(files_attached=[pdf_status.get("path")])
+            email = create_payement_email(
+                from_email=UBS_SETTLEMENTS_OTC_PAYMENT_FROM,
+                body_email=UBS_SETTLEMENTS_OTC_PAYMENT_BODY,
+                files_attached=[pdf_status.get("path")])
 
             if email.get("success") :
                 

@@ -11,21 +11,23 @@ from src.ui.components.selector import number_of_items_selector, date_selector
 from src.ui.components.input import (
     general_payment_fields, type_market_fields, amount_currency_fields,
     name_reference_bank_fields, bank_benificiary_fields, iban_field,
-    extra_options_fields
+    extra_options_fields, product_n_trade_ref_fields, ubs_ben_bic_field
 )
 from src.utils.data_io import export_dataframe_to_excel, export_excel_to_pdf
 from src.core.data.payments import (
     find_beneficiary_by_ctpy_ccy_n_type, process_excel_to_pdf, process_payments_to_excel, 
-    create_payement_email, create_settlement_fx_payment_excel
+    create_payement_email, create_settlement_fx_payment_excel, load_beneficiaries_db
 )
 from src.ui.pages.Settlements.payments import type_market_section
 
 from src.config.parameters import (
     PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, UBS_PAYMENTS_TYPES,
     UBS_PAYMENTS_MARKET, UBS_PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS, PAYMENTS_BENEFICIARY_COLUMNS, 
-    PAYMENTS_BENECIFIARY_SHEET_NAME, UBS_PAYMENTS_FUNDS, UBS_PAYMENTS_DIRECTIONS
+    PAYMENTS_BENECIFIARY_SHEET_NAME, UBS_PAYMENTS_FUNDS, UBS_PAYMENTS_DIRECTIONS,
+    UBS_SETTLEMENTS_FX_PAYMENTS_FROM, UBS_SETTLEMENTS_FX_PAYMENTS_CC, UBS_SETTLEMENTS_FX_PAYMENTS_BODY,
+    UBS_SETTLEMENTS_FX_PAYMENTS_SUBJECT, UBS_SETTLEMENTS_FX_PAYMENTS_TO
 )
-from src.config.paths import PAYMENTS_DIR_ABS_PATH
+from src.config.paths import PAYMENTS_DIR_ABS_PATH, UBS_PAYMENTS_DB_SSI_ABS_PATH
 from src.utils.formatters import date_to_str, str_to_date
 
 
@@ -87,6 +89,7 @@ def input_fx_payment (order_number : int = 1) :
     center_h5(f"FX Payment {order_number}")
 
     _, ctpy, acc = fund_ctpy_n_acc_section(number_order=order_number+1)
+    reference = trade_reference_section(number_order=order_number)
 
     direction = direction_section(number_order=order_number+1)
     amount, currency = amount_n_currency_section(number_order=order_number+1)
@@ -96,9 +99,18 @@ def input_fx_payment (order_number : int = 1) :
     sett, ctpy_ccy = counter_settlement_section(number_order=order_number+1)
     t_date, m_date = value_date_section(number_order=order_number+1)
 
-    bic = bic_code_section(number_order=order_number+1)
+    default_bic = None
 
-    payment = (acc, None, direction, currency, amount, ctpy_ccy, fx_rate, sett, t_date, m_date, bic)
+    df, md5 = load_beneficiaries_db(UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_BENECIFIARY_SHEET_NAME, PAYMENTS_BENEFICIARY_COLUMNS)
+    row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, "FX", currency)
+        
+    if row is not None :
+        st.write(row)
+        _, default_bic, _, _, _ = row
+
+    bic = bic_code_section(default_bic, number_order=order_number+1)
+
+    payment = (acc, reference, direction, currency, amount, ctpy_ccy, fx_rate, sett, t_date, m_date, bic)
 
     return payment
 
@@ -129,6 +141,21 @@ def fund_ctpy_n_acc_section (
     fund, ctpy, acc = general_payment_fields(fundations, counterparties, accounts, number_order, key_fundation, key_counterparty, key_account)
 
     return fund, ctpy, acc
+
+
+def trade_reference_section (
+
+        number_order : int = 1
+
+    ) :
+    """
+    
+    """
+    key_reference = f"UBS_FX_Payment_{number_order}_trade_reference"
+  
+    _, reference = product_n_trade_ref_fields(number_order, None, key_reference, None, "Reference")
+
+    return reference
 
 
 def direction_section (directions : Optional[List[str] | Dict] = None, number_order : int = 1) :
@@ -215,13 +242,18 @@ def value_date_section (number_order : int = 1, format : str = "%d.%m.%Y") :
     return t_date, v_date
 
 
-def bic_code_section (number_order : int = 1) :
+def bic_code_section (
+        
+        default_bic : Optional[str] = None,
+        number_order : int = 1
+    
+    ) :
     """
     Docstring for bic_code_section
     """
     key_bic = f"UBS_FX_Payment_{number_order}_bic"
 
-    bic_code = st.text_input("BIC Code", key=key_bic)
+    bic_code = ubs_ben_bic_field(default_bic, number_order, key_bic)
 
     return bic_code
 
@@ -233,7 +265,6 @@ def export_fx_payment_section (payments : List[Tuple] = None, filename : Optiona
     #st.write(payments)
     dataframe = create_settlement_fx_payment_excel(payments)
 
-    st.dataframe(dataframe)
     if dataframe is None :
         
         st.warning("[-] No payment information to export")
@@ -244,11 +275,46 @@ def export_fx_payment_section (payments : List[Tuple] = None, filename : Optiona
 
     excel_filename = f"{filename}.xlsx"
     status = export_dataframe_to_excel(dataframe, output_abs_path=os.path.join(dir_abs_path, excel_filename))
-    st.write(status)
+
     if status.get("success") is True :
 
         st.success(f"[+] FX Payments exported to excel successfully as {excel_filename}")
+        
+        email = create_payement_email(
+        
+            from_email=UBS_SETTLEMENTS_FX_PAYMENTS_FROM,
+            to_email=UBS_SETTLEMENTS_FX_PAYMENTS_TO,
+            cc_email=UBS_SETTLEMENTS_FX_PAYMENTS_CC,
+            subject_email=UBS_SETTLEMENTS_FX_PAYMENTS_SUBJECT,
+            body_email=UBS_SETTLEMENTS_FX_PAYMENTS_BODY,
+            files_attached=[status.get("path")]
+        
+        )
 
+        if email.get("success") :
+            
+            path = email.get("path")
+
+            print(f"\n[+] Mesage created and stored in {path}")
+            st.info("Email successfully created. Ready to download")
+            
+            with open(email.get("path"), "rb") as f :
+                file_bytes = f.read()
+
+            st.download_button(
+                "Download Payment instruction",
+                data=file_bytes,
+                file_name=os.path.basename(email.get("path")),
+                mime="application/octet-stream",  # ou "application/vnd.ms-outlook" si .msg
+            )
+    
+        else  :
+
+            st.error("[-] Error during Payment generation")
+            return
+
+    else :
+        # Need to create an email item here. 
         pdf_filename = f"{filename}.pdf"
         status = export_excel_to_pdf(status.get("path"), pdf_filename, dir_abs_path, orientation=2)
 
