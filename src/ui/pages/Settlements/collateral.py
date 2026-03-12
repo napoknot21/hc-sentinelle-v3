@@ -18,7 +18,7 @@ from src.core.data.payments import (
 
 from src.config.parameters import (
     PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_BOOKS,
-    PAYMENTS_DIRECTIONS, PAYMENTS_ACCOUNTS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME
+    PAYMENTS_DIRECTIONS, UBS_PAYMENTS_ACCOUNTS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME
 )
 from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH
 from src.utils.formatters import date_to_str
@@ -80,19 +80,23 @@ def input_collateral_section (nb_payments : int = 1) :
             center_h5(f"Collateral {i+1}")
             
             fund, ctpy, acc = fund_ctpy_n_acc_section(number_order=i+1)
-            direction, type_collateral = type_return_section(number_order=i+1)
+            direction, type_collateral, ret = type_return_section(number_order=i+1)
+
+            #t_ref = 
 
             amount, currency = amount_n_currency_section(number_order=i+1)
             t_date, v_date = value_date_section(number_order=i+1)
             
             swift_def, swift_ben_def, iban_def = None, None, None
             
-            df, md5 = load_beneficiaries_db(UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_BENECIFIARY_SHEET_NAME, PAYMENTS_BENEFICIARY_COLUMNS)
-            row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, "Collateral Management", currency)
+            if ret != "Yes" :
+                
+                df, md5 = load_beneficiaries_db(UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_BENECIFIARY_SHEET_NAME, PAYMENTS_BENEFICIARY_COLUMNS)
+                row = find_beneficiary_by_ctpy_ccy_n_type(df, md5, ctpy, "Collateral Management", currency)
 
-            if row is not None :
-                _, swift_def, _, swift_ben_def, iban_def = row
-            
+                if row is not None :
+                    _, swift_def, _, swift_ben_def, iban_def = row
+                
             swift_bank, iban, swift_benif = swift_iban_section(swift_def, iban_def, swift_ben_def, number_order=i+1)
             
             book = book_section(number_order=i+1)
@@ -125,13 +129,13 @@ def fund_ctpy_n_acc_section (
     counterparties_dict = PAYMENTS_COUNTERPARTIES if counterparties is None else counterparties
     counterparties = list(counterparties_dict.keys())
 
-    accounts = PAYMENTS_ACCOUNTS if accounts is None else accounts
+    accounts = UBS_PAYMENTS_ACCOUNTS if accounts is None else accounts
 
     key_fundation = f"Settlement_Collateral_{number_order}_fundation"
     key_counterparty = f"Settlement_Collateral_{number_order}_counterparty"
     key_account = f"Settlement_Collateral_{number_order}_account"
 
-    fund, ctpy, acc = general_payment_fields(fundations, counterparties, accounts, number_order, key_fundation, key_counterparty, key_account)
+    fund, ctpy, acc = general_payment_fields(fundations, counterparties, list(accounts.values()), number_order, key_fundation, key_counterparty, key_account)
 
     return fund, ctpy, acc
 
@@ -154,12 +158,12 @@ def type_return_section (
 
     flow, ret = type_return_fields(flows, returns, number_order=number_order)
 
-    type_cash = type_name + " " + ("Give" if flow == "Pay" else flow)
+    type_cash = type_name + " " + (flow)
     
     if ret == "Yes" :
         type_cash += " - Return" 
 
-    return flow, type_cash
+    return flow, type_cash, ret
 
 
 def value_date_section (number_order : int = 1, format : str = "%d.%m.%Y") :
@@ -269,7 +273,6 @@ def process_collaterals_section (
     response = convert_ubs_collateral_management_to_excel(collaterals)
     status = response["success"]
 
-    st.write(response)
     if status is True :
 
         filename, _ = os.path.splitext(os.path.basename(response.get("path")))

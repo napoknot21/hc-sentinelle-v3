@@ -458,7 +458,6 @@ def realized_volatilty_chart_section (
     dataframe, md5 = read_nav_estimate_by_fund(fundation)
     rename_df , md5 = rename_nav_estimate_columns(dataframe, md5)
 
-
     df_na = rename_df.drop_nulls(subset=columns)
     df = df_na.sort("date")
 

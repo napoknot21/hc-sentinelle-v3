@@ -165,6 +165,11 @@ def nav_estimate_performance_graph (
             font_size=16,
         ),
 
+        legend=dict(
+            y=0.5,
+            yanchor="middle"
+        ),
+
         height=350, 
         width=1600,
 
@@ -263,7 +268,6 @@ def index_performance_graph (
     print(_dataframe)
 
     return fig
-
 
 
 @st.cache_data()
@@ -813,13 +817,21 @@ def leverage_line_chart (
     fig.update_layout(
 
         title=title,
+        
         xaxis=dict(title=x_axis),
         yaxis=dict(title="Leverages"),
+        
         hovermode="x unified",
+        
         hoverlabel=dict(
             bgcolor="white",
             font_color="black",
             font_size=16,
+        ),
+
+        legend=dict(
+            y=0.5,
+            yanchor="middle"
         ),
     )
         
