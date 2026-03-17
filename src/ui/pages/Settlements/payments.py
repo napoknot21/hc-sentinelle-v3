@@ -21,7 +21,7 @@ from src.config.parameters import (
     PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, UBS_PAYMENTS_TYPES,
     UBS_PAYMENTS_MARKET, UBS_PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS, PAYMENTS_BENEFICIARY_COLUMNS, 
     PAYMENTS_BENECIFIARY_SHEET_NAME, UBS_PAYMENTS_FUNDS, UBS_SETTLEMENTS_OTC_PAYMENT_FROM,
-    UBS_SETTLEMENTS_OTC_PAYMENT_BODY
+    UBS_SETTLEMENTS_OTC_PAYMENT_BODY, UBS_PAYMENTS_DIRECTIONS_PAY
 )
 
 from src.utils.data_io import convert_ubs_instruction_payments_to_excel, export_excel_to_pdf
@@ -181,7 +181,7 @@ def direction_n_reason_section (
     """
     Docstring for product_n_trade_ref_section
     """
-    directions = PAYMENTS_DIRECTIONS if directions is None else directions
+    directions = UBS_PAYMENTS_DIRECTIONS_PAY if directions is None else directions
 
     key_direction = f"UBS_OTC_Payment_{number_order}_direction" 
     key_reason = f"UBS_OTC_Payment_{number_order}_reason" 

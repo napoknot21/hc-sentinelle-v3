@@ -106,7 +106,7 @@ def input_fx_payment (order_number : int = 1) :
         
     if row is not None :
         st.write(row)
-        _, default_bic, _, _, _ = row
+        _, _, _, default_bic, _ = row
 
     bic = bic_code_section(default_bic, number_order=order_number+1)
 
@@ -199,7 +199,7 @@ def fx_rate_section (number_order : int = 1) :
     """
     key_fx_rate = f"UBS_FX_Payment_{number_order}_fx_rate"
 
-    fx_rate = st.number_input("FX Rate", min_value=1.0000,  format="%.4f", step=0.0001, key=key_fx_rate)
+    fx_rate = st.number_input("FX Rate", min_value=1.0000,  format="%.5f", step=0.0001, key=key_fx_rate)
 
     return fx_rate
 

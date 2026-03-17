@@ -18,9 +18,11 @@ from src.core.data.payments import (
 
 from src.config.parameters import (
     PAYMENTS_FUNDS, PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, PAYMENTS_BOOKS,
-    PAYMENTS_DIRECTIONS, UBS_PAYMENTS_ACCOUNTS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME
+    UBS_PAYMENTS_DIRECTIONS_PAY, UBS_PAYMENTS_ACCOUNTS, PAYMENTS_BENEFICIARY_COLUMNS, PAYMENTS_BENECIFIARY_SHEET_NAME,
+    UBS_SETTLEMENTS_COLLATERAL_MGNT_FROM, UBS_SETTLEMENTS_COLLATERAL_MGNT_CC, UBS_SETTLEMENTS_COLLATERAL_MGNT_BODY,
+    UBS_SETTLEMENTS_COLLATERAL_MGNT_SUBJECT, UBS_SETTLEMENTS_COLLATERAL_MGNT_TO
 )
-from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH
+from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH, UBS_SETTLEMENTS_COLLATERLA_MGNT_FILES_ABS_PATH
 from src.utils.formatters import date_to_str
 from src.utils.data_io import convert_ubs_collateral_management_to_excel, export_excel_to_pdf
 
@@ -153,7 +155,7 @@ def type_return_section (
     """
     Docstring for type_return_section
     """
-    flows = PAYMENTS_DIRECTIONS if flows is None else flows
+    flows = UBS_PAYMENTS_DIRECTIONS_PAY if flows is None else flows
     returns = ["Yes", "No"] if returns is None else returns
 
     flow, ret = type_return_fields(flows, returns, number_order=number_order)
@@ -270,20 +272,42 @@ def process_collaterals_section (
     :param payments: Description
     :type payments: Optional[List]
     """
-    response = convert_ubs_collateral_management_to_excel(collaterals)
+    response = convert_ubs_collateral_management_to_excel(collaterals, dir_abs_path=UBS_SETTLEMENTS_COLLATERLA_MGNT_FILES_ABS_PATH)
+    #response_backup = convert_ubs_collateral_management_to_excel(collaterals, dir_abs_path=UBS_SETTLEMENTS_COLLATERLA_MGNT_FILES_ABS_PATH)
+
     status = response["success"]
 
     if status is True :
 
         filename, _ = os.path.splitext(os.path.basename(response.get("path")))
-        pdf_status = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=1)
-        
+
+        pdf_status = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=1, output_dir_path=UBS_SETTLEMENTS_COLLATERLA_MGNT_FILES_ABS_PATH)
+        #pdf_backup = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=1, output_dir_path=None)
+
         if pdf_status.get("success") :
 
             st.warning(f"{pdf_status["message"]}")
             st.warning(f"Successfully at {pdf_status.get("path")}")
+
+            with open(pdf_status.get("path"), "rb") as f:
+                pdf_bytes = f.read()
             
-            email = create_payement_email(files_attached=[pdf_status.get("path")])
+            st.download_button(
+                "Download Payment instruction",
+                data=pdf_bytes,
+                file_name=os.path.basename(pdf_status.get("path")),
+                mime="application/pdf",  # ou "application/vnd.ms-outlook" si .msg
+            )
+            """
+            email = create_payement_email(
+                
+                from_email=UBS_SETTLEMENTS_COLLATERAL_MGNT_FROM,
+                cc_email=UBS_SETTLEMENTS_COLLATERAL_MGNT_CC,
+                subject_email=UBS_SETTLEMENTS_COLLATERAL_MGNT_SUBJECT,
+                body_email=UBS_SETTLEMENTS_COLLATERAL_MGNT_BODY,
+                files_attached=[pdf_status.get("path")]
+            
+            )
 
             if email.get("success") :
                 
@@ -301,6 +325,7 @@ def process_collaterals_section (
                     file_name=os.path.basename(email.get("path")),
                     mime="application/octet-stream",  # ou "application/vnd.ms-outlook" si .msg
                 )
+            """
         
         else  :
 

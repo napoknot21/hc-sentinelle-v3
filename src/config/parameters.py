@@ -692,7 +692,8 @@ PAYMENTS_EMAIL_SUBJECT = os.getenv("PAYMENTS_EMAIL_SUBJECT")
 PAYMENTS_RAW_BODY = os.getenv("PAYMENTS_EMAIL_BODY", "")
 PAYMENTS_EMAIL_BODY = PAYMENTS_RAW_BODY.replace("\\n", "\n")
 
-PAYMENTS_DIRECTIONS = ["Receive", "Give"]
+PAYMENTS_DIRECTIONS = ["Receive", "Given"]
+
 
 PAYMENTS_BOOK_HV = os.getenv("PAYMENTS_BOOK_HV")
 PAYMENTS_BOOK_WR = os.getenv("PAYMENTS_BOOK_WR")
@@ -754,6 +755,8 @@ UBS_PAYMENTS_EXCEL_COLUMNS = [
     
 ]
 
+UBS_PAYMENTS_DIRECTIONS_PAY = ["Receive", "Pay"]
+
 UBS_PAYMENTS_TYPES = ["Option Premium", "Option Exercice"]
 UBS_PAYMENTS_MARKET = ["FX", "Equity"]
 
@@ -809,6 +812,7 @@ UBS_COLLATERAL_EXCEL_COLUMNS = {
     0  : "E8",   # type_collateral
     1  : "E10",  # account
     2  : "E11",  # fund
+    3  : "G13", 
     4  : "E14",  # external ref (if used)
     5  : "C16",  # currency
     6  : "G16",  # amount
