@@ -14,19 +14,20 @@ from src.config.paths import TREADE_RECAP_DATA_RAW_DIR_ABS_PATH
 from src.utils.formatters import str_to_date
 from src.utils.data_io import export_dataframe_to_excel
 from src.ui.components.text import center_h5
-from src.core.api.recap import trade_recap_launcher
+from src.core.api.recap import trade_recap_launcher, trade_recap_invoke_api_outlook
 from src.core.data.recap import (
     read_trade_recap_by_date, find_most_recent_file_by_date, clean_structure_from_dataframe,
     apply_user_review_defaults, apply_otc_fx_logic_to_trade, reconcile_edited_with_original
 )
 
-KEY_DF        = "dataframe_recap_daily"
-KEY_DF_BASE   = "dataframe_recap_daily_base"        # stable base passed to data= – never mutated during editing
-KEY_MD5       = "dataframe_md5_recap_daily"
-KEY_EDITOR    = "dataframe_editor_recap_daily"      # base name – never used as widget key directly
-KEY_EDITOR_GEN = "dataframe_editor_recap_daily_gen" # int counter – bump to reset the editor widget
-KEY_VALIDATED = "dataframe_recap_daily_validated"
-KEY_FILE      = "dataframe_recap_daily_filename"
+KEY_DF         = "dataframe_recap_daily"
+KEY_DF_BASE    = "dataframe_recap_daily_base"        # stable base passed to data= – never mutated during editing
+KEY_MD5        = "dataframe_md5_recap_daily"
+KEY_EDITOR     = "dataframe_editor_recap_daily"      # base name – never used as widget key directly
+KEY_EDITOR_GEN = "dataframe_editor_recap_daily_gen"  # int counter – bump to reset the editor widget
+KEY_VALIDATED  = "dataframe_recap_daily_validated"
+KEY_FILE       = "dataframe_recap_daily_filename"
+KEY_STATUS     = "recap_export_status"               # stores result of export + outlook invocation
 
 
 def _editor_widget_key () -> str :
@@ -62,7 +63,7 @@ def polars_to_excel_bytes (dataframe: pl.DataFrame, sheet_name: str = "Sheet1") 
         return output.getvalue()
 
 
-def save_df_to_temp_excel(df: pl.DataFrame, prefix: str = "recap_raw_") -> str :
+def save_df_to_temp_excel (df: pl.DataFrame, prefix: str = "recap_raw_") -> str :
     """
     Save a Polars DataFrame to a named temp Excel file, return its path.
     """
@@ -73,7 +74,6 @@ def save_df_to_temp_excel(df: pl.DataFrame, prefix: str = "recap_raw_") -> str :
         df.to_pandas().to_excel(writer, sheet_name="Sheet1", index=False)
     
     return tmp.name
-
 
 
 def generate_email_draft_bytes (
@@ -235,7 +235,6 @@ def trades () -> None :
     """
     Main entry.
     """
-    st.warning("THIS SECTION IN UNDER DEVELOPMENT !!!!")
     filename, date = date_history_section()
 
     if filename is None or date is None :
@@ -246,13 +245,13 @@ def trades () -> None :
     # ── Flush state when file changes ────────────────────────────────────────
     if st.session_state.get(KEY_FILE) != filename :
 
-        for k in (KEY_DF, KEY_DF_BASE, KEY_MD5, KEY_VALIDATED) :
+        for k in (KEY_DF, KEY_DF_BASE, KEY_MD5, KEY_VALIDATED, KEY_STATUS) :
             st.session_state.pop(k, None)
         
         st.session_state[KEY_EDITOR_GEN] = st.session_state.get(KEY_EDITOR_GEN, 0) + 1
         st.session_state[KEY_FILE] = filename
 
-    # Load + prepare (once per file, never overwrites user edits) 
+    # Load + prepare (once per file, never overwrites user edits)
     # Do NOT call read_trade_recap_by_date on every rerun – that would
     # overwrite KEY_DF with the raw file and destroy user label changes.
     # Only load when KEY_DF is absent or empty (first visit after a file change).
@@ -260,6 +259,7 @@ def trades () -> None :
     df_missing = not isinstance(df_current, pl.DataFrame) or df_current.is_empty()
 
     if df_missing :
+
         dataframe, md5, _ = read_trade_recap_by_date(date, filename)
         ensure_session_keys(dataframe, md5, date, filename)
 
@@ -268,7 +268,9 @@ def trades () -> None :
 
     # prepare only runs when Label col is missing (i.e. first load)
     if "Label" not in dataframe.columns :
+        
         dataframe, md5 = prepare_master_trade_recap_section(dataframe, md5, date, filename)
+        
         st.session_state[KEY_DF]  = dataframe
         st.session_state[KEY_MD5] = md5
 
@@ -385,38 +387,54 @@ def edit_master_trade_recap_section (
         st.write("")
 
         if st.button("✅ Validate Trade Recap", use_container_width=True) :
+
             st.session_state[KEY_DF] = pl.from_pandas(edited_pd).with_columns(
                 pl.col("Label").fill_null("").cast(pl.Utf8)
             )
             st.session_state[KEY_VALIDATED] = True
+
             st.rerun()
 
         return None
 
     # ── Post-validation: show frozen result + exports ─────────────────────────
     export_df = st.session_state.get(KEY_DF, pl.DataFrame())
-    date_str  = str(date).replace("-", "_") if date is not None else "DATE"
 
     st.success("✅ Trade Recap validated.")
 
     # Show the frozen validated dataframe so the user can see their changes
     st.dataframe(export_df, use_container_width=True)
 
-    output_dir = TREADE_RECAP_DATA_RAW_DIR_ABS_PATH
-    base, _ = os.path.splitext(filename)
-    out_path = f"{base}_MASTER.xlsx"
-    
-    output_abs_path = os.path.join(output_dir, out_path)
+    # ── Run export + Outlook invocation ONCE, cache result in session_state ───
+    # This avoids re-running the subprocess on every Streamlit rerun
+    # (which is triggered by any widget interaction, including download buttons).
+    if KEY_STATUS not in st.session_state :
 
-    result = export_dataframe_to_excel(export_df, output_abs_path=output_abs_path)
+        output_dir = TREADE_RECAP_DATA_RAW_DIR_ABS_PATH
+        base, _    = os.path.splitext(filename)
+        out_path   = f"{base}_MASTER.xlsx"
+        output_abs_path = os.path.join(output_dir, out_path)
 
-    ###########################-----------------------------------------------------------------------------------------------------------------------
+        with st.spinner("Exporting and generating email draft...") :
+            result = export_dataframe_to_excel(export_df, output_abs_path=output_abs_path)
+
+            status = trade_recap_invoke_api_outlook(
+                date=date,
+                excel_file=result.get("path"),
+            )
+
+        st.session_state[KEY_STATUS] = status  # ← store once, reuse on every rerun
+
+    status = st.session_state[KEY_STATUS]      # ← always read from session_state
+
     st.write("")
 
     if st.button("🔓 Reset & Edit Again", use_container_width=True) :
         # Go back to the original pre-edit base (not the validated state)
         st.session_state[KEY_VALIDATED]  = False
         st.session_state[KEY_EDITOR_GEN] = st.session_state.get(KEY_EDITOR_GEN, 0) + 1
+        # Also clear the export status so it re-runs after next validation
+        st.session_state.pop(KEY_STATUS, None)
         st.rerun()
 
     st.write("")
@@ -425,31 +443,45 @@ def edit_master_trade_recap_section (
     center_h5("Master Exports")
     st.write("")
 
-    master_df = pl.read_excel(output_abs_path)
+    excel_path = status.get("excel_file") if status else None
+    email_path = status.get("email_path") if status else None
+
     col_left, col_right = st.columns(2)
 
     with col_left :
-        st.download_button(
-            label               = "⬇️ Download Master Excel",
-            data                = polars_to_excel_bytes(master_df),
-            file_name           = out_path,
-            mime                = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width = True,
-        )
+        if excel_path and os.path.isfile(excel_path) :
+            with open(excel_path, "rb") as f :
+                excel_bytes = f.read()
+            st.download_button(
+                label               = "⬇️ Download Master Excel",
+                data                = excel_bytes,
+                file_name           = os.path.basename(excel_path),
+                mime                = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width = True,
+            )
+        else :
+            st.warning("Excel file not available.")
 
     with col_right :
-        st.download_button(
-            label               = "📧 Download Master Email Draft",
-            data                = generate_email_draft_bytes(export_df, label="MASTER", date=date),
-            file_name           = f"EMAIL_MASTER_{date_str}.txt",
-            mime                = "text/plain",
-            use_container_width = True,
-        )
+        if email_path and os.path.isfile(email_path) :
+            with open(email_path, "rb") as f :
+                eml_bytes = f.read()
+            st.download_button(
+                label               = "📧 Download Master Email Draft",
+                data                = eml_bytes,
+                file_name           = os.path.basename(email_path),
+                mime                = "message/rfc822",
+                use_container_width = True,
+            )
+        else :
+            st.warning("Email file not available.")
 
+    """
     st.divider()
 
     # ── Split FX / OTC ────────────────────────────────────────────────────────
     split_fx_otc_section(export_df, date=date)
+    """
 
     return None
 
