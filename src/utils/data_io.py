@@ -552,7 +552,7 @@ def convert_ubs_instruction_payments_to_excel (
     
     template_abs_path = UBS_PAYMENTS_INTRUCTION_TEMPLATE_ABS_PATH if template_abs_path is None else template_abs_path 
     
-    filename = f"UBS_OTC_Payment_Instruction_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" if filename is None else filename
+    filename = f"UBS_OTC_Payment_Instruction_{dt.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')}.xlsx" if filename is None else filename
     dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
     columns_index = UBS_PAYMENTS_EXCEL_COLUMNS if columns_index is None else columns_index
 
@@ -636,7 +636,7 @@ def convert_ubs_collateral_management_to_excel (
     
     template_abs_path = UBS_COLLATERAL_MANAGEMENT_TEMPLATE_ABS_PATH if template_abs_path is None else template_abs_path 
     
-    filename = f"UBS_Collateral_Management_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx" if filename is None else filename
+    filename = f"UBS_Collateral_Management_{dt.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')}.xlsx" if filename is None else filename
     dir_abs_path = PAYMENTS_FILES_ABS_PATH if dir_abs_path is None else dir_abs_path
 
     os.makedirs(dir_abs_path, exist_ok=True)

@@ -22,7 +22,10 @@ from src.config.parameters import (
     UBS_SETTLEMENTS_COLLATERAL_MGNT_FROM, UBS_SETTLEMENTS_COLLATERAL_MGNT_CC, UBS_SETTLEMENTS_COLLATERAL_MGNT_BODY,
     UBS_SETTLEMENTS_COLLATERAL_MGNT_SUBJECT, UBS_SETTLEMENTS_COLLATERAL_MGNT_TO
 )
-from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH, UBS_SETTLEMENTS_COLLATERLA_MGNT_FILES_ABS_PATH
+from src.config.paths import (
+    UBS_PAYMENTS_DB_SSI_ABS_PATH, UBS_SETTLEMENTS_COLLATERLA_MGNT_FILES_ABS_PATH,
+    UBS_SETTLEMENTS_COLLATERAL_MGNT_SAVE_DIR_ABS_PATH, PAYMENTS_DIR_ABS_PATH
+)
 from src.utils.formatters import date_to_str
 from src.utils.data_io import convert_ubs_collateral_management_to_excel, export_excel_to_pdf
 
@@ -272,8 +275,8 @@ def process_collaterals_section (
     :param payments: Description
     :type payments: Optional[List]
     """
-    response = convert_ubs_collateral_management_to_excel(collaterals, dir_abs_path=UBS_SETTLEMENTS_COLLATERLA_MGNT_FILES_ABS_PATH)
-    #response_backup = convert_ubs_collateral_management_to_excel(collaterals, dir_abs_path=UBS_SETTLEMENTS_COLLATERLA_MGNT_FILES_ABS_PATH)
+    response = convert_ubs_collateral_management_to_excel(collaterals, dir_abs_path=PAYMENTS_DIR_ABS_PATH)
+    response_backup = convert_ubs_collateral_management_to_excel(collaterals, dir_abs_path=UBS_SETTLEMENTS_COLLATERAL_MGNT_SAVE_DIR_ABS_PATH)
 
     status = response["success"]
 
@@ -281,8 +284,8 @@ def process_collaterals_section (
 
         filename, _ = os.path.splitext(os.path.basename(response.get("path")))
 
-        pdf_status = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=1, output_dir_path=UBS_SETTLEMENTS_COLLATERLA_MGNT_FILES_ABS_PATH)
-        #pdf_backup = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=1, output_dir_path=None)
+        pdf_status = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=1, output_dir_path=PAYMENTS_DIR_ABS_PATH)
+        pdf_backup = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=1, output_dir_path=UBS_SETTLEMENTS_COLLATERAL_MGNT_SAVE_DIR_ABS_PATH)
 
         if pdf_status.get("success") :
 

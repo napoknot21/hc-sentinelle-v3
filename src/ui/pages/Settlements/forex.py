@@ -27,7 +27,11 @@ from src.config.parameters import (
     UBS_SETTLEMENTS_FX_PAYMENTS_FROM, UBS_SETTLEMENTS_FX_PAYMENTS_CC, UBS_SETTLEMENTS_FX_PAYMENTS_BODY,
     UBS_SETTLEMENTS_FX_PAYMENTS_SUBJECT, UBS_SETTLEMENTS_FX_PAYMENTS_TO
 )
-from src.config.paths import PAYMENTS_DIR_ABS_PATH, UBS_PAYMENTS_DB_SSI_ABS_PATH
+from src.config.paths import (
+    PAYMENTS_DIR_ABS_PATH, UBS_PAYMENTS_DB_SSI_ABS_PATH,
+    UBS_SETTLEMENTS_FX_PAYMENTS_SAVE_DIR_ABS_PATH, UBS_SETTLEMENTS_COLLATERAL_MGNT_SAVE_DIR_ABS_PATH, 
+    UBS_SETTLEMENTS_OTC_PAYMENT_SAVE_DIR_ABS_PATH, UBS_SETTLEMENTS_SECURITIES_SAVE_DIR_ABS_PATH
+)
 from src.utils.formatters import date_to_str, str_to_date
 
 
@@ -270,11 +274,15 @@ def export_fx_payment_section (payments : List[Tuple] = None, filename : Optiona
         st.warning("[-] No payment information to export")
         return None
     
-    filename = f"UBS_FX_Payments_{date_to_str(date=None, format='%Y%m%d_%H%M%S')}" if filename is None else filename
+    filename = f"UBS_FX_Payments_{date_to_str(date=None, format='%Y-%m-%dT%H-%M-%S')}" if filename is None else filename
+
     dir_abs_path = PAYMENTS_DIR_ABS_PATH if dir_abs_path is None else dir_abs_path
+    dir_abs_backup = UBS_SETTLEMENTS_FX_PAYMENTS_SAVE_DIR_ABS_PATH
 
     excel_filename = f"{filename}.xlsx"
+
     status = export_dataframe_to_excel(dataframe, output_abs_path=os.path.join(dir_abs_path, excel_filename))
+    status_bis = export_dataframe_to_excel(dataframe, output_abs_path=os.path.join(dir_abs_backup, excel_filename))
 
     if status.get("success") is True :
 

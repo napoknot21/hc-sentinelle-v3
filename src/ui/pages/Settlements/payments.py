@@ -16,7 +16,7 @@ from src.core.data.payments import (
     find_beneficiary_by_ctpy_ccy_n_type, load_beneficiaries_db, create_payement_email
 )
 
-from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH
+from src.config.paths import UBS_PAYMENTS_DB_SSI_ABS_PATH, PAYMENTS_DIR_ABS_PATH, UBS_SETTLEMENTS_OTC_PAYMENT_SAVE_DIR_ABS_PATH
 from src.config.parameters import (
     PAYMENTS_CONCURRENCIES, PAYMENTS_COUNTERPARTIES, UBS_PAYMENTS_TYPES,
     UBS_PAYMENTS_MARKET, UBS_PAYMENTS_ACCOUNTS, PAYMENTS_DIRECTIONS, PAYMENTS_BENEFICIARY_COLUMNS, 
@@ -249,12 +249,16 @@ def process_payements_section (
     :type payments: Optional[List]
     """
     response = convert_ubs_instruction_payments_to_excel(payments)
+    response_bis = convert_ubs_instruction_payments_to_excel(payments, dir_abs_path=UBS_SETTLEMENTS_OTC_PAYMENT_SAVE_DIR_ABS_PATH)
+
     status = response["success"]
 
     if status is True :
 
         filename, _ = os.path.splitext(os.path.basename(response.get("path")))
+
         pdf_status = export_excel_to_pdf(response.get("path"), filename + ".pdf", orientation=2)
+        pdf_bis = export_excel_to_pdf(response.get("path"), filename + ".pdf", output_dir_path=UBS_SETTLEMENTS_OTC_PAYMENT_SAVE_DIR_ABS_PATH, orientation=2)
         
         if pdf_status.get("success") :
 
