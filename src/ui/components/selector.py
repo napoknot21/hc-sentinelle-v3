@@ -17,9 +17,11 @@ def date_selector (
     """
     
     """
-    default_value = dt.datetime.now().date() if default_value is None else default_value
+    default_value = dt.date.today() if default_value is None else default_value
 
-    return st.date_input(label, value=default_value, key=key)
+    date = st.date_input(label, value=default_value, key=key)
+
+    return date
 
 
 def number_of_items_selector (
@@ -39,7 +41,5 @@ def number_of_items_selector (
     )
 
     return nb_payments
-
-
 
 

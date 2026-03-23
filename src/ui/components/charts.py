@@ -716,7 +716,8 @@ def im_mv_over_nav_with_rolling (
             name=column_nav["title"],
 
             line_shape='spline',
-            line=dict(color=column_nav["color"], width=2) # Set line color to red
+            connectgaps=True,
+            line=dict(color=column_nav["color"], width=2) # Set line color to the defined color
             
         )
 

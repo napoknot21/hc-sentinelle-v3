@@ -45,10 +45,12 @@ def show_expiries_history (_dataframe : pl.DataFrame, md5 : str,  height : int =
         floatingFilter=True,
     )
 
-    gb.configure_pagination(
-        paginationAutoPageSize=False,
-        paginationPageSize=50,
-    )
+    gb.configure_pagination(enabled=False)
+    #gb.configure_pagination(
+    #    paginationAutoPageSize=False,
+    #    paginationPageSize=50,
+    #)
+
 
     # sidebar (pour hide/afficher colonnes + filtres avancés)
     gb.configure_side_bar()
@@ -58,8 +60,9 @@ def show_expiries_history (_dataframe : pl.DataFrame, md5 : str,  height : int =
     grid_response = AgGrid(
         df,
         gridOptions=grid_options,
-        height=height,
+        #height=height,
         update_mode=GridUpdateMode.NO_UPDATE,
+        #fit_columns_on_grid_load=True,
         theme="alpine",  # ou "streamlit", "balham", etc.
     )
 

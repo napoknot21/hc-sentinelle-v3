@@ -293,12 +293,13 @@ def apply_user_review_defaults(df: pl.DataFrame) -> pl.DataFrame:
     return df
 
 
+
 def apply_otc_fx_logic_to_trade(
         
         dataframe: Optional[pl.DataFrame],
         md5: Optional[str] = None,
         columns: Optional[List] = None,
-        
+
     ) -> Tuple[Optional[pl.DataFrame], Optional[str]]:
     """
     Applies OTC/FX/LISTED labelling logic to trades based on asset class and instrument type.
@@ -334,16 +335,19 @@ def apply_otc_fx_logic_to_trade(
         return dataframe, md5
 
     # --- Safely resolve optional columns
-    for col_name in ("tradeLegCode", "tradeDescription"):
-        if col_name not in dataframe.columns:
+    for col_name in ("tradeLegCode", "tradeDescription") :
+
+        if col_name not in dataframe.columns :
             dataframe = dataframe.with_columns(pl.lit("").cast(pl.Utf8).alias(col_name))
 
     # --- Resolve instrument type (prefer instrument.instrumentType, fallback to fields.instrumentType)
-    if "instrument.instrumentType" in dataframe.columns:
+    if "instrument.instrumentType" in dataframe.columns :
         raw_instrument_type = pl.col("instrument.instrumentType")
-    elif "fields.instrumentType" in dataframe.columns:
+
+    elif "fields.instrumentType" in dataframe.columns :
         raw_instrument_type = pl.col("fields.instrumentType")
-    else:
+
+    else :
         raw_instrument_type = pl.lit("")
 
     instrument_type  = raw_instrument_type.fill_null("").cast(pl.Utf8).str.to_uppercase()
@@ -361,18 +365,43 @@ def apply_otc_fx_logic_to_trade(
         | instrument_type.str.contains("LISTED")  # instrument.instrumentType column (already uppercased)
     )
 
-    # --- Label expression (mirrors the rule image exactly)
-    label_expr = (
-        pl.when(is_fx & fx_instrument).then(pl.lit("FX"))
-          .when(is_fx & ~fx_instrument).then(pl.lit("OTC"))
-          .when(is_eq & has_listed).then(pl.lit("LISTED"))
-          .when(is_eq & ~has_listed).then(pl.lit("OTC"))
-          .when(is_commodity).then(pl.lit("OTC"))
-          .otherwise(pl.lit("LISTED"))  # default per the rules
-          .alias("Label")
+    has_stock    = (
+        trade_description.str.contains("STOCK")  # tradeDescription column
+        | instrument_type.str.contains("STOCK")  # instrument.instrumentType column (already uppercased)
     )
 
-    return dataframe.with_columns(label_expr), md5
+
+    # --- 1) Compute label per leg (mirrors the rule image exactly)
+    leg_label_expr = (
+        pl.when(is_fx & fx_instrument).then(pl.lit("FX"))
+          .when(is_fx & ~fx_instrument).then(pl.lit("OTC"))
+          .when(is_eq & (has_listed | has_stock)).then(pl.lit("LISTED"))
+          .when(is_eq & (~has_listed & ~has_stock)).then(pl.lit("OTC"))
+          .when(is_commodity).then(pl.lit("OTC"))
+          .otherwise(pl.lit("LISTED"))  # default per the rules
+    )
+
+    dataframe = dataframe.with_columns(leg_label_expr.alias("_leg_label"))
+
+    # --- 2) Consolidate at the tradeId level
+    # Priority: OTC > FX > LISTED
+    if "tradeId" in dataframe.columns:
+        has_otc = (pl.col("_leg_label") == "OTC").any().over("tradeId")
+        has_fx  = (pl.col("_leg_label") == "FX").any().over("tradeId")
+
+        trade_label_expr = (
+            pl.when(has_otc).then(pl.lit("OTC"))
+              .when(has_fx).then(pl.lit("FX"))
+              .otherwise(pl.lit("LISTED"))
+              .alias("Label")
+        )
+        dataframe = dataframe.with_columns(trade_label_expr).drop("_leg_label")
+    else:
+        # Fallback if no tradeId
+        dataframe = dataframe.with_columns(pl.col("_leg_label").alias("Label")).drop("_leg_label")
+
+    return dataframe, md5
+
 
 
 def reconcile_edited_with_original (

@@ -203,7 +203,7 @@ def fx_rate_section (number_order : int = 1) :
     """
     key_fx_rate = f"UBS_FX_Payment_{number_order}_fx_rate"
 
-    fx_rate = st.number_input("FX Rate", min_value=1.0000,  format="%.5f", step=0.0001, key=key_fx_rate)
+    fx_rate = st.number_input("FX Rate", min_value=1.0000,  format="%.6f", step=0.0001, key=key_fx_rate)
 
     return fx_rate
 
