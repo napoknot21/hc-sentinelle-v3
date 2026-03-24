@@ -1,36 +1,31 @@
 from __future__ import annotations
 
-import os
-import time
 import hashlib
 
 import polars as pl
 import datetime as dt
-import streamlit as st
 
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List
+
+from src.config.parameters import FUND_HV, FUND_NAME_MAP, SIMM_RENAME_COLUMNS, SIMM_COLUMNS
+from src.utils.formatters import date_to_str, str_to_date
+from src.utils.logger import log
 
 from src.core.api.client import get_ice_calculator
 
-from src.config.paths import SIMM_FUNDS_DIR_PATHS
-from src.config.parameters import FUND_HV, FUND_NAME_MAP, SIMM_RENAME_COLUMNS
 
-from src.utils.formatters import date_to_str
-from src.utils.logger import log
-
-
-def fetch_raw_simm_data (
+def fetch_raw_simm_data_by_date (
     
         date : Optional[str | dt.datetime | dt.date] = None,
-        fund : Optional[str] = None,
 
+        fund : Optional[str] = None,
         fund_map : Optional[Dict] = None
     
-    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
+    ) -> Optional[List[Dict]] :
     """
     Fetch raw bilateral SIMM (ICE) and return (df, md5) or None.
 
-    Args:
+    Args :
         date (str | datetime | date): The date for which to retrieve SIMM data.
         fund (str): Fund identifier used in the API call.
 
@@ -41,18 +36,16 @@ def fetch_raw_simm_data (
     Note :
         This function refers to the "get_simm()" precedent version.
     """
-    #time = time.time()
-
     date = date_to_str(date)
     fund = FUND_HV if fund is None else fund
 
-    fund_map = FUND_NAME_MAP if fund is None else fund_map # We need to hardcode this value in order to get cache parameters of this function
-    fund_name = fund_map.get(fund, "HV") # We get the fundation in initials (HV, etc)
+    fund_map = FUND_NAME_MAP if fund_map is None else fund_map
+    fund_name = fund_map.get(fund, "HV")
 
     if not fund_name :
 
         log(f"[-] Fund '{fund}' not found in FUND_NAME_MAP", "error")
-        return None, None
+        return None
     
     # Ice API connexion
     try :
@@ -63,7 +56,7 @@ def fetch_raw_simm_data (
     except Exception as e :
 
         log(f"[-] ICE API initialization failed: {e}", "error")
-        return None, None
+        return None
     
     # Network bound
     try :
@@ -73,162 +66,80 @@ def fetch_raw_simm_data (
         if bilateral_im is None :
         
             log(f"[-] Error during bilateral IM data request | fund={fund_name} | date={date}", "error")
-            return None, None
+            return None
 
     except Exception as e :
 
         log(f"[-] Error during bilateral IM request: {e}", "error")
-        return None, None
+        return None
 
     log("[+] Bilateral IM data request successful")
     
-    try :
+    return bilateral_im
 
-        # Dictionarry billateral IM normalization
-        normal_json = pl.json_normalize(bilateral_im)
 
-        if normal_json is None :
-
-            log("[-] Error during bilateral IM data normalization", "error")
-            return None, None
+def convert_raw_simm_to_dataframe (
         
-        md5_hash = hashlib.md5(normal_json.write_parquet()).hexdigest()
-
-        log("[+] Bilateral IM data normalization successful")
-    
-    except Exception as e :
-
-        log(f"[-] Error during bilateral IM data normalization: {e}", "error")
-
-    return normal_json, md5_hash
-
-
-def load_simm_data_from_ice (
-        
-        fund : Optional[str] = None,
         date : Optional[str | dt.datetime | dt.date] = None,
-        rename_cols : Optional[Dict] = None,
-        specific_cols : Optional[List] = None
+        raw_simm : Optional[List[Dict]] = None,
 
-    ) -> Tuple[Optional[pl.DataFrame], str] :
-    """
-    Load and preprocess SIMM data from the ICE API.
+        rename_columns : Optional[Dict] = None,
+        simm_columns : Optional[Dict] = None
 
-    This function wraps `fetch_raw_simm_data`, renames its columns, and filters them to keep only relevant ones.
-
-    Args:
-        date (datetime): The date for which to load SIMM data.
-        fund (str): Fund identifier.
-        rename_cols (dict): Mapping of raw API column names to desired standardized column names.
-        specific_cols (list): List of final column names to retain in the resulting DataFrame.
-
-    Returns:
-        data_cols (pl.DataFrame | None) : Cleaned Polars DataFrame with renamed and filtered columns,
-                             or None if the fetch fails.
-    """
-    # Default values
-    date = date_to_str(date)
-    fund = FUND_HV if fund is None else fund
-
-    rename_cols = SIMM_RENAME_COLUMNS if rename_cols is None else rename_cols
-    specific_cols = list(SIMM_RENAME_COLUMNS.values()) if specific_cols is None else specific_cols
-
-    # Fetch and get the SIMM
-    try :
-
-        data_df, md5 = fetch_raw_simm_data(date, fund)
-
-    except Exception as e :
-
-        log("[-] Error getting the SIMM data from API ICE...", "error")
-        return None, None
-    
-    log("[+] SIMM data successfully got", "info")
-    
-    # Data handling (Rename columns)
-    data_rename = data_df.rename(rename_cols)
-
-    # Polars normally manages the "," (commas) by itself
-    data_cols = data_rename[specific_cols]
-    md5_hash = hashlib.md5(data_cols.write_parquet()).hexdigest()
-
-    print(data_cols)
-
-    return data_cols, md5_hash
-
-
-@st.cache_data()
-def load_simm_data_from_df (
-        
-        _df : pl.DataFrame,
-        md5_hash : Optional[str] = None,
-        rename_cols : Optional[Dict] = None,
-        specific_cols : Optional[List] = None
-
-) -> Optional[Tuple[pl.DataFrame, str]] :
-    """
-    
-    """
-    rename_cols = SIMM_RENAME_COLUMNS if rename_cols is None else rename_cols
-    specific_cols = list(SIMM_RENAME_COLUMNS.values()) if specific_cols is None else specific_cols
-
-    # Data handling (Rename columns)
-    data_rename = _df.rename(rename_cols)
-
-    # Polars normally manages the "," (commas) by itself
-    data_cols = data_rename[specific_cols]
-    md5_hash = hashlib.md5(data_cols.write_parquet()).hexdigest()
-
-    print(data_cols)
-
-    return data_cols, md5_hash
-
-
-def update_simm_date_from_df (
-        
-        df : pl.DataFrame, 
-        md5 : Optional[str] = None,
-        fund : Optional[str] =  None,
-        date : Optional[str | dt.datetime | dt.date] = None
-    
     ) :
     """
-    Update a given Polars DataFrame by appending new rows from ICE API for a specific date.
-
-    Args:
-        df (pl.DataFrame): Existing DataFrame to be updated.
-        md5 (str | None): Optional MD5 hash (unused here but may be useful in your logic).
-        fund (str | None): Fund identifier.
-        date (str | datetime | date | None): Date to fetch new SIMM data for.
-
-    Returns:
-        pl.DataFrame: Updated DataFrame with new rows added.
     """
-    date = date_to_str(date)
-    fund = FUND_HV if fund is None else fund
+    date = str_to_date(date)
 
-    rename_cols = SIMM_RENAME_COLUMNS if rename_cols is None else rename_cols
-    specific_cols = list(SIMM_RENAME_COLUMNS.values()) if specific_cols is None else specific_cols
+    rename_columns = SIMM_RENAME_COLUMNS if rename_columns is None else rename_columns
+    simm_columns = SIMM_COLUMNS if simm_columns is None else simm_columns
 
-    # Fetch and get the SIMM
-    try :
-
-        data_df_date, _ = load_simm_data_from_ice(date, fund, rename_cols, specific_cols)
-
-        if data_df_date is None :
-            
-            log("[-] No data returned from ICE API.", "error")
-            return df, md5
-        
-    except Exception as e :
-
-        log("[-] Error getting the SIMM data from API ICE...", "error")
-        return df, md5
+    if raw_simm is None or len(raw_simm) <= 0 :
+        return None, None
     
-    # We have the data for the date missing (today's date by default)
+    dataframe = pl.DataFrame(raw_simm)
 
-    full_data_df = pl.concat([df, data_df_date])
-    new_md5 = hashlib.md5(full_data_df.write_parquet()).hexdigest()
+    col_meta = {k: (v["name"], v["type"]) for k, v in simm_columns.items()}
 
-    return full_data_df, new_md5
+    flat_cols   = {}  # { raw_col: (final_name, dtype) }
+    struct_cols = {}  # { struct_col: { field: (final_name, dtype) } }
+
+    for raw_key, (final_name, dtype) in col_meta.items() :
+
+        if "." in raw_key :
+
+            struct_col, field = raw_key.split(".", 1)
+            struct_cols.setdefault(struct_col, {})[field] = (final_name, dtype)
+        
+        else :
+            flat_cols[raw_key] = (final_name, dtype)
+
+    exprs = [
+
+        *[
+            pl.col(struct_col).struct.field(field).cast(dtype).alias(final_name)
+            for struct_col, fields in struct_cols.items()
+            if struct_col in (columns := pl.DataFrame(raw_simm).columns)
+            for field, (final_name, dtype) in fields.items()
+        ],
+        
+        *[
+            pl.col(raw_col).cast(dtype).alias(final_name)
+            for raw_col, (final_name, dtype) in flat_cols.items()
+        ],
+    
+    ]
+
+    final_cols = [final_name for _, (final_name, _) in col_meta.items()] + ["Date"]
+
+    dataframe = (
+        pl.DataFrame(raw_simm)
+        .with_columns(exprs)
+        .with_columns(pl.lit(date).alias("Date").cast(pl.Date))
+        .select(final_cols)
+    )
+
+    md5 = hashlib.md5(dataframe.write_csv().encode()).hexdigest()
+
+    return dataframe, md5
 

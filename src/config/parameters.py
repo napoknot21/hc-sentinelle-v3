@@ -115,6 +115,9 @@ SIMM_COLUMNS = {
 # Mapping: raw_name -> final_name
 SIMM_RENAME_COLUMNS : dict[str, str] = {k: v["name"] for k, v in SIMM_COLUMNS.items()}
 
+_SIMM_HISTORY_COLUMNS = {v["name"] : v["type"] for _, v in SIMM_COLUMNS.items()}
+SIMM_HISTORY_COLUMNS = _SIMM_HISTORY_COLUMNS.copy()
+SIMM_HISTORY_COLUMNS["Date"] = pl.Date
 
 SIMM_MAPPING_COUNTERPARTIES = {
 

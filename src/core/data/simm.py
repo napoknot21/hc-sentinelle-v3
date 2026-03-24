@@ -1,272 +1,199 @@
 from __future__ import annotations
 
 import os
-import hashlib
 import polars as pl
 import datetime as dt
 
-from typing import List, Optional, Dict, Tuple
-
-from src.core.api.simm import update_simm_date_from_df
+from typing import List, Optional, Dict
 
 from src.utils.logger import log
-from src.utils.data_io import load_excel_to_dataframe
-from src.utils.formatters import date_to_str, str_to_date
+from src.utils.data_io import load_excel_to_dataframe, export_dataframe_to_excel
+from src.utils.formatters import str_to_date
 
 from src.config.paths import SIMM_FUNDS_DIR_PATHS
 from src.config.parameters import (
-    FUND_HV, SIMM_HIST_NAME_DEFAULT, SIMM_CUTOFF_DATE, SIMM_COLUMNS,
-    SIMM_RENAME_COLUMNS, SIMM_MAPPING_COUNTERPARTIES
+    FUND_HV, SIMM_HIST_NAME_DEFAULT, SIMM_CUTOFF_DATE, SIMM_MAPPING_COUNTERPARTIES, SIMM_HISTORY_COLUMNS
 )
 
 
-SCHEMA_OVERRIDES = {v["name"] : v["type"] for v in SIMM_COLUMNS.values()}
+def _empty_simm_history_dataframe (
 
-SCHEMA_OVERRIDES_WTH_DATE = SCHEMA_OVERRIDES.copy()
-SCHEMA_OVERRIDES_WTH_DATE["Date"] = pl.Date
-
-
-def get_simm_history (
-        
-        date : Optional[str | dt.date | dt.datetime] =  None,
-        fund : Optional[str] = None, # FUND_HV
-
-        simm_fund_paths : Optional[Dict] = None, # SIMM_FUNDS_DIR_PATHS,
-        
-        schema_overrides : Optional[Dict] = None, # SCHEMA_OVERRIDES
-        specific_cols : Optional[List] = None,
-        
-        cutoff_date : Optional[str] = None # SIMM_CUTOFF_DATE
-
-    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
-    """
-    Read historical SIMM data for a given fund from a local Excel file.
-
-    This function resolves the absolute path to the fund's SIMM Excel file, and uses
-    Polars to read and optionally filter or cast the columns using a provided schema.
-
-    Args:
-        fund (str): Fund identifier used to determine the folder path (e.g. "HV").
-        simm_fund_paths (dict): Dictionary mapping fund names to their folder paths.
-        excel_relative_filename (str): The relative filename of the SIMM Excel file.
-        specific_cols (list, optional): List of column names to retain after reading.
-        schema_overrides (dict, optional): Dictionary mapping column names to Polars dtypes
-                                           to enforce casting during import.
-
-    Returns:
-        simm_history_df (pl.DataFrame | None) : A Polars DataFrame containing the SIMM history,
-                             or None if the fund path could not be resolved.
-    """
-    # Checks for the fundation path
-    date = str_to_date(date)
-    fund = FUND_HV if fund is None else fund
-
-    schema_overrides = SCHEMA_OVERRIDES_WTH_DATE if schema_overrides is None else schema_overrides
-    specific_cols = list(schema_overrides.keys()) if specific_cols is None else specific_cols
-
-    cutoff_date = SIMM_CUTOFF_DATE if cutoff_date is None else cutoff_date
-
-    excel_file_abs_pth = get_simm_abs_path_by_fund(fund, simm_fund_paths)
-
-    if excel_file_abs_pth is None :
-
-        log(f"[-] SIMM {excel_file_abs_pth} does not exist or not found.")
-        return None, None
+        schema_overrides : Optional[Dict] = None
     
-    try :
+    ) -> pl.DataFrame :
+    """
+    Build an empty SIMM history dataframe with the expected schema.
+    """
+    schema_overrides = SIMM_HISTORY_COLUMNS if schema_overrides is None else schema_overrides
+    dataframe = pl.DataFrame(schema=schema_overrides)
 
-        simm_history_df, md5 = load_excel_to_dataframe(excel_file_abs_pth, specific_cols=specific_cols, schema_overrides=schema_overrides)
-
-        if simm_history_df is None :
-            
-            log("[-] No data returned from the SIMM file", "error")
-            return None, None
-
-    except Exception as e :
-
-        log(f"[-] Error getting the SIMM data : {e}", "error")
-        return None, None
-
-    
-    try :
-
-        if "Date" in simm_history_df.columns :
-            
-            cutoff_date = str_to_date(cutoff_date)
-            simm_history_df = simm_history_df.filter(pl.col("Date") >= (cutoff_date))
-
-        else :
-            log(f"[!] 'Date' column not found in DataFrame. Cannot apply cutoff.", "warning")
-    
-    except Exception as e :
-        return None, None
-
-    print(simm_history_df)
-
-    return simm_history_df, md5
+    return dataframe 
 
 
-def get_simm_by_date (
+def get_simm_all_history (
         
-        date : Optional[str | dt.date | dt.datetime] =  None,
-        fund : Optional[str] = None, # FUND_HV
-
-        simm_fund_paths : Optional[Dict] = None, # SIMM_FUNDS_DIR_PATHS,
+        fund : Optional[str ] = None,
+        paths_by_fund : Optional[Dict] = None,
         
-        schema_overrides : Optional[Dict] = None, # SCHEMA_OVERRIDES
-        specific_cols : Optional[List] = None,
-        
-        cutoff_date : Optional[str] = None # SIMM_CUTOFF_DATE
-
-    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
-    """
-    
-    """
-    date = str_to_date(date)
-    fund = FUND_HV if fund is None else fund
-
-    schema_overrides = SCHEMA_OVERRIDES_WTH_DATE if schema_overrides is None else schema_overrides
-    specific_cols = list(schema_overrides.keys()) if specific_cols is None else specific_cols
-
-    cutoff_date = SIMM_CUTOFF_DATE if cutoff_date is None else cutoff_date
-
-    try :
-        dataframe, md5 = get_simm_history(date, fund, simm_fund_paths, schema_overrides, specific_cols, cutoff_date)
-
-    except Exception as e :
-        return None, None
-    
-    # Filter by date
-    date = str_to_date(date)
-    df_filter = dataframe.filter(pl.col("Date") == (date))
-
-    print(df_filter)
-
-    return df_filter, md5
-
-
-
-
-def export_simm_history_from_df (
-        
-        fund : Optional[str] = None,
-        simm_fund_paths : Optional[Dict] = None, # SIMM_FUNDS_DIR_PATHS,
-        specific_cols : Optional[List] = None,
-        schema_overrides : Optional[Dict] = None, # SCHEMA_OVERRIDES
-
-    ) -> None :
-    """
-    
-    
-    """
-    schema_overrides = SCHEMA_OVERRIDES_WTH_DATE if schema_overrides is None else schema_overrides
-    specific_cols = list(schema_overrides.keys()) if specific_cols is None else specific_cols
-
-    file_abs_path = get_simm_abs_path_by_fund(fund, simm_fund_paths)
-
-
-    return None
-
-
-def is_simm_history_updated_from_df (
-
-        _df : pl.DataFrame,
-        md5_hash : Optional[str] = None,
-        date : Optional[str | dt.datetime | dt.date] = None,
-        specific_col : str = "Date",
-    
-    ) -> bool :
-    """
-    Filters and updates the SIMM history if today's data is missing.
-
-    This function is cached using Streamlit's st.cache_data,
-    and will re-run only if the input DataFrame changes.
-
-    Args:
-        df (pl.DataFrame): SIMM history dataframe (with column 'Date').
-        specific_col (str): Name of the date column.
-        cutoff_date (str): Minimum allowed date (entries before will be removed).
-
-    Returns:
-        pl.DataFrame: Updated and filtered SIMM history.
-    """
-    if _df is None :
-
-        log("[-] The dataframe is NULL. Impossible to get information.","error")
-        return False
-        
-    date_str = date_to_str(date)
-    lastest_date = _df.select(specific_col).to_series()[-1] # This line is exclusevely for today's date. Not general purpose
-
-    if lastest_date == date_str :
-        
-        log("[*] Dataframe and SIMM excel already updated with today's date !", "info")
-        return True
-
-    # Case where the lastest day is not in the Dataframe (so into the excel file) -> Need to call the API (not in this file)
-    return False
-
-
-def is_simm_history_updated_from_file (
-        
-        fund : Optional[str] = None,
-        date : Optional[str | dt.datetime | dt.date] = None,
-        specific_col : str = "Date"
-
-    ) -> bool :
-    """
-    
-    """
-    fund = FUND_HV if fund is None else fund
-    date = date_to_str(date)
-
-    df_simm, md5_hash = get_simm_history(fund)
-    updated = is_simm_history_updated_from_df(df_simm, md5_hash, date, specific_col)
-
-    return updated
-
-
-def get_updated_all_simm_history (
-    
-        fund : Optional[str] = None,
-        simm_fund_paths : Optional[Dict] = None,
-        specific_cols : Optional[List] = None,
         schema_overrides : Optional[Dict] = None,
-        type = int
+        columns : Optional[List[str]] = None,
+
+        cutoff_date : Optional[str | dt.datetime | dt.date] = None
+        
+    ) :
+    """
     
-    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
     """
-    Function to get all leverages from the leverage folder and save them in a single file.
+    fund = FUND_HV if fund is None else fund
+    paths_by_fund = SIMM_FUNDS_DIR_PATHS if paths_by_fund is None else paths_by_fund
+    
+    schema_overrides = SIMM_HISTORY_COLUMNS if schema_overrides is None else schema_overrides
+    columns = list(schema_overrides.keys()) if columns is None else columns
+
+    file_abs_path = get_simm_abs_path_by_fund(fund)
+
+    if file_abs_path is None :
+        return _empty_simm_history_dataframe(schema_overrides), None
+
+    try :
+        dataframe, md5 = load_excel_to_dataframe(file_abs_path, specific_cols=columns, schema_overrides=schema_overrides) 
+
+    except Exception as e :
+        return None, None
+    
+    cutoff_date = str_to_date(SIMM_CUTOFF_DATE if cutoff_date is None else cutoff_date)
+
+    dataframe = dataframe.filter(pl.col("Date") >= (cutoff_date))
+    
+    return dataframe, md5
+
+
+def get_simm_by_date_from_history (
+        
+        date : Optional[str | dt.datetime | dt.date] = None,
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        fund : Optional[str] = None,
+        paths_by_fund : Optional[Dict] = None,
+
+        schema_overrides : Optional[Dict] = None,
+        columns : Optional[List] = None,
+        
+        cutoff_date : Optional[str] = None
+
+    ) :
     """
-    specific_cols = list(SCHEMA_OVERRIDES_WTH_DATE.keys())
-    schema_overrides = SCHEMA_OVERRIDES if schema_overrides is None else schema_overrides
+    Get all conterparties SIMM for a selected Date
+    """
+    fund = FUND_HV if fund is None else fund
+    paths_by_fund = SIMM_FUNDS_DIR_PATHS if paths_by_fund is None else paths_by_fund
 
-    simm_history_df, md5_hash = get_simm_history(fund, simm_fund_paths, specific_cols, schema_overrides)
-    updated = is_simm_history_updated_from_df(simm_history_df, md5_hash)
+    schema_overrides = SIMM_HISTORY_COLUMNS if schema_overrides is None else schema_overrides
+    columns = list(schema_overrides.keys()) if columns is None else columns
 
-    if updated :
-        return simm_history_df, md5_hash
+    cutoff_date = str_to_date(SIMM_CUTOFF_DATE if cutoff_date is None else cutoff_date)
 
-    simm_history_df, md5_hash = update_simm_date_from_df(simm_history_df, md5_hash, fund)
+    dataframe, md5 = get_simm_all_history(fund, paths_by_fund, schema_overrides, columns, cutoff_date) if dataframe is None else (dataframe, md5)
 
-    return simm_history_df, md5_hash
+    if dataframe is None or dataframe.is_empty() :
+        return None, None
+    
+    date = str_to_date(date)
+    dataframe = dataframe.filter(pl.col("Date") == date)
+
+    return dataframe, md5
+
+
+def update_simm_history(
+        
+        new_rows : Optional[pl.DataFrame] = None,
+
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        fund : Optional[str] = None,
+        paths_by_fund : Optional[Dict] = None,
+
+        schema_overrides : Optional[Dict] = None,
+        columns : Optional[List[str]] = None,
+
+        cutoff_date : Optional[str | dt.datetime | dt.date] = None,
+        sort_result : bool = True,
+
+    ) -> bool :
+    """
+    Update full SIMM history by inserting new rows for a given date.
+
+    Assumption
+    ----------
+    `new_rows` already has the SIMM history structure, i.e. all columns from
+    `SIMM_HISTORY_COLUMNS`.
+
+    Behavior
+    --------
+    - load full history
+    - optionally overwrite `Date` in `new_rows`
+    - optionally remove existing rows for that date
+    - append new rows
+    - optionally deduplicate / sort
+    """
+    fund = FUND_HV if fund is None else fund
+    paths_by_fund = SIMM_FUNDS_DIR_PATHS if paths_by_fund is None else paths_by_fund
+
+    schema_overrides = SIMM_HISTORY_COLUMNS if schema_overrides is None else schema_overrides
+    columns = list(schema_overrides.keys()) if columns is None else columns
+
+    if new_rows is None or new_rows.is_empty() :
+
+        log("[!] New rows are None or empty... Nothing updated", "warning")
+        return False
+    
+    # Normalization
+    new_rows = (new_rows.select(columns).cast(schema_overrides, strict=False))
+
+    cutoff_date = str_to_date(SIMM_CUTOFF_DATE if cutoff_date is None else cutoff_date)
+    dataframe, md5 = get_simm_all_history(fund, paths_by_fund, schema_overrides, columns, cutoff_date) if dataframe is None else (dataframe, md5)
+    
+    file_abs_path = get_simm_abs_path_by_fund(fund, paths_by_fund)
+
+    if dataframe is None or dataframe.is_empty() :
+
+        status = export_dataframe_to_excel(new_rows, output_abs_path=file_abs_path)
+        log(f"{status.get("message")}")
+
+        return status.get("success")
+    
+    # Here dataframe already exists and new_rows is in good foramt.
+    dataframe = pl.concat([dataframe, new_rows], how="diagonal_relaxed")
+
+    if sort_result :
+        dataframe = dataframe.sort("Date")
+
+    result = export_dataframe_to_excel(dataframe, output_abs_path=file_abs_path)
+    log(result.get("message"))
+        
+    return result.get("success", False)
 
 
 def get_simm_abs_path_by_fund (
         
         fund : Optional[str] = None,
-        simm_fund_paths : Optional[Dict] = None, # SIMM_FUNDS_DIR_PATHS,
+        simm_fund_paths : Optional[Dict] = None,
         basename_file : Optional[str] = None
 
     ) -> Optional[str] :
     """
-    
+    Resolve the history workbook path for the requested fund.
     """
     fund = FUND_HV if fund is None else fund
     simm_fund_paths = SIMM_FUNDS_DIR_PATHS if simm_fund_paths is None else simm_fund_paths
     basename_file = SIMM_HIST_NAME_DEFAULT if basename_file is None else basename_file
 
     file_abs_directory = simm_fund_paths.get(fund)
+    if not file_abs_directory :
+        return None
 
     file_abs_path = os.path.join(file_abs_directory, basename_file)
 
@@ -276,11 +203,12 @@ def get_simm_abs_path_by_fund (
 def rename_ancien_simm_counterparties (
         
         dataframe : Optional[pl.DataFrame] = None,
-        rename_mapping : Optional[Dict] = None, # SIMM_RENAME_COLUMNS
+        rename_mapping : Optional[Dict] = None,
         column : Optional[str] = "Counterparty"
 
     ) -> Optional[pl.DataFrame] :
     """
+    Harmonize historical counterparty labels.
     """
     if dataframe is None :
 

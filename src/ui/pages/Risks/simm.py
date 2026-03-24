@@ -8,12 +8,31 @@ from typing import Optional
 
 from src.utils.formatters import date_to_str, str_to_date
 
-#from src.core.api.simm import *
-from src.core.data.simm import get_simm_by_date, get_simm_history, rename_ancien_simm_counterparties
+from src.core.api.simm import fetch_raw_simm_data_by_date, convert_raw_simm_to_dataframe
+from src.core.data.simm import (
+    rename_ancien_simm_counterparties, get_simm_by_date_from_history, get_simm_all_history,
+    update_simm_history
+)
 from src.core.data.nav import read_history_nav_from_excel
 
 from src.ui.components.text import center_h2
 from src.ui.components.charts import simm_ctpy_im_vm_chart, simm_over_time_chart, total_nav_over_time_chart, im_mv_over_nav_with_rolling
+
+
+def _get_simm_display_date (
+        dataframe : Optional[pl.DataFrame] = None,
+        selected_date : Optional[str | dt.date | dt.datetime] = None
+    ) -> str :
+    """
+    Display the actual SIMM date being shown when we fall back to cached data.
+    """
+    display_date = date_to_str(selected_date)
+
+    if dataframe is None or dataframe.height == 0 or "Date" not in dataframe.columns :
+        return display_date
+
+    latest_date = dataframe.select(pl.col("Date").max()).item()
+    return date_to_str(latest_date)
 
 
 def simm (
@@ -53,29 +72,35 @@ def realized_var_cvar_section (
     """
     
     """
-    dataframe, md5 = get_simm_by_date(date, fundation)
-
-    date = date_to_str(date)
-    fig = simm_ctpy_im_vm_chart(dataframe, md5, date, "Counterparty", ("IM", "MV"))
-
-    st.plotly_chart(fig, use_container_width=True)
-
+    
     return None
 
 
 def date_simm_bar_section (
         
         date : Optional[str | dt.date | dt.datetime] = None,
-        fundation : Optional[str] = None
+        fundation : Optional[str] = None,
 
     ) :
     """
     
     """
-    dataframe, md5 = get_simm_by_date(date, fundation)
-    date = date_to_str(date)
+    
 
-    fig = simm_ctpy_im_vm_chart(dataframe, md5, date, "Counterparty", ("IM", "MV"))
+    dataframe, md5 = get_simm_all_history(fundation)
+    df_date, md5_date = get_simm_by_date_from_history(date, dataframe, md5)
+    
+    if df_date is None or df_date.is_empty() :
+        
+        list = fetch_raw_simm_data_by_date(date, fundation)
+        df_date, md5_date = convert_raw_simm_to_dataframe(date, list)
+
+        if df_date is not None and not df_date.is_empty() :
+            
+            updated = update_simm_history(df_date, dataframe, md5)
+            st.info("SIMM history sucessfully update" if updated else None)
+
+    fig = simm_ctpy_im_vm_chart(df_date, md5_date, date, "Counterparty", ("IM", "MV"))
 
     if fig is None :
     
@@ -118,7 +143,7 @@ def im_over_time_section (
     """
     
     """
-    dataframe, md5 = get_simm_history(date, fundation)
+    dataframe, md5 = get_simm_all_history(fundation)
 
     date = str_to_date(date)
     dataframe = dataframe.filter(pl.col("Date") <= date)
@@ -146,7 +171,7 @@ def mv_over_time_section (
     """
     
     """
-    dataframe, md5 = get_simm_history(date, fundation)
+    dataframe, md5 = get_simm_all_history(fundation)
 
     date = str_to_date(date)
     dataframe = dataframe.filter(pl.col("Date") <= date)
@@ -219,8 +244,8 @@ def _smooth_mv (
     
     ) -> pl.DataFrame:
     """
-    Supprime les points où la variation relative dépasse pct_jump_threshold.
-    Exemple: 0.25 -> écarte tout saut > 25%.
+    Supprime les points oÃƒÆ’Ã‚Â¹ la variation relative dÃƒÆ’Ã‚Â©passe pct_jump_threshold.
+    Exemple: 0.25 -> ÃƒÆ’Ã‚Â©carte tout saut > 25%.
     """
     df = df.sort("Date").with_columns(
         (pl.col("NAV") / pl.col("NAV").shift(1) - 1).alias("pct_change")
@@ -303,7 +328,7 @@ def _im_or_mv_over_nav (
     """
     """
     df_nav, md5_nav = read_history_nav_from_excel(fundation)
-    df, md5 = get_simm_history(date, fundation)
+    df, md5 = get_simm_all_history(fundation)
 
     date = str_to_date(date)
     df_nav = df_nav.filter(pl.col("Date") <= date)
@@ -336,4 +361,5 @@ def _im_or_mv_over_nav (
     print(merged_df)
 
     return merged_df, md5_nav, md5
+
 

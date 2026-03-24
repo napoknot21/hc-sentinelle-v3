@@ -508,32 +508,25 @@ def simm_ctpy_im_vm_chart (
 
         return None
     
-    counterparties = list(_dataframe[x_axis].unique())
-    columns = list(columns)
-    
-    # Plot using Plotly
-    fig = go.Figure()
+    arrow = _dataframe.select([x_axis, *columns]).to_arrow()
 
-    for column in columns :
-        fig.add_trace(go.Bar(x=counterparties, y=_dataframe[column], name=column))
+    fig = go.Figure(
+        [
+            go.Bar(x=arrow[x_axis], y=arrow[col], name=col)
+            for col in columns
+        ]
+    )
 
     fig.update_layout(
-
         title=f"Most Recent SIMM Data at {date} (ICE Data)",
         xaxis=dict(title=x_axis),
-        yaxis=dict(title='Amount'),
+        yaxis=dict(title="Amount"),
         hovermode="x unified",
-        
-        hoverlabel=dict(
-
-            bgcolor="white",
-            font_color="black",
-            #font_size=16,
-        ),
-
+        hoverlabel=dict(bgcolor="white", font_color="black", font_size=15),
     )
-    
+
     return fig
+
 
 
 @st.cache_data()
