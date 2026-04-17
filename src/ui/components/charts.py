@@ -483,6 +483,58 @@ def history_criteria_graph (
     return fig
 
 
+@st.cache_data()
+def simm_vs_ice_graph (
+        
+        _dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+        metric : str = "IM",   # "IM" ou "VM"
+        compares : Optional[List[str]] = ["data", "ice"],
+        currency : str = "EUR",
+    
+    ) -> go.Figure :
+    """
+    Affiche deux lignes : {metric}_ice vs {metric}_simm pour une bank donnée.
+    """
+    if _dataframe is None or _dataframe.is_empty() :
+        
+        st.cache_data.clear()
+        return go.Figure()
+
+    fig = go.Figure()
+
+    for compare in compares :
+
+        col_name = f"{metric}_{compare}"
+        
+        if col_name not in _dataframe.columns :
+    
+            log(f"Column '{col_name}' not in DataFrame: {_dataframe.columns}", "error")
+            return go.Figure()
+        
+        df = _dataframe.select(["Date", col_name]).sort("Date")
+
+
+        fig.add_trace(go.Scatter(
+            x=df["Date"].to_list(),
+            y=df[col_name].to_list(),
+            mode="lines",
+            name=f"{metric} {compare.upper()}",
+            connectgaps=True,
+        ))
+
+    fig.update_layout(
+        title=f"{metric} — Data vs SIMM (ICE)",
+        xaxis_title="Date",
+        yaxis_title=metric,
+        legend_title="Source",
+        template="plotly_white",
+        hovermode="x unified",
+        hoverlabel=dict(bgcolor="white", font_color="black", font_size=16),
+    )
+
+    return fig
+
 # ---------- SIMM ----------
 
 @st.cache_data()

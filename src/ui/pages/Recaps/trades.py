@@ -11,7 +11,8 @@ import pandas as pd
 import streamlit as st
 
 from src.config.paths import TREADE_RECAP_DATA_RAW_DIR_ABS_PATH
-from src.utils.formatters import str_to_date
+from src.config.parameters import TRADE_RECAP_RAW_FILE_REGEX
+from src.utils.formatters import str_to_date, date_to_str, str_to_datetime
 from src.utils.data_io import export_dataframe_to_excel
 from src.ui.components.text import center_h5
 from src.core.api.recap import trade_recap_launcher, trade_recap_invoke_api_outlook
@@ -235,6 +236,7 @@ def trades () -> None :
     """
     Main entry.
     """
+
     filename, date = date_history_section()
 
     if filename is None or date is None :
@@ -289,7 +291,7 @@ def trades () -> None :
 # Sections
 # ---------------------------------------------------------------------------
 
-def date_history_section (format : Optional[str] = "%Y_%m_%d") -> Tuple[Optional[str], Optional[str | dt.datetime | dt.date]] :
+def date_history_section (format : Optional[str] = "%Y-%m-%d") -> Tuple[Optional[str], Optional[str | dt.datetime | dt.date]] :
     """
     Date picker + Run button.
     """
@@ -298,12 +300,11 @@ def date_history_section (format : Optional[str] = "%Y_%m_%d") -> Tuple[Optional
     if st.button("Run Trade Recap") :
         trade_recap_launcher(date)
 
-    filename, real_date = find_most_recent_file_by_date(date)
+    real_datetime, filename = find_most_recent_file_by_date(date)
+    real_date = str_to_date(real_datetime, format)
 
-    date      = str_to_date(date)
-    real_date = str_to_date(real_date, format)
+    if real_datetime is None or filename is None :
 
-    if date != real_date :
         st.warning("[-] No trade Recap generated for the selected Date")
         return None, None
 
@@ -412,15 +413,28 @@ def edit_master_trade_recap_section (
 
         output_dir = TREADE_RECAP_DATA_RAW_DIR_ABS_PATH
         base, _    = os.path.splitext(filename)
-        out_path   = f"{base}_MASTER.xlsx"
-        output_abs_path = os.path.join(output_dir, out_path)
+
+        # Name formatting for trade-recap file formats
+        current_time = dt.datetime.now().strftime("%Y_%m_%dT%H_%M")
+        (trade_date, _) = TRADE_RECAP_RAW_FILE_REGEX.match(base + ".xlsx").groups()
+
+        out_path_base   = f"trade-recap_{trade_date}_as_of_{current_time}"
+
+        out_path_raw    = f"{out_path_base}_raw.xlsx"
+        out_path        = f"{out_path_base}.xlsx"  # for the cleaned version, which is what we export to Excel and send to Outlook
+        subject         = f"Trade Recap - {trade_date} as of {current_time}" 
+
+        output_abs_path = os.path.join(output_dir, out_path_raw)
 
         with st.spinner("Exporting and generating email draft...") :
+
             result = export_dataframe_to_excel(export_df, output_abs_path=output_abs_path)
 
             status = trade_recap_invoke_api_outlook(
                 date=date,
                 excel_file=result.get("path"),
+                subject=subject
+
             )
 
         st.session_state[KEY_STATUS] = status  # ← store once, reuse on every rerun
@@ -449,9 +463,12 @@ def edit_master_trade_recap_section (
     col_left, col_right = st.columns(2)
 
     with col_left :
+
         if excel_path and os.path.isfile(excel_path) :
+        
             with open(excel_path, "rb") as f :
                 excel_bytes = f.read()
+        
             st.download_button(
                 label               = "⬇️ Download Master Excel",
                 data                = excel_bytes,

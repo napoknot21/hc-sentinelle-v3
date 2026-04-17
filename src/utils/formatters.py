@@ -112,8 +112,6 @@ def str_to_datetime (date : Optional[str | dt.date | dt.datetime] = None, format
     return date_obj
 
 
-
-
 def shift_months (date : Optional[str | dt.date | dt.datetime] = None, months : int = 1) -> dt.date :
     """
     

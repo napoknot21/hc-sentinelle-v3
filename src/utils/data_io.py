@@ -244,7 +244,15 @@ def load_json_to_dataframe (
         return None, None
 
 
-def export_dataframe_to_excel (df : pl.DataFrame, sheet_name : str = "Sheet1", output_abs_path : str = None) -> Dict :
+def export_dataframe_to_excel (
+        
+        df : pl.DataFrame,
+        sheet_name : str = "Sheet1",
+        
+        output_abs_path : str = None,
+        column_formats : Optional[Dict] = None,
+
+    ) -> Dict :
     """
     Exports a Polars DataFrame to an Excel file.
 
@@ -279,7 +287,8 @@ def export_dataframe_to_excel (df : pl.DataFrame, sheet_name : str = "Sheet1", o
         df.write_excel(
         
             workbook=output_abs_path,
-            worksheet=sheet_name
+            worksheet=sheet_name,
+            **({"column_formats": column_formats} if column_formats else {})
 
         )
 

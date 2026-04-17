@@ -44,7 +44,7 @@ def trade_recap_launcher (
         log("[-] Impossible to run trade recap after retries", "error")
         return False
 
-    date_str = date_to_str(date)
+    date = date_to_str(date)
     regex = TRADE_RECAP_RAW_FILE_REGEX if regex is None else regex
 
     launcher_file = TRADE_RECAP_LAUNCHER_FILE if launcher_file is None else launcher_file
@@ -64,7 +64,8 @@ def trade_recap_launcher (
 
         sys.executable,
         script_path,
-        "--yesterday",
+        "--start-date", date,
+        "--end-date", date,
         "--no-draft"
 
     ]
@@ -127,6 +128,7 @@ def trade_recap_invoke_api_outlook (
         date : Optional[str | dt.datetime | dt.date] = None,
         
         excel_file : Optional[str] = None,
+        subject : str = None,
 
         launcher_file : Optional[str] = None,
         root_dir_abs : Optional[str] = None,
@@ -159,6 +161,8 @@ def trade_recap_invoke_api_outlook (
     root_dir_abs = TRADE_RECAP_ABS_PATH if root_dir_abs is None else root_dir_abs
     raw_dir_abs = TREADE_RECAP_DATA_RAW_DIR_ABS_PATH if raw_dir_abs is None else raw_dir_abs
 
+    subject = f"Trade Recap - {date_str}" if subject is None else subject
+
     script_path = os.path.join(root_dir_abs, launcher_file)
 
     if not os.path.isfile(script_path) :
@@ -173,6 +177,7 @@ def trade_recap_invoke_api_outlook (
         sys.executable,
         script_path,
         "--from-raw", excel_file,
+        "--subject", subject,
         "--skip-draft"
 
     ]

@@ -22,7 +22,7 @@ from src.config.parameters import (
     
     )
 from src.utils.data_io import load_excel_to_dataframe
-from src.utils.formatters import str_to_date, date_to_str
+from src.utils.formatters import str_to_date, str_to_datetime
 from src.utils.logger import log
 
 
@@ -161,12 +161,12 @@ def find_most_recent_file_by_date (
         date : Optional[str | dt.datetime | dt.date] = None,
 
         dir_abs_path : Optional[str] = None,
-        regex : Optional[str] = None,
+        regex : Optional[re.Pattern] = None,
 
-        format : str = "%Y_%m_%d",
-        mode: str = "le",  # "eq", "le", "ge"
+        format : str = "%Y-%m-%d",
+        timestamp_format : str = "%Y_%m_%dT%H_%M",
 
-    ) -> Tuple[Optional[str], Tuple[str]] :
+    ) -> Tuple[Optional[str], Optional[str]] :
     """
     Docstring for find_most_recent_file_by_date
     
@@ -175,9 +175,9 @@ def find_most_recent_file_by_date (
     :param dir_abs_path: Description
     :type dir_abs_path: Optional[str]
     :param regex: Description
-    :type regex: Optional[str]
+    :type regex: Optional[re.Pattern]
     """
-    date_str_target = date_to_str(date)
+    date = str_to_date(date, format) if date is not None else None
 
     dir_abs_path = TREADE_RECAP_DATA_RAW_DIR_ABS_PATH if dir_abs_path is None else dir_abs_path
     regex = TRADE_RECAP_RAW_FILE_REGEX if regex is None else regex
@@ -185,8 +185,9 @@ def find_most_recent_file_by_date (
     if not os.path.isdir(dir_abs_path) :
         return None, None
     
-    # Best pour la date cible
-    best_per_date: Dict[str, Tuple[int, int, float, str]] = {}
+    # Keep only files matching the selected trade date
+    # value = (as_of_dt, mtime, filename)
+    best_file : Optional[Tuple[dt.datetime, str]] = None
 
     with os.scandir(dir_abs_path) as it :
         
@@ -197,66 +198,29 @@ def find_most_recent_file_by_date (
             
             m = regex.match(entry.name)
 
-            print(entry.name)
             if not m :
                 continue
+
+            trade_date_str, timestamp_datetime_str = m.groups()
+
+            trade_date = str_to_date(trade_date_str, format)
+            timestamp_datetime = str_to_datetime(timestamp_datetime_str, timestamp_format)
+
+            if trade_date != date :
+                continue
             
-            date_str, hh, mm = m.groups()
+            candidate = (timestamp_datetime, entry.name)
 
-            hh_i = int(hh)
-            mm_i = int(mm)
+            if best_file is None or candidate[0] > best_file[0] :
+                best_file = candidate
 
-            mtime = entry.stat().st_mtime
 
-            key = (hh_i, mm_i, mtime)
-
-            current = best_per_date.get(date_str)
-
-            if current is None or key > current[:3] :
-                best_per_date[date_str] = (hh_i, mm_i, mtime, entry.name)
-
-    if not best_per_date:
+    if best_file is None :
         return None, None
     
-    # Si on a exactement la date cible, on la privilégie pour tous les modes
-    if date_str_target in best_per_date:
-        _, _, _, fname = best_per_date[date_str_target]
-        return fname, date_str_target
-
-    # Pas de fichier pour la date exacte -> on applique le "mode"
-    all_dates = sorted(best_per_date.keys())  # tri lexical = tri chronologique
-    date_str_target = str_to_date(date_str_target) 
-
-    if mode == "eq":
-        # strict : rien trouvé à la date exacte
-        return None, None
-
-    elif mode == "le" :
-        # last date <= date target
-        candidates = [d for d in all_dates if str_to_date(d, format) <= date_str_target]
-
-        if not candidates :
-            return None, None
-
-        chosen_date = candidates[-1]
-
-    elif mode == "ge" :
-        # First date >= date Target
-        candidates = [d for d in all_dates if str_to_date(d, format) >= date_str_target]
-
-        if not candidates :
-            return None, None
-        
-        chosen_date = candidates[0]
-
-    else :
-        
-        log(f"Unknown mode '{mode}'. Use 'eq', 'le' or 'ge'.")
-        return None, None
+    print(best_file)
     
-    _, _, _, fname = best_per_date[chosen_date]
-    
-    return fname, chosen_date
+    return best_file[0], best_file[1]
 
 
 

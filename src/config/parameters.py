@@ -127,6 +127,19 @@ SIMM_MAPPING_COUNTERPARTIES = {
 
 }
 
+
+
+SIMM_MAPPING_COUNTERPARTIES_BANK_CODE = {
+
+    os.getenv("PAYMENTS_COUNTERPARTY_GS") : os.getenv("CASH_BANK_CODE_GS"),
+    os.getenv("PAYMENTS_COUNTERPARTY_MS") : os.getenv("CASH_BANK_CODE_MS"),
+    os.getenv("PAYMENTS_COUNTERPARTY_SAXO") : os.getenv("CASH_BANK_CODE_SAXO"),
+    os.getenv("PAYMENTS_COUNTERPARTY_UBS") : os.getenv("CASH_BANK_CODE_UBS"),
+    os.getenv("PAYMENTS_COUNTERPARTY_EDB") : os.getenv("CASH_BANK_CODE_EDB"),
+    #os.getenv("PAYMENTS_COUNTERPARTY_UBSL") : os.getenv("CASH_BANK_CODE_UBSL"),
+
+}
+
 # ---------------- FX Screeners (Tarf) ----------------
 
 
@@ -1240,7 +1253,6 @@ VOL_REALIZED_FUNDS_COLS = {
     os.getenv("FUND_WR") : VOL_REALIZED_WR_COLUMNS,
 
 }
-
 
 
 # -------------- Trade Recap --------------

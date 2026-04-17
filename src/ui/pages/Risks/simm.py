@@ -89,7 +89,7 @@ def date_simm_bar_section (
 
     dataframe, md5 = get_simm_all_history(fundation)
     df_date, md5_date = get_simm_by_date_from_history(date, dataframe, md5)
-    
+    """
     if df_date is None or df_date.is_empty() :
         
         list = fetch_raw_simm_data_by_date(date, fundation)
@@ -99,7 +99,7 @@ def date_simm_bar_section (
             
             updated = update_simm_history(df_date, dataframe, md5)
             st.info("SIMM history sucessfully update" if updated else None)
-
+    """
     fig = simm_ctpy_im_vm_chart(df_date, md5_date, date, "Counterparty", ("IM", "MV"))
 
     if fig is None :

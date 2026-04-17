@@ -281,8 +281,12 @@ def export_fx_payment_section (payments : List[Tuple] = None, filename : Optiona
 
     excel_filename = f"{filename}.xlsx"
 
-    status = export_dataframe_to_excel(dataframe, output_abs_path=os.path.join(dir_abs_path, excel_filename))
-    status_bis = export_dataframe_to_excel(dataframe, output_abs_path=os.path.join(dir_abs_backup, excel_filename))
+    status = export_dataframe_to_excel(
+        dataframe, output_abs_path=os.path.join(dir_abs_path, excel_filename), column_formats={"Rate": "0.000000"}
+    )
+    status_bis = export_dataframe_to_excel(
+        dataframe, output_abs_path=os.path.join(dir_abs_backup, excel_filename), column_formats={"Rate": "0.000000"}
+    )
 
     if status.get("success") is True :
 

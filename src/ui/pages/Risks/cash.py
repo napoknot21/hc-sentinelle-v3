@@ -11,15 +11,16 @@ from typing import Optional, List, Dict
 # Add of CCYs from LibApi
 from src.config.paths import LIBAPI_ABS_PATH
 sys.path.append(LIBAPI_ABS_PATH)
-from libapi.config.parameters import CCYS_ORDER # type: ignore
 
+from src.config.parameters import SIMM_MAPPING_COUNTERPARTIES, SIMM_MAPPING_COUNTERPARTIES_BANK_CODE
 from src.utils.dates import previous_business_day
 from src.utils.formatters import str_to_date, format_numeric_columns_to_string
 
 from src.ui.components.text import center_bold_paragraph, center_h2, left, left_h5
-from src.ui.components.charts import cash_chart, history_criteria_graph
+from src.ui.components.charts import cash_chart, history_criteria_graph, simm_vs_ice_graph
 
 from src.core.data.cash import load_all_cash, load_all_collateral, aggregate_n_groupby, pivot_currency_historic, load_cache_fx_values
+from src.core.data.simm import get_simm_all_history
 from src.core.api.cash import call_api_for_pairs
 
 # -------- Main function --------
@@ -50,6 +51,11 @@ def cash (
     im_n_collat_section(fundation)
 
     vm_n_requirement_section(fundation)
+
+    net_excess_graph_session(fundation)
+    st.write('')
+
+    simm_vs_data_section(fundation)
     
     return None
 
@@ -340,3 +346,166 @@ def requirement_graph_section (fundation : Optional[str] = None) :
     st.plotly_chart(fig, width="content")
 
     return None
+
+
+def net_excess_graph_session (fundation : Optional[str] = None) :
+    """
+    Docstring for net_excess_graph_session
+    
+    :param fundation: Description
+    :type fundation: Optional[str]
+    """
+    dataframe, md5 = load_all_collateral(fundation)
+    fig = history_criteria_graph(dataframe, md5, "Net Excess/Deficit")
+    
+    st.plotly_chart(fig, width="content")
+
+    return None
+
+
+# -------- SIMM vs Data --------
+
+def simm_vs_data_section (
+        
+        fundation : Optional[str] = None,
+        banks : Optional[List[str]] = None,
+
+        ctpy_rename : Optional[Dict] = None,
+        bank_code : Optional[Dict] = None,
+        columns : Optional[List[str]] = ["Bank", "Date", "IM", "VM"]
+    
+    ) :
+    """
+    Docstring for simm_vs_data_section
+    
+    :param fundation: Description
+    :type fundation: Optional[str]
+    """
+    dataframe, md5 = load_all_collateral(fundation)
+    simm_df, simm_md5 = get_simm_all_history(fundation)
+
+    ctpy_rename = SIMM_MAPPING_COUNTERPARTIES if ctpy_rename is None else ctpy_rename
+    bank_code = SIMM_MAPPING_COUNTERPARTIES_BANK_CODE if bank_code is None else bank_code
+
+    dataframe = (
+        dataframe.filter(pl.col("Currency") == "EUR")
+        .select(columns)
+        .rename({"IM": "IM_data", "VM": "VM_data"})
+        .with_columns(
+            (-pl.col("IM_data")).alias("IM_data")
+        )
+        .sort("Date")
+    )
+
+    simm_df, simm_md5 = simm_vs_data_data_normalization(simm_df, simm_md5, ctpy_rename, bank_code)
+    simm_df = (
+        simm_df
+        .select(columns)
+        .rename({"IM": "IM_ice", "VM": "VM_ice"})
+        .sort("Date")
+    )
+    
+    joined = dataframe.join(simm_df, on=columns[0:2], how="outer", coalesce=True).sort("Date")
+
+    banks = list(bank_code.values()) if banks is None else banks
+
+    # Persist le choix dans session_state
+    if "simm_bank_selector" not in st.session_state:
+        st.session_state["simm_bank_selector"] = banks[0]
+
+    bank_selector = st.selectbox("Select Bank for SIMM vs Data", options=banks, key="simm_bank_selector")
+
+    im_n_vm_simm_vs_data_section(joined, md5, bank_selector)  
+
+    return None
+
+
+def simm_vs_data_data_normalization (
+        
+        simm_df : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+        
+        ctpy_rename : Optional[Dict] = None,
+        bank_code : Optional[Dict] = None
+    
+    ) -> tuple[Optional[pl.DataFrame], Optional[str]] :
+    """
+    Docstring for simm_vs_data_data_normalization
+    """
+    if simm_df is None :
+        return None, None
+    
+    # Normalization of Counterparties names between Data and SIMM
+    ctpy_rename = SIMM_MAPPING_COUNTERPARTIES if ctpy_rename is None else ctpy_rename
+    bank_code = SIMM_MAPPING_COUNTERPARTIES_BANK_CODE if bank_code is None else bank_code
+
+    simm_df = (
+        
+        simm_df
+        .with_columns(pl.col("Counterparty").replace(ctpy_rename))
+        .with_columns(pl.col("Counterparty").replace(bank_code))
+        .rename({"Counterparty": "Bank", "MV": "VM"})
+        # Cast Date en pl.Date pour matcher dataframe (qui est pl.Date, pas Datetime)
+        .with_columns(pl.col("Date").cast(pl.Date))
+    
+    )
+
+    return simm_df, md5
+
+
+def im_n_vm_simm_vs_data_section (
+        
+        dataframe : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+        
+        bank : Optional[str] = None
+    
+    ) -> None :
+    """
+    Docstring for im_n_vm_simm_vs_data_section
+    
+    :param fundation: Description
+    :type fundation: Optional[str]
+    """
+    col1, col2 = st.columns(2)
+
+    with col1 :
+        im_simm_vs_data_section(dataframe, md5, bank)
+
+    with col2 :
+        vm_simm_vs_data_section(dataframe, md5, bank)
+
+    return None
+
+
+def im_simm_vs_data_section (dataframe : Optional[pl.DataFrame] = None, md5 : Optional[str] = None, bank : Optional[str] = None) :
+    """
+    Docstring for im_simm_vs_data_section
+    
+    :param fundation: Description
+    :type fundation: Optional[str]
+    """
+    dataframe = dataframe.filter(pl.col("Bank") == bank)
+    fig = simm_vs_ice_graph(dataframe, md5, "IM")
+    
+    st.plotly_chart(fig, width="content")
+
+    return None
+
+
+def vm_simm_vs_data_section (dataframe : Optional[pl.DataFrame] = None, md5 : Optional[str] = None, bank : Optional[str] = None) :
+    """
+    Docstring for vm_simm_vs_data_section
+    
+    :param fundation: Description
+    :type fundation: Optional[str]
+    """
+    dataframe = dataframe.filter(pl.col("Bank") == bank)
+    fig = simm_vs_ice_graph(dataframe, md5, "VM")
+    
+    st.plotly_chart(fig, width="content")
+
+    return None
+
+
+
