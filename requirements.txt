@@ -1,0 +1,12 @@
+pandas
+plotly
+openpyxl
+xlwings
+seaborn
+stqdm
+streamlit
+streamlit-aggrid
+streamlit-option-menu
+streamlit-javascript
+yfinance
+python-dotenv
