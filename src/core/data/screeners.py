@@ -53,6 +53,7 @@ def read_db_gross_data_by_date (
     dir_path = leverages_paths.get(fund)
 
     filename, real_date = find_most_recent_file_by_date(date, dir_path, regex) if filename is None else (filename, date)
+
     if filename is None :
         return None, None
     
@@ -347,7 +348,7 @@ def screeners_load_excel_to_dataframe (excel_file : str, sheet_name : str, speci
         df = pl.read_excel(
 
             source=excel_file,
-            sheet_name=sheet_name,
+            #sheet_name=sheet_name,
             columns=specific_cols,
             schema_overrides=schema_overrides,
 

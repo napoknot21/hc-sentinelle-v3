@@ -32,6 +32,11 @@ def screeners (
 
     dataframe, md5, real_date = read_db_gross_data_by_date(date, fundation)
     
+    if dataframe is None :
+
+        st.warning("[!] No information detected for the selected date")
+        return None
+
     tarf_section(date, fundation, dataframe, md5)
     fx_carry_section(date, fundation, dataframe, md5)
     tail_trades_section(date, fundation, dataframe, md5)
@@ -56,6 +61,9 @@ def tarf_section (
 
     columns_filter = ["Instrument Type", "Expiry Date", "Underlying Asset"]
     df_filtered, md5, real_date = tarf_visualizer_by_date(dataframe, md5, date, fundation, columns_filter=columns_filter)
+
+    if df_filtered is None :
+        return None
 
     real_date = date_to_str(real_date)
     left_h5(f"TARF Visualizer at {real_date}")

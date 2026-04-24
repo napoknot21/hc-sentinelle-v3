@@ -1180,7 +1180,7 @@ SCREENERS_COLUMNS_TARF = {
     # Amounts and notionals
     "Remaining Notional" : pl.Float64,
     #"Base Notional" : pl.Float64,
-    "Notional 1 Base" : pl.Float64,
+    #"Notional 1 Base" : pl.Float64,
     "Total Premium" : pl.Float64,
     "MV" : pl.Float64,
 
