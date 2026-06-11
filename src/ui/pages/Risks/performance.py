@@ -159,6 +159,7 @@ def total_aum_section (
 
         if dataframe is None:
             dataframe , md5 = fetch_subred_by_date(date)
+            print(dataframe)
 
         aum_dict = get_subred_by_date(date, dataframe, md5)
         

@@ -197,6 +197,7 @@ EXPIRIES_COLUMNS = {
 
     "Trade Type" : pl.Utf8,
     "Underlying Asset" : pl.Utf8,
+    #"Trade Code" : pl.Utf8,
     "Termination Date" : pl.Date,
 
     "Buy/Sell" : pl.Utf8,
@@ -287,6 +288,8 @@ NAV_INDEX_PERF_COLUMNS = {
 # ------------ Subred --------------
 
 SUBRED_BOOK_HV=os.getenv("SUBRED_BOOK_HV")
+SUBRED_BOOK_HV_ADDITIONAL_1=os.getenv("SUBRED_BOOK_HV_ADDITIONAL_1")
+
 SUBRED_BOOK_WR=os.getenv("SUBRED_BOOK_WR")
 
 SUBRED_FILENAME_PATTERN=os.getenv("SUBRED_FILENAME_PATTERN")
@@ -330,8 +333,8 @@ SUBRED_COLUMNS_READ = {
 
 SUBRED_BOOKS_FUNDS = {
 
-    os.getenv("FUND_HV") : SUBRED_BOOK_HV, 
-    os.getenv("FUND_WR") : SUBRED_BOOK_WR,
+    os.getenv("FUND_HV") : [SUBRED_BOOK_HV, SUBRED_BOOK_HV_ADDITIONAL_1], 
+    os.getenv("FUND_WR") : [SUBRED_BOOK_WR],
 
 }
 
@@ -654,6 +657,12 @@ PAYMENTS_COUNTERPARTIES = {
         
         "initials" : os.getenv("PAYMENTS_COUNTERPARTY_UBS_E"),
         "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_UBS_E")
+    },
+
+    os.getenv("PAYMENTS_COUNTERPARTY_BOFA") : {
+
+        "initials" : "BofA",
+        "bank" : os.getenv("PAYMENTS_COUNTERPARTY_BANK_BOFA")
     }
 
 }

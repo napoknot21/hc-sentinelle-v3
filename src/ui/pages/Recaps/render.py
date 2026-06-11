@@ -9,10 +9,12 @@ from src.ui.components.text import center_h1
 from src.ui.styles.base import risk_menu
 
 from src.ui.pages.Recaps.trades import trades
+from src.ui.pages.Recaps.viewer import viewer
 
 reconciliation_subpages = [
     
-    {"name" : "Trade Recaps", "page" : trades,       "icon" : "calendar-check"},
+    {"name" : "Trade Recap", "page" : trades,       "icon" : "calendar-check"},
+    {"name" : "Trade Viewer", "page" : viewer,      "icon" : "calendar-check"}
     #{"name" : "Per Counterparty",   "page" : counterparty,  "icon" : "cash-coin"},
     
 ]

@@ -4,7 +4,17 @@ import datetime as dt
 
 from typing import Optional
 
-from src.utils.formatters import str_to_date
+from src.utils.formatters import str_to_date, str_to_datetime
+
+
+DEFAULT_DATE_FORMATS = ("%Y-%m-%d", "%Y_%m_%d")
+DEFAULT_DATETIME_FORMATS = (
+    "%Y_%m_%dT%H_%M",
+    "%Y_%m_%dT%H_%M_%S",
+    "%Y-%m-%dT%H-%M",
+    "%Y-%m-%dT%H-%M-%S",
+    "%Y-%m-%d_%H-%M",
+)
 
 
 def previous_business_day (date : Optional[str | dt.datetime | dt.date] = None) -> dt.date:
@@ -30,6 +40,46 @@ def monday_of_week(date : Optional[str | dt.datetime | dt.date] = None) -> dt.da
     monday = date - dt.timedelta(days=date.weekday())
 
     return monday
+
+
+def parse_date_any (
+
+        value : str,
+        formats : tuple[str, ...] = DEFAULT_DATE_FORMATS,
+
+    ) -> Optional[dt.date] :
+    """
+    Parse a date with the first matching format.
+    """
+    for format in formats :
+
+        try :
+            return str_to_date(value, format)
+
+        except ValueError :
+            continue
+
+    return None
+
+
+def parse_datetime_any (
+
+        value : str,
+        formats : tuple[str, ...] = DEFAULT_DATETIME_FORMATS,
+
+    ) -> Optional[dt.datetime] :
+    """
+    Parse a datetime with the first matching format.
+    """
+    for format in formats :
+
+        try :
+            return str_to_datetime(value, format)
+
+        except ValueError :
+            continue
+
+    return None
 
 
 def get_qtd_from_date (date_ref : Optional[str | dt.datetime | dt.date] = None) -> dt.date :

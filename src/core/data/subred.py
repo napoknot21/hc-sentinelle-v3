@@ -122,12 +122,12 @@ def clean_aum_by_fund (
     fund = FUND_HV if fund is None else fund
     books_by_fund = SUBRED_BOOKS_FUNDS if books_by_fund is None else books_by_fund
 
-    book = books_by_fund.get(fund)
+    books : List[str] = books_by_fund.get(fund)
 
     column_to_explode = "instrument" if column_to_explode is None else column_to_explode
     schema_override = SUBRED_STRUCT_COLUMNS if schema_override is None else schema_override
 
-    dataframe = dataframe.filter(pl.col("bookName") == book)
+    dataframe = dataframe.filter(pl.col("bookName").is_in(books))
     dataframe = dataframe.drop("bookName")
 
     if dataframe.schema.get(column_to_explode) == pl.Utf8 :

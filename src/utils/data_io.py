@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
+import io
 import time
 import hashlib
 import openpyxl
 import itertools
 import xlwings as xw
 import polars as pl
+import pandas as pd
 
 from typing import Dict, Optional, List, Tuple
 from openpyxl.utils import get_column_letter
@@ -14,6 +16,18 @@ from src.config.parameters import *
 from src.config.paths import *
 from src.utils.logger import *
 from src.utils.formatters import numeric_cast_expr_from_utf8, date_cast_expr_from_utf8
+
+
+def polars_to_excel_bytes (dataframe : pl.DataFrame, sheet_name : str = "Sheet1") -> bytes :
+    """
+    Convert a Polars dataframe to Excel bytes.
+    """
+    with io.BytesIO() as output :
+
+        with pd.ExcelWriter(output, engine="openpyxl") as writer :
+            dataframe.to_pandas().to_excel(writer, sheet_name=sheet_name, index=False)
+
+        return output.getvalue()
 
 
 def load_excel_to_dataframe (

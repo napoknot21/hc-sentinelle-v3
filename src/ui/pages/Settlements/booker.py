@@ -24,6 +24,8 @@ def booker () :
     date = date_selector("Value Date")
     book = book_section()
 
+    direction = "Pay" if direction == "Given" else direction
+
     if st.button("Post Margin Call") :
         post_margin_call(amount, currency, ctpy, direction, date, book)
 

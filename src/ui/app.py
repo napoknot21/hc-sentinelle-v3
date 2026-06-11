@@ -30,7 +30,7 @@ def app () :
     st.set_page_config(page_title="Heroics Sentinelle", layout="wide")
 
     logo = Path(__file__).parent / "assets" / "logos" / "heroics_sentinelle_logo.png"
-    st.image(logo, width=300)
+    st.image(str(logo), width=300)
     
     selected = sidebar(PAGES, "Heroics Capital", logo_header_path=str(logo), styles=risk_menu)
     
