@@ -98,7 +98,7 @@ def estimated_gross_perf_section (
     """
     left_h3("Estimated Gross Performance (in %)")
 
-    result, md5 = estimated_gross_performance(fund=fundation)
+    result, md5 = estimated_gross_performance(fund=fundation, max_date=date)
     dataframe, md5 = compute_monthly_returns(result, md5, fundation)
     dataframe, md5 = compute_yearly_returns(dataframe, md5)
 

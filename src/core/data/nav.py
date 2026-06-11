@@ -607,11 +607,15 @@ def estimated_gross_performance (
 
         fund :  Optional[str] = None,
         columns_fund : Optional[Dict] = None,
+
+        max_date : Optional[str | dt.datetime | dt.date] = None
     
     ) :
     """
     
     """
+    max_date = str_to_date(max_date)
+
     fund = FUND_HV if fund is None else fund
     dataframe, md5 = read_nav_estimate_by_fund(fund) if dataframe is None else (dataframe, md5)
     
@@ -622,6 +626,7 @@ def estimated_gross_performance (
     df = df.drop_nulls(subset=[column])
 
     df = (df.sort("date").group_by("date").agg(pl.all().last()).sort("date"))
+    df = df.filter(pl.col("date") <= max_date)
 
     df = df.with_columns(
         [
