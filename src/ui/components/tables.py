@@ -34,7 +34,7 @@ def show_expiries_history (_dataframe : pl.DataFrame, md5 : str,  height : int =
         st.cache_data.clear()
         return None
 
-    _dataframe = format_numeric_columns_to_string(_dataframe)
+    _dataframe = format_numeric_columns_to_string(_dataframe, decimals=4)
     df = _dataframe.to_pandas()
 
     gb = GridOptionsBuilder.from_dataframe(df) #table = st.dataframe(_dataframe)

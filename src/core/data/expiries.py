@@ -60,7 +60,14 @@ def load_upcomming_expiries (
         log("[-] Error during reading excel file operation", "error")
     
     else :
-
+        
+        dataframe = dataframe.with_columns(
+            [
+                pl.col(col).round(4) for col, dtype in zip(dataframe.columns, dataframe.dtypes)
+                if dtype in (pl.Float32, pl.Float64)
+            ]
+        )
+        
         log("[+] FIle successfully read and converted to DataFrame")
         print(dataframe)
 

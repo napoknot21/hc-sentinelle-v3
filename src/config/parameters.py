@@ -197,7 +197,7 @@ EXPIRIES_COLUMNS = {
 
     "Trade Type" : pl.Utf8,
     "Underlying Asset" : pl.Utf8,
-    #"Trade Code" : pl.Utf8,
+    "Trade Code" : pl.Utf8,
     "Termination Date" : pl.Date,
 
     "Buy/Sell" : pl.Utf8,
