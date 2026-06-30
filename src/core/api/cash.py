@@ -9,8 +9,10 @@ import datetime as dt
 
 from typing import List, Dict, Optional, Tuple, Any
 
+from dotenv import dotenv_values
+
 from src.core.api.client import get_ice_calculator, get_trade_manager
-from src.config.parameters import FUND_NAME_MAP, PAIRS
+from src.config.parameters import FUND_NAME_MAP, PAIRS, FUND_HV
 from src.config.paths import CASH_UPDATER_PATH
 from src.utils.formatters import date_to_str, normalize_fx_dict
 
@@ -55,6 +57,21 @@ def call_api_for_pairs (
     return normalize_fx_dict(close_values)
 
 
+def build_cash_updater_env (cash_updater_path : Optional[str] = None) -> Dict[str, str] :
+    """
+    Build a child env where cash-updater .env values win over the Streamlit process env.
+    """
+    env = os.environ.copy()
+    env_path = os.path.join(cash_updater_path, ".env")
+    cash_updater_env = dotenv_values(env_path)
+
+    env.update({key: value for key, value in cash_updater_env.items() if value is not None})
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
+
+    return env
+
+
 def run_cash_updater (
 
         date : Optional[str | dt.date | dt.datetime] = None,
@@ -68,18 +85,16 @@ def run_cash_updater (
     Launch the external cash-updater project for one fund and one date.
     """
     date = date_to_str(date)
-    
-    fund_map = FUND_NAME_MAP if fund is None else fund
+    fund = FUND_HV if fund is None else fund
+
+    fund_map = FUND_NAME_MAP if fund_map is None else fund_map
     cash_updater_path = CASH_UPDATER_PATH if cash_updater_path is None else cash_updater_path
 
-    full_fund = fund_map.get(fund, None)
-
-    if full_fund is None :
-        return None
+    fund_code = fund_map.get(fund, fund)
 
     command = [
     
-        "python", "main.py", "--start-date", date, "--end-date", date, "--fund", fund,
+        "python", "main.py", "--start-date", date, "--end-date", date, "--fund", fund_code,
     
     ]
 
@@ -89,8 +104,11 @@ def run_cash_updater (
 
             command,
             cwd=cash_updater_path,
+            env=build_cash_updater_env(cash_updater_path),
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
 
         )
 
@@ -100,9 +118,9 @@ def run_cash_updater (
 
             "success" : success,
             "message" : (
-                f"Cash refreshed for {fund} on {date}"
+                f"Cash refreshed for {fund_code} on {date}"
                 if success
-                else f"Cash refresh failed for {fund} on {date}"
+                else f"Cash refresh failed for {fund_code} on {date}"
             ),
             "command" : " ".join(command),
             "returncode" : completed_process.returncode,
@@ -116,7 +134,7 @@ def run_cash_updater (
         return {
 
             "success" : False,
-            "message" : f"Cash refresh failed for {fund} on {date}: {e}",
+            "message" : f"Cash refresh failed for {fund_code} on {date}: {e}",
             "command" : " ".join(command),
             "returncode" : None,
             "stdout" : "",
