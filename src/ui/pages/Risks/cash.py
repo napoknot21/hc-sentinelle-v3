@@ -19,11 +19,13 @@ from src.utils.formatters import str_to_date, format_numeric_columns_to_string
 from src.ui.components.text import center_bold_paragraph, center_h2, left, left_h5
 from src.ui.components.charts import cash_chart, history_criteria_graph, simm_vs_ice_graph
 
-from src.core.data.cash import load_all_cash, load_all_collateral, aggregate_n_groupby, pivot_currency_historic, load_cache_fx_values
+from src.core.data.cash import load_all_cash, load_all_collateral, aggregate_n_groupby, pivot_currency_historic, load_cache_fx_values, aggregate_simm_vs_data_im_vm
 from src.core.data.simm import get_simm_all_history
-from src.core.api.cash import call_api_for_pairs
+from src.core.api.cash import call_api_for_pairs, run_cash_updater
 
 # -------- Main function --------
+
+ALL_BANK_SELECTOR = "All"
 
 def cash (
         
@@ -52,7 +54,7 @@ def cash (
 
     vm_n_requirement_section(fundation)
 
-    net_excess_graph_session(fundation)
+    #net_excess_graph_session(fundation)
     st.write('')
 
     simm_vs_data_section(fundation)
@@ -72,6 +74,7 @@ def cash_amount_section (
     
     """
     dataframe, md5 = load_all_cash(fundation)
+    
     col1, col2 = st.columns(2)
 
     with col1 :
@@ -85,8 +88,29 @@ def cash_amount_section (
         st.write('')
         cash_per_ctpy_table(dataframe, md5, date, ("Bank", "Type"), "Amount in CCY")
 
+        refresh_result_key = "cash_refresh_result"
+
+        if refresh_result_key in st.session_state :
+
+            refresh_result = st.session_state.pop(refresh_result_key)
+            st.success(refresh_result["message"])
+
         if st.button("Refresh Cash") :
-            # TODO : Integrate Cash-Updater Script
+
+            with st.spinner("Refreshing cash...") :
+                refresh_result = run_cash_updater(date, fundation)
+
+            if refresh_result["success"] :
+
+                st.session_state[refresh_result_key] = refresh_result
+                st.cache_data.clear()
+                st.rerun()
+
+            st.error(refresh_result["message"])
+
+            if refresh_result.get("stderr") :
+                st.code(refresh_result["stderr"])
+
             return None
 
     return None
@@ -387,6 +411,9 @@ def simm_vs_data_section (
     ctpy_rename = SIMM_MAPPING_COUNTERPARTIES if ctpy_rename is None else ctpy_rename
     bank_code = SIMM_MAPPING_COUNTERPARTIES_BANK_CODE if bank_code is None else bank_code
 
+    simm_df, simm_md5 = simm_vs_data_data_normalization(simm_df, simm_md5, ctpy_rename, bank_code)
+    aggregated_df, aggregated_md5 = aggregate_simm_vs_data_im_vm(dataframe, simm_df, md5)
+
     dataframe = (
         dataframe.filter(pl.col("Currency") == "EUR")
         .select(columns)
@@ -397,7 +424,6 @@ def simm_vs_data_section (
         .sort("Date")
     )
 
-    simm_df, simm_md5 = simm_vs_data_data_normalization(simm_df, simm_md5, ctpy_rename, bank_code)
     simm_df = (
         simm_df
         .select(columns)
@@ -407,15 +433,24 @@ def simm_vs_data_section (
     
     joined = dataframe.join(simm_df, on=columns[0:2], how="outer", coalesce=True).sort("Date")
 
-    banks = list(bank_code.values()) if banks is None else banks
+    banks = [ALL_BANK_SELECTOR] + list(bank_code.values()) if banks is None else [ALL_BANK_SELECTOR] + banks
 
     # Persist le choix dans session_state
-    if "simm_bank_selector" not in st.session_state:
+    if "simm_bank_selector" not in st.session_state or st.session_state["simm_bank_selector"] not in banks:
         st.session_state["simm_bank_selector"] = banks[0]
 
     bank_selector = st.selectbox("Select Bank for SIMM vs Data", options=banks, key="simm_bank_selector")
 
-    im_n_vm_simm_vs_data_section(joined, md5, bank_selector)  
+    if bank_selector == ALL_BANK_SELECTOR :
+        selected_dataframe = aggregated_df
+        selected_md5 = aggregated_md5
+        selected_bank = None
+    else :
+        selected_dataframe = joined
+        selected_md5 = md5
+        selected_bank = bank_selector
+
+    im_n_vm_simm_vs_data_section(selected_dataframe, selected_md5, selected_bank)
 
     return None
 
@@ -485,9 +520,10 @@ def im_simm_vs_data_section (dataframe : Optional[pl.DataFrame] = None, md5 : Op
     :param fundation: Description
     :type fundation: Optional[str]
     """
-    dataframe = dataframe.filter(pl.col("Bank") == bank)
-    fig = simm_vs_ice_graph(dataframe, md5, "IM")
+    if bank is not None and dataframe is not None :
+        dataframe = dataframe.filter(pl.col("Bank") == bank)
     
+    fig = simm_vs_ice_graph(dataframe, md5, "IM")
     st.plotly_chart(fig, width="content")
 
     return None
@@ -500,7 +536,9 @@ def vm_simm_vs_data_section (dataframe : Optional[pl.DataFrame] = None, md5 : Op
     :param fundation: Description
     :type fundation: Optional[str]
     """
-    dataframe = dataframe.filter(pl.col("Bank") == bank)
+    if bank is not None and dataframe is not None :
+
+        dataframe = dataframe.filter(pl.col("Bank") == bank)
     fig = simm_vs_ice_graph(dataframe, md5, "VM")
     
     st.plotly_chart(fig, width="content")

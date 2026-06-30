@@ -331,29 +331,21 @@ def _im_or_mv_over_nav (
     df, md5 = get_simm_all_history(fundation)
 
     date = str_to_date(date)
+    
+    
     df_nav = df_nav.filter(pl.col("Date") <= date)
     df = df.filter(pl.col("Date") <= date)
 
-    nav_df = (
-        df_nav
-        .group_by("Date")
-        .agg(pl.col("MV").sum().alias("NAV"))
-        .sort("Date")
-    )
+    nav_df = (df_nav.group_by("Date").agg(pl.col("MV").sum().alias("NAV")).sort("Date"))
 
     # IM par jour (somme)
-    df = (
-        df
-        .group_by("Date")
-        .agg(pl.col(column).sum().alias(column))
-        .sort("Date")
-    )
+    df = (df.group_by("Date").agg(pl.col(column).sum().alias(column)).sort("Date"))
 
     merged_df = (
 
         nav_df
         .join(df, on="Date", how="inner")
-        .with_columns((pl.col(column) / pl.col("NAV") * 100).alias(f"{column}/NAV %"))
+        .with_columns((pl.col(column) / pl.col("NAV") * 100).alias(f"{"SIMM" if column == "IM" else column}/NAV %"))
         .sort("Date")
     
     )

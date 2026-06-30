@@ -241,6 +241,48 @@ def load_collateral_by_date (
     return df_date, md5
 
 
+def aggregate_simm_vs_data_im_vm (
+
+        dataframe : Optional[pl.DataFrame] = None,
+        simm_df : Optional[pl.DataFrame] = None,
+        md5 : Optional[str] = None,
+
+        currency : str = "EUR",
+        data_im_sign : int = -1,
+
+    ) -> Tuple[Optional[pl.DataFrame], Optional[str]] :
+    """
+    Aggregate collateral data and ICE SIMM history by date for IM / VM comparison.
+    """
+    if dataframe is None or simm_df is None :
+        return None, md5
+
+    data_agg = (
+        dataframe
+        .filter(pl.col("Currency") == currency)
+        .group_by("Date")
+        .agg(
+            (pl.col("IM").sum() * data_im_sign).alias("IM_data"),
+            pl.col("VM").sum().alias("VM_data"),
+        )
+        .sort("Date")
+    )
+
+    simm_agg = (
+        simm_df
+        .group_by("Date")
+        .agg(
+            pl.col("IM").sum().alias("IM_ice"),
+            pl.col("VM").sum().alias("VM_ice"),
+        )
+        .sort("Date")
+    )
+
+    joined = data_agg.join(simm_agg, on="Date", how="outer", coalesce=True).sort("Date")
+
+    return joined, md5
+
+
 # --------- FX Values ---------
 
 def load_cache_fx_values (

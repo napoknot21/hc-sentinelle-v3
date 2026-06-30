@@ -722,6 +722,8 @@ def im_mv_over_nav_with_rolling (
         
         st.cache_data.clear()
         return None
+    
+    column = "SIMM" if column == "IM" else column
 
     columns = [
 
@@ -771,7 +773,7 @@ def im_mv_over_nav_with_rolling (
     # Create layout for the figure
     layout1 = go.Layout(
 
-        title=f"Total {column} Over NAV %",
+        title=f"Total {column} Over NAV % (ICE)",
         xaxis=dict(title='Date'),
         yaxis=dict(title=f'{column}/NAV %'),
         hovermode="x unified",
